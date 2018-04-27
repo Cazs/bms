@@ -1,0 +1,29 @@
+appId: com.fadulous.resource-engine
+copyright: Casper Ndlovu
+productName: Resource-Engine
+publish:
+  - provider: github
+    owner: Cazs
+    repo: Resource-Engine
+directories:
+  output: dist/
+mac:
+  category: public.app-category.business
+  target:
+    - zip
+    - dmg
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - ia32
+    - target: portable
+      arch:
+        - x64
+        - ia32
+linux:
+  category: Office
+  target:
+    - deb
+    - AppImage
