@@ -587,7 +587,6 @@ export class Jobs extends React.Component
           <h3 style={{textAlign: 'center', 'fontWeight': 'lighter', marginTop: '15px'}}>List of tasks for job #{row.object_number}</h3>
           <BootstrapTable
             id='tblJobTasks'
-            // key='_id'
             data={row.tasks}
             striped
             hover

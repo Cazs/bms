@@ -38,7 +38,8 @@ import Quote from '../../components/quotes/Quote';
 import ComboBox from '../../components/shared/ComboBox';
 
 import Message from '../../components/shared/Message';
-import CustomButton, { ButtonsGroup } from '../../components/shared/Button';
+import Button, { ButtonsGroup } from '../../components/shared/Button';
+import CloseButton from '../../components/shared/CloseButton';
 import { Field, Part, Row } from '../../components/shared/Part';
 import Logo from '../../components/settings/_partials/profile/Logo';
 
@@ -99,6 +100,7 @@ export class Quotes extends React.Component
                     selected_quote: null,
                     active_row: null,
                     column_toggles_top: -200,
+                    extra_cost_modal_props: {x: 0, y: 0, visible: false},
                     // Table Column Toggles
                     col_id_visible: false,
                     col_object_number_visible: true,
@@ -284,8 +286,8 @@ export class Quotes extends React.Component
 
     const quote_options = (
       <div>
-        <CustomButton primary onClick={() => this.showQuotePreview(row)}>PDF Preview</CustomButton>
-        <CustomButton
+        <Button primary onClick={() => this.showQuotePreview(row)}>PDF Preview</Button>
+        <Button
           primary
           style={{marginLeft: '15px'}}
           onClick={(evt) =>
@@ -336,7 +338,7 @@ export class Quotes extends React.Component
             // this.props.changeTab(2);
           }}
         >Create&nbsp;New&nbsp;Job
-        </CustomButton>
+        </Button>
       </div>
     );
 
@@ -380,7 +382,7 @@ export class Quotes extends React.Component
             </div>
 
             <div className="pageItem col-md-6">
-              <label className="itemLabel">Unit Cost</label>
+              <label className="itemLabel">Unit&nbsp;Cost</label>
               <input
                 id="unit_cost"
                 ref={(unit_cost)=>this.unit_cost=unit_cost}
@@ -416,61 +418,65 @@ export class Quotes extends React.Component
             </div>
 
             <div className="pageItem col-md-6">
-              <label className="itemLabel">Unit</label>
+              {/* <label className="itemLabel">Unit</label>
               <input
                 name="unit"
                 type="text"
                 disabled
                 value={this.state.new_quote_item.unit}
                 style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-              />
-            </div>
-          </div>
-          <div style={{width: '300px', marginLeft: 'auto', marginRight: 'auto', marginTop: '15px'}}>
-            <CustomButton
-              success
-              style={{width: '120px', height: '50px', float: 'left'}}
-              onClick={() =>
-              {
-                if(this.state.new_quote_item.resource_id && this.state.new_quote_item.quote_id)
-                {
-                  const quote_item = this.state.new_quote_item;
-                  quote_item.date_logged = new Date().getTime()/1000; // epoch sec
-                  quote_item.creator = SessionManager.session_usr.usr;
-                  console.log('creating new quote item: ', quote_item);
-
-                  row.resources.push(quote_item);
-                  // update state
-                  this.setState({new_quote_item: quote_item});
-                  // signal add quote item
-                  this.props.dispatch({
-                    type: ACTION_TYPES.QUOTE_ITEM_ADD,
-                    payload: quote_item
-                  });
-
-                  // TODO: fix this hack
-                  // signal update quote - so it saves to local storage
-                  this.props.dispatch({
-                    type: ACTION_TYPES.QUOTE_UPDATE,
-                    payload: row
-                  });
-                  // this.setState(this.state.new_quote_item);
-                } else
-                  openDialog(
+              /> */}
+              <div style={{width: '300px', marginLeft: 'auto', marginRight: 'auto', marginTop: '25px'}}>
+                <Button
+                  success
+                  style={{width: '120px', height: '50px', float: 'left'}}
+                  onClick={() =>
+                  {
+                    if(this.state.new_quote_item.resource_id && this.state.new_quote_item.quote_id)
                     {
-                      type: 'warning',
-                      title: 'Could not add material to quote',
-                      message: 'Please select a valid material from the drop down list'
-                    }
-                  );
-                  /* buttons: [
-                    t('common:yes'),
-                    t('common:noThanks')
-                  ] */
-              }}
-            >Add
-            </CustomButton>
-            <CustomButton style={{width: '120px', height: '50px', float: 'left', marginLeft: '15px'}} danger>Reset Fields</CustomButton>
+                      const quote_item = this.state.new_quote_item;
+                      quote_item.date_logged = new Date().getTime()/1000; // epoch sec
+                      quote_item.creator = SessionManager.session_usr.usr;
+                      console.log('creating new quote item: ', quote_item);
+
+                      row.resources.push(quote_item);
+                      // update state
+                      this.setState({new_quote_item: quote_item});
+                      // signal add quote item
+                      this.props.dispatch({
+                        type: ACTION_TYPES.QUOTE_ITEM_ADD,
+                        payload: quote_item
+                      });
+
+                      // TODO: fix this hack
+                      // signal update quote - so it saves to local storage
+                      this.props.dispatch({
+                        type: ACTION_TYPES.QUOTE_UPDATE,
+                        payload: row
+                      });
+                      // this.setState(this.state.new_quote_item);
+                    } else
+                      this.props.dispatch({
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {type: 'danger', message: 'Chosen material is invalid.\nPlease select a valid material from the drop down list'}
+                      });
+                      // openDialog(
+                      //   {
+                      //     type: 'warning',
+                      //     title: 'Could not add material to quote',
+                      //     message: 'Please select a valid material from the drop down list'
+                      //   }
+                      // );
+                      /* buttons: [
+                        t('common:yes'),
+                        t('common:noThanks')
+                      ] */
+                  }}
+                >Add
+                </Button>
+                <Button style={{width: '120px', height: '50px', float: 'left', marginLeft: '15px'}} danger>Reset Fields</Button>
+              </div>
+            </div>
           </div>
         </div> 
       </div>
@@ -554,12 +560,97 @@ export class Quotes extends React.Component
             </TableHeaderColumn>
 
             <TableHeaderColumn
-              dataField='additional_costs'
+              dataField='extra_costs_summary'
               dataSort
               caretRender={this.getCaret}
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_request_visible}
+              customEditor={{
+                getElement: (func, props) =>
+                {
+                  let extra_costs = props.row.extra_costs;
+                  if(!extra_costs)
+                    extra_costs = [];
+                  return (
+                    <div style={{backgroundColor: 'rgba(0,0,0,.3)', borderRadius: '4px', border: '2px solid #5BA5E8'}}>
+                      {/* <ComboBox
+                        items={this.props.employees}
+                        label='name'
+                        value={this.props.employees.length > 0 ? this.props.employees[0]: null}
+                        selected_item={this.props.employees.length > 0 ? this.props.employees[0]: null}
+                        onUpdate={(new_val)=>
+                        {
+                          const assignee_names = props.row.assignee_names;
+                          const assignees = props.row.assignees;
+
+                          const selected_user = JSON.parse(new_val);
+
+                          assignee_names.push(selected_user.name);
+                          assignees.push(selected_user);
+
+                          const assignee_html = 
+                            '<p style="background-color: rgba(255,255,255,.2);line-height: 45px; border-radius: 15px; border: 1px solid #fff; margin-top: 5px;">'
+                              + selected_user.name
+                              + '<span class="ion-close-circled" onmouseover="this.style.color=\'red\';this.style.cursor=\'pointer\'" onmouseout="this.style.color=\'#fff\'" style="float:right;width: 20px;height: 20px;color: #fff;"></span>'
+                            + '</p>';
+                          if(assignees.length>1)
+                            this.assignee_container.innerHTML += assignee_html;// existing items, append
+                          else this.assignee_container.innerHTML = assignee_html; // no items, add first item
+
+                          Object.assign(props.row.assignee_names, assignee_names);
+                          Object.assign(props.row.assignees, assignees);
+                        }}
+                      /> */}
+                      <Button
+                        success
+                        style={{marginLeft: '20px'}}
+                        onClick={(evt)=>
+                        {
+                          const modal = this.state.extra_cost_modal_props;
+                          modal.x = evt.clientX - 450;
+                          modal.y = evt.clientY - 30;
+                          modal.visible = true;// !modal.visible;
+                          this.setState({extra_cost_modal_props: modal});
+                        }}
+                      >
+                        New Cost
+                      </Button>
+                      {/* Show list of current additional costs with delete button */}
+                      <div ref={(r)=> this.extra_costs_container =r}>
+                        {
+                          extra_costs.length > 0 ? 
+                            extra_costs.map( extra_cost =>
+                              (
+                                <p
+                                  style={{
+                                    background: 'rgba(255,255,255,.2)',
+                                    lineHeight: '45px',
+                                    borderRadius: '15px',
+                                    border: '1px solid #fff',
+                                    marginTop: '5px'}}
+                                >
+                                  {extra_cost.name}
+                                  <span
+                                    id={props.row.extra_cost.index}
+                                    // index={props.row.assignees.length}
+                                    key={props.row.extra_cost.index}
+                                    ref={(obj)=>this.extra_cost = obj}
+                                    className="ion-close-circled"
+                                    // onMouseOver='this.style.color="red"; this.style.cursor="pointer"'
+                                    onMouseOver={(el)=>Object.assign(el.target.style, {color: 'red'})}
+                                    onMouseOut={(el)=>Object.assign(el.target.style, {color: '#fff'})}
+                                    onFocus={(el)=>Object.assign(el.target.style, {border: 'lime'})}
+                                    onBlur={(el)=>Object.assign(el.target.style, {border: 'none'})}
+                                    style={{float: 'right', width: '40px', height: '40px'}}
+                                  />
+                                </p>)
+                            ) : (<p style={{textAlign: 'center'}}>No extra costs.</p>)
+                        }
+                      </div>
+                    </div>)
+                }
+              }}
             > Extra Costs
             </TableHeaderColumn>
 
@@ -668,6 +759,123 @@ export class Quotes extends React.Component
     return (
       <PageContent bare>
         <div style={{maxHeight: 'auto'}}>
+          {/* Extra costs modal */}
+          <div
+            style={{
+              position: 'fixed',
+              top: this.state.extra_cost_modal_props.y,
+              left: this.state.extra_cost_modal_props.x,
+              paddingLeft: '40px',
+              paddingRight: '40px',
+              borderRadius: '10px',
+              background: 'rgba(0,0,0,.7)',
+              boxShadow: '0px 0px 20px #343434',
+              zIndex: '200'
+            }}
+            hidden={!this.state.extra_cost_modal_props.visible}
+          >
+            <div style={{paddingTop: '1px', width: '100%'}} >
+              <div style={{width: '10px', height: '10px', float: 'right', marginRight: '-30px'}}>
+                <CloseButton
+                  className="ion-close-circled"
+                  onClick={()=>
+                    this.setState({extra_cost_modal_props: Object.assign(this.state.extra_cost_modal_props, {visible: false})})}
+                />
+              </div>
+            </div>
+            <div className="row">
+              <div className="pageItem" style={{paddingTop: '5px'}}>
+                <label className="itemLabel" style={{color: '#fff'}}>Cost&nbsp;Title</label>
+                <input
+                  ref={(txt_title)=>this.txt_title = txt_title}
+                  name="title"
+                  type="text"
+                    // value={this.state.new_quote.sitename}
+                  onChange={(new_val)=>
+                    {
+                      // const quote = this.state.new_quote;
+                      // quote.sitename = new_val.currentTarget.value;
+                      // this.setState({new_quote: quote});
+                    }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+              <div className="pageItem" style={{paddingTop: '5px', paddingLeft: '5px'}}>
+                <label className="itemLabel" style={{color: '#fff'}}>Cost&nbsp;Value</label>
+                <input
+                  ref={(txt_cost)=>this.txt_cost = txt_cost}
+                  name="cost"
+                  type="text"
+                    // value={this.state.new_quote.sitename}
+                  onChange={(new_val)=>
+                    {
+                      // const quote = this.state.new_quote;
+                      // quote.sitename = new_val.currentTarget.value;
+                      // this.setState({new_quote: quote});
+                    }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+            </div>
+
+            <div className="row" style={{paddingTop: '5px'}}>
+              <div className="pageItem">
+                <label className="itemLabel" style={{color: '#fff'}}>Markup</label>
+                <input
+                  ref={(txt_markup)=>this.txt_markup = txt_markup}
+                  name="markup"
+                  type="text"
+                    // value={this.state.new_quote.sitename}
+                  onChange={(new_val)=>
+                    {
+                      // const quote = this.state.new_quote;
+                      // quote.sitename = new_val.currentTarget.value;
+                      // this.setState({new_quote: quote});
+                    }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+              <div className="pageItem" />
+              <div className="pageItem">
+                <Button
+                  success
+                  style={{
+                    width: '130px',
+                    height: '45px',
+                    marginTop: '30px',
+                    marginLeft: '20px'
+                  }}
+                  onClick={()=>
+                  {
+                    if(this.txt_title.value && this.txt_cost.value)
+                    {
+                      // item.date_logged = new Date().getTime()/1000; // epoch sec
+                      // item.creator = SessionManager.session_usr.usr;
+                      // console.log('creating new extra cost for quote item: ', quote_item);
+
+                      // row.resources.push(quote_item);
+                      // update state
+                      // this.setState({new_quote_item: quote_item});
+
+
+                      // signal update quote - so it saves to local storage
+                      this.props.dispatch({
+                        type: ACTION_TYPES.QUOTE_UPDATE,
+                        payload: this.state.selected_quote
+                      });
+                      // this.setState(this.state.new_quote_item);
+                    } else
+                      this.props.dispatch({
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {type: 'danger', message: 'Please make sure that the cost and title fields have been filled in correctly.'}
+                      });
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+            </div>
+          </div>
           {/* Quote Creation Modal */}
           <Modal
             isOpen={this.state.is_new_quote_modal_open}
@@ -795,14 +1003,14 @@ export class Quotes extends React.Component
                 </div>
               </div>
 
-              <CustomButton
+              <Button
                 onClick={this.closeModal}
                 style={{width: '120px', height: '50px', float: 'right'}}
                 danger
               >Dismiss
-              </CustomButton>
+              </Button>
 
-              <CustomButton
+              <Button
                 onClick={()=>{
                   const quote = this.state.new_quote;
 
@@ -887,7 +1095,7 @@ export class Quotes extends React.Component
                 style={{width: '120px', height: '50px', float: 'left'}}
                 success
               >Create
-              </CustomButton>
+              </Button>
             </div>
           </Modal>
 
@@ -1154,8 +1362,8 @@ export class Quotes extends React.Component
                     </Field>
                   </Row>
                   <Row>
-                    <CustomButton onClick={this.openModal} success>Create New Quote</CustomButton>
-                    <CustomButton
+                    <Button onClick={this.openModal} success>Create New Quote</Button>
+                    <Button
                       success
                       style={{marginLeft: '20px'}}
                       onClick={() => 
@@ -1167,7 +1375,7 @@ export class Quotes extends React.Component
                       }}
                     >
                   Toggle Filters
-                    </CustomButton>
+                    </Button>
                   </Row>
                 </Part>
               </div>

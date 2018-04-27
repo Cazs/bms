@@ -446,7 +446,6 @@ export class PurchaseOrders extends React.Component
           <h3 style={{textAlign: 'center', 'fontWeight': 'lighter'}}>List of materials for purchase order #{row.object_number}</h3>
           <BootstrapTable
             id='tblPurchaseOrderResources'
-            key='tblPurchaseOrderResources'
             data={row.resources}
             striped
             hover
@@ -457,6 +456,7 @@ export class PurchaseOrders extends React.Component
             version='4' // bootstrap version
           >
             <TableHeaderColumn
+              isKey
               dataField='item_number'
               dataSort
               caretRender={this.getCaret}
@@ -467,7 +467,6 @@ export class PurchaseOrders extends React.Component
             </TableHeaderColumn>
 
             <TableHeaderColumn
-              isKey
               dataField='item_description'
               dataSort
               caretRender={this.getCaret}
@@ -1002,7 +1001,6 @@ export class PurchaseOrders extends React.Component
               <div style={{maxHeight: 'auto', marginTop: '5px', backgroundColor: '#2BE8A2'}}>
                 <BootstrapTable
                   id='tblPurchaseOrders'
-                  key='tblPurchaseOrders'
                   data={purchaseOrders}
                   striped
                   hover
@@ -1023,7 +1021,6 @@ export class PurchaseOrders extends React.Component
                   version='4' // bootstrap version
                 >
                   <TableHeaderColumn  
-                    // isKey
                     dataField='_id'
                     dataSort
                     caretRender={this.getCaret}

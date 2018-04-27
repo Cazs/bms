@@ -1,4 +1,7 @@
-./node_modules
-./i18n
-./db
-./dist
+/node_modules/*
+/i18n/*
+/db/*
+/dist/*
+/prod/*
+/monitor/*
+/coverage/*
