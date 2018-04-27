@@ -202,31 +202,36 @@ export const postRemoteResource = (dispatch, db, resource, endpoint, collection_
                         {
                           if(response.status == 200) // Success, successfully updated record
                           {
+                            dispatch(UIActions.newNotification('success', 'Successfully updated '+collection_name));
                             // TODO: return array from server then just resolve that
                             // update local store
                             const new_quote_id = response.data;
-                            db.update({_id: resource._id} ,resource, (error) =>
+                            if(db)
                             {
-                              if(error)
+                              db.update({_id: resource._id} ,resource, (error) =>
                               {
-                                Log('error', error);
-                                return reject(error);
-                              }
-                              Log('info', 'successfully updated record on local collection [' + collection_name + '].');
-                              dispatch(UIActions.newNotification('success', 'Successfully updated '+collection_name));
-                            });
-
-                            // return updated local resources
-                            getLocalResource(db, (err, docs) =>
+                                if(error)
+                                {
+                                  Log('error', error);
+                                  return reject(error);
+                                }
+                                Log('info', 'successfully updated record on local collection [' + collection_name + '].');
+                              });
+                              // return updated local resources
+                              getLocalResource(db, (err, docs) =>
+                              {
+                                if(err)
+                                {
+                                  Log('error', err);
+                                  return reject(err);
+                                }
+                                resolve(docs);
+                              });
+                            } else
                             {
-                              if(err)
-                              {
-                                Log('error', err);
-                                return reject(err);
-                              }
-                              resolve(docs);
-                            });
-
+                              Log('warning', 'no db collection specified, not updating local store, assuming you\'re taking care of this elsewhere.');
+                              resolve(response);
+                            }
                           } else if(response.status == 204) // No content
                           {
                             reject(new Error('Error ['+response.status+']: No '+collection_name+' were found in the database.'));

@@ -564,7 +564,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_object_number_visible}
-            > Item&nbsp;Number
+            >Item&nbsp;No.
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -575,7 +575,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_object_number_visible}
-            > Item&nbsp;Description
+            >Description
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -585,7 +585,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_client_id_visible}
-            > Unit Cost
+            >Cost
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -595,7 +595,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_contact_person_id_visible}
-            > Quantity
+            >Quantity
             </TableHeaderColumn>
             
             <TableHeaderColumn
@@ -605,7 +605,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_sitename_visible}
-            >  Unit
+            >Unit
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -668,6 +668,7 @@ export class Quotes extends React.Component
                               selected_quote: row,
                               selected_extra_cost: // Object.assign( this.state.selected_extra_cost,
                                                     {
+                                                      _id: null,
                                                       quote_item_id: null,
                                                       object_number: 0,
                                                       title: '',
@@ -706,7 +707,7 @@ export class Quotes extends React.Component
                                           selected_quote: row,
                                           selected_quote_item: props.row,
                                           selected_extra_cost: extra_cost,
-                                          extra_cost_modal_props: Object.assign( this.state.extra_cost_modal_props,
+                                          extra_cost_modal_props: Object.assign(this.state.extra_cost_modal_props,
                                                                   { visible: true, edit_mode: true })
                                         })}
                                 >
@@ -722,7 +723,7 @@ export class Quotes extends React.Component
                     </div>)
                 }
               }}
-            > Extra&nbsp;Costs
+            >Extra&nbsp;Costs
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -732,7 +733,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               hidden
-            > Notes
+            >Notes
             </TableHeaderColumn>
           </BootstrapTable>
           
@@ -958,6 +959,7 @@ export class Quotes extends React.Component
 
                       const extra_cost =
                       {
+                        _id: this.state.selected_extra_cost._id,
                         quote_item_id: this.state.selected_quote_item._id,
                         object_number: this.state.selected_quote_item.extra_costs ? this.state.selected_quote_item.extra_costs.length : 0,
                         title: this.txt_title.value,
@@ -967,6 +969,14 @@ export class Quotes extends React.Component
                         creator: SessionManager.session_usr.usr,
                         creator_employee: SessionManager.session_usr
                       };
+
+                      // this.setState(
+                      //   {
+                      //     selected_extra_cost: Object.assign(this.state.selected_extra_cost,
+                      //                           {
+                      //                             object_number: this.state.selected_quote_item.extra_costs ? this.state.selected_quote_item.extra_costs.length : 0
+                      //                           })
+                      //   });
 
                       if(!this.state.selected_quote_item.extra_costs)
                         this.state.selected_quote_item.extra_costs = [];
@@ -999,15 +1009,27 @@ export class Quotes extends React.Component
                       console.log('selected quote_item: ', this.state.selected_quote_item);
                       console.log('selected quote_item extra_cost: ', extra_cost);
 
-                      // signal update quote - so it saves to local storage
-                      // if(!this.state.extra_costs_modal_props.edit_mode)
-                      // this.props.dispatch(
-                      // {
-                      //   type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_ADD,
-                      //   payload: this.state.selected_quote_item
-                      // });
-                      // this.setState(this.state.new_quote_item);
 
+                      // signal quote item add (if in edit mode) to save new extra cost to remote storage
+                      if(!this.state.extra_cost_modal_props.edit_mode)
+                        this.props.dispatch(
+                        {
+                          type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_ADD,
+                          payload: extra_cost
+                        });
+                      else // else signal quote item update to update extra cost on remote storage
+                        this.props.dispatch(
+                        {
+                          type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_UPDATE,
+                          payload: extra_cost
+                        });
+
+                      // signal update quote - so it saves new extra costs to local storage
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.QUOTE_UPDATE,
+                        payload: this.state.selected_quote
+                      });
                     } else
                       this.props.dispatch(
                       {
