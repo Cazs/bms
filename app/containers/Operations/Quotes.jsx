@@ -60,6 +60,7 @@ import
     PageHeaderActions,
     PageContent,
   } from '../../components/shared/Layout';
+import { globalShortcut } from 'electron';
 
 
 const modalStyle =
@@ -74,6 +75,18 @@ const modalStyle =
     minWidth              : window.outerWidth-160, // '950px'
   }
 };
+
+const ExtraCost = styled.div`
+  background: rgba(255,255,255,.3);
+  border-radius: 6px;
+  border: 1px solid #fff;
+  height: 25px;
+  // Hover
+  &:hover {
+    cursor: pointer;
+    background: rgba(255,255,255,.7);
+  }
+`;
 
 export class Quotes extends React.Component
 {
@@ -98,11 +111,22 @@ export class Quotes extends React.Component
     this.state = {  filter: null,
                     is_new_quote_modal_open: false,
                     is_quote_items_modal_open: false,
-                    selected_quote: null,
+                    selected_quote: {extra_costs: []},
                     active_row: null,
                     column_toggles_top: -200,
                     info: {x: 200, y: 200, display: 'none'},
-                    extra_cost_modal_props: {x: 0, y: 0, visible: false},
+                    extra_cost_modal_props: {x: 0, y: 0, visible: false, edit_mode: false},
+                    selected_extra_cost:
+                    {
+                      quote_item_id: null,
+                      object_number: 0,
+                      title: '',
+                      cost: 0,
+                      markup: 0,
+                      creator: SessionManager.session_usr.usr,
+                      creator_employee: SessionManager.session_usr,
+                      date_logged: new Date().getTime()
+                    },
                     // Table Column Toggles
                     col_id_visible: false,
                     col_object_number_visible: true,
@@ -594,9 +618,12 @@ export class Quotes extends React.Component
               customEditor={{
                 getElement: (func, props) =>
                 {
-                  let extra_costs = props.row.extra_costs;
-                  if(!extra_costs)
-                    extra_costs = [];
+                  const quote = props.row;
+                  if(!quote.extra_costs)
+                    quote.extra_costs = [];
+                  // this.state.selected_quote = row;
+                  // if(!this.state.selected_quote.extra_costs)
+                  //   this.state.selected_quote.extra_costs = [];
                   return (
                     <div style={{backgroundColor: 'rgba(0,0,0,.3)', borderRadius: '4px', border: '2px solid #5BA5E8'}}>
                       {/* <ComboBox
@@ -629,48 +656,67 @@ export class Quotes extends React.Component
                       /> */}
                       <Button
                         success
-                        style={{marginLeft: '20px'}}
+                        style={{marginLeft: '5%'}}
                         onClick={(evt)=>
                         {
                           const modal = this.state.extra_cost_modal_props;
                           modal.x = evt.clientX - 450;
                           modal.y = evt.clientY - 30;
                           modal.visible = true;// !modal.visible;
-                          this.setState({extra_cost_modal_props: modal});
+                          this.setState(
+                            {
+                              selected_quote: row,
+                              selected_extra_cost: // Object.assign( this.state.selected_extra_cost,
+                                                    {
+                                                      quote_item_id: null,
+                                                      object_number: 0,
+                                                      title: '',
+                                                      cost: 0,
+                                                      markup: 0,
+                                                      creator: SessionManager.session_usr.usr,
+                                                      creator_employee: SessionManager.session_usr,
+                                                      date_logged: new Date().getTime()
+                                                    },
+                              extra_cost_modal_props: modal,
+                              selected_quote_item: props.row,
+                              edit_mode: false
+                            });
                         }}
                       >
-                        New Cost
+                        New&nbsp;Cost
                       </Button>
+
                       {/* Show list of current additional costs with delete button */}
                       <div ref={(r)=> this.extra_costs_container =r}>
                         {
-                          extra_costs.length > 0 ? 
-                            extra_costs.map( extra_cost =>
-                              (
-                                <p
-                                  style={{
-                                    background: 'rgba(255,255,255,.2)',
-                                    lineHeight: '45px',
-                                    borderRadius: '15px',
-                                    border: '1px solid #fff',
-                                    marginTop: '5px'}}
+                          quote.extra_costs.length > 0 ? 
+                            quote.extra_costs.map( extra_cost =>
+                            {
+                              const cost = Number(extra_cost.cost);
+                              const markup = Number(extra_cost.markup);
+
+                              const markedup_cost = cost + (cost * (markup/100));
+                              return (
+                                <ExtraCost
+                                  key={extra_cost.object_number}
+                                  style={{marginTop: '7px'}}
+                                  onClick={()=>
+                                      this.setState(
+                                        {
+                                          selected_quote: row,
+                                          selected_quote_item: props.row,
+                                          selected_extra_cost: extra_cost,
+                                          extra_cost_modal_props: Object.assign( this.state.extra_cost_modal_props,
+                                                                  { visible: true, edit_mode: true })
+                                        })}
                                 >
-                                  {extra_cost.name}
-                                  <span
-                                    id={props.row.extra_cost.index}
-                                    // index={props.row.assignees.length}
-                                    key={props.row.extra_cost.index}
-                                    ref={(obj)=>this.extra_cost = obj}
-                                    className="ion-close-circled"
-                                    // onMouseOver='this.style.color="red"; this.style.cursor="pointer"'
-                                    onMouseOver={(el)=>Object.assign(el.target.style, {color: 'red'})}
-                                    onMouseOut={(el)=>Object.assign(el.target.style, {color: '#fff'})}
-                                    onFocus={(el)=>Object.assign(el.target.style, {border: 'lime'})}
-                                    onBlur={(el)=>Object.assign(el.target.style, {border: 'none'})}
-                                    style={{float: 'right', width: '40px', height: '40px'}}
-                                  />
-                                </p>)
-                            ) : (<p style={{textAlign: 'center'}}>No extra costs.</p>)
+                                  <p style={{marginTop: '2px', marginLeft: '2px'}}>
+                                    <i style={{fontWeight: 'lighter', textAlign: 'left', float: 'left'}}>{extra_cost.title}</i>
+                                    <em style={{ textAlign: 'right', float: 'right'}}>{GlobalConstants.currency_symbol} {markedup_cost}</em>
+                                  </p>
+                                </ExtraCost>)
+                            }) : 
+                          (<p style={{textAlign: 'center'}}>No extra costs.</p>)
                         }
                       </div>
                     </div>)
@@ -810,7 +856,11 @@ export class Quotes extends React.Component
                 <CloseButton
                   className="ion-close-circled"
                   onClick={()=>
-                    this.setState({extra_cost_modal_props: Object.assign(this.state.extra_cost_modal_props, {visible: false})})}
+                    this.setState(
+                      {
+                        extra_cost_modal_props: Object.assign(this.state.extra_cost_modal_props,
+                                                {visible: false, edit_mode: false})
+                      })}
                 />
               </div>
             </div>
@@ -821,13 +871,13 @@ export class Quotes extends React.Component
                   ref={(txt_title)=>this.txt_title = txt_title}
                   name="title"
                   type="text"
-                    // value={this.state.new_quote.sitename}
+                  value={this.state.selected_extra_cost.title}
                   onChange={(new_val)=>
-                    {
-                      // const quote = this.state.new_quote;
-                      // quote.sitename = new_val.currentTarget.value;
-                      // this.setState({new_quote: quote});
-                    }}
+                  {
+                    const extra_cost = this.state.selected_extra_cost;
+                    extra_cost.title = new_val.currentTarget.value;
+                    this.setState({selected_extra_cost: extra_cost});
+                  }}
                   style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
                 />
               </div>
@@ -837,13 +887,14 @@ export class Quotes extends React.Component
                   ref={(txt_cost)=>this.txt_cost = txt_cost}
                   name="cost"
                   type="text"
-                    // value={this.state.new_quote.sitename}
+                  // defaultValue="0"
+                  value={this.state.selected_extra_cost.cost}
                   onChange={(new_val)=>
-                    {
-                      // const quote = this.state.new_quote;
-                      // quote.sitename = new_val.currentTarget.value;
-                      // this.setState({new_quote: quote});
-                    }}
+                  {
+                    const extra_cost = this.state.selected_extra_cost;
+                    extra_cost.cost = new_val.currentTarget.value;
+                    this.setState({selected_extra_cost: extra_cost});
+                  }}
                   style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
                 />
               </div>
@@ -856,13 +907,14 @@ export class Quotes extends React.Component
                   ref={(txt_markup)=>this.txt_markup = txt_markup}
                   name="markup"
                   type="text"
-                    // value={this.state.new_quote.sitename}
+                  // defaultValue="0"
+                  value={this.state.selected_extra_cost.markup}
                   onChange={(new_val)=>
-                    {
-                      // const quote = this.state.new_quote;
-                      // quote.sitename = new_val.currentTarget.value;
-                      // this.setState({new_quote: quote});
-                    }}
+                  {
+                    const extra_cost = this.state.selected_extra_cost;
+                    extra_cost.markup = new_val.currentTarget.value;
+                    this.setState({selected_extra_cost: extra_cost});
+                  }}
                   style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
                 />
               </div>
@@ -870,7 +922,8 @@ export class Quotes extends React.Component
               <div className="pageItem">
                 <Button
                   success
-                  style={{
+                  style={
+                  {
                     width: '130px',
                     height: '45px',
                     marginTop: '30px',
@@ -880,29 +933,90 @@ export class Quotes extends React.Component
                   {
                     if(this.txt_title.value && this.txt_cost.value)
                     {
-                      // item.date_logged = new Date().getTime()/1000; // epoch sec
-                      // item.creator = SessionManager.session_usr.usr;
-                      // console.log('creating new extra cost for quote item: ', quote_item);
+                      if(this.txt_cost.value.match('^[0-9]+$') == null)
+                      {
+                        this.props.dispatch(
+                        {
+                          type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                          payload: { type: 'danger', message: 'Invalid cost. Must be a number greater than or equal to 0.'}
+                        });
+                        return;
+                      }
 
-                      // row.resources.push(quote_item);
+                      if(this.txt_markup.value)
+                      {
+                        if(this.txt_markup.value.match('^[0-9]+$') == null)
+                        {
+                          this.props.dispatch(
+                          {
+                            type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                            payload: { type: 'danger', message: 'Invalid markup. Must be a number greater than or equal to 0.'}
+                          });
+                          return;
+                        }
+                      }
+
+                      const extra_cost =
+                      {
+                        quote_item_id: this.state.selected_quote_item._id,
+                        object_number: this.state.selected_quote_item.extra_costs ? this.state.selected_quote_item.extra_costs.length : 0,
+                        title: this.txt_title.value,
+                        markup: this.txt_markup.value,
+                        cost: this.txt_cost.value,
+                        date_logged: new Date().getTime(),
+                        creator: SessionManager.session_usr.usr,
+                        creator_employee: SessionManager.session_usr
+                      };
+
+                      if(!this.state.selected_quote_item.extra_costs)
+                        this.state.selected_quote_item.extra_costs = [];
+                      
+                      // push new cost to selected_quote_item's list of costs if not in edit mode
+                      if(!this.state.extra_cost_modal_props.edit_mode)
+                        this.state.selected_quote_item.extra_costs.push(extra_cost);
+
                       // update state
-                      // this.setState({new_quote_item: quote_item});
+                      this.setState(
+                      {
+                        selected_quote_item: this.state.selected_quote_item,
+                        extra_cost_modal_props: this.state.extra_cost_modal_props.edit_mode ? this.state.extra_cost_modal_props :
+                                                Object.assign(this.state.extra_cost_modal_props, {visible: false}),
+                        // if is editing leave current as selected, else if adding reset selected_extra_cost
+                        selected_extra_cost: this.state.extra_cost_modal_props.edit_mode ? extra_cost :
+                                              {
+                                                quote_item_id: null,
+                                                index: 0,
+                                                title: '',
+                                                cost: 0,
+                                                markup: 0,
+                                                creator: SessionManager.session_usr.usr,
+                                                creator_employee: SessionManager.session_usr,
+                                                date_logged: new Date().getTime()
+                                              }
+                      });
 
+                      console.log('selected quote: ', this.state.selected_quote);
+                      console.log('selected quote_item: ', this.state.selected_quote_item);
+                      console.log('selected quote_item extra_cost: ', extra_cost);
 
                       // signal update quote - so it saves to local storage
-                      this.props.dispatch({
-                        type: ACTION_TYPES.QUOTE_UPDATE,
-                        payload: this.state.selected_quote
-                      });
+                      // if(!this.state.extra_costs_modal_props.edit_mode)
+                      // this.props.dispatch(
+                      // {
+                      //   type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_ADD,
+                      //   payload: this.state.selected_quote_item
+                      // });
                       // this.setState(this.state.new_quote_item);
+
                     } else
-                      this.props.dispatch({
+                      this.props.dispatch(
+                      {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                        payload: {type: 'danger', message: 'Please make sure that the cost and title fields have been filled in correctly.'}
+                        payload: { type: 'danger', message: 'Please make sure that the cost and title fields have been filled in correctly.'}
                       });
                   }}
                 >
-                  Add
+                  { this.state.extra_cost_modal_props.edit_mode ? 'Update' : 'Add' }
                 </Button>
               </div>
             </div>
@@ -1131,7 +1245,7 @@ export class Quotes extends React.Component
           </Modal>
 
           {/* Quotes table & Column toggles */}
-          <div style={{paddingTop: '0px'}}>
+          <div style={{ paddingTop: '0px' }}>
             
             {/* Quotes Table column toggles */}
             <Transition
@@ -1413,8 +1527,8 @@ export class Quotes extends React.Component
             </Transition>
 
             {/* List of Quotes */}
-            {quotes.length === 0 ? (
-              <Message danger text='No quotes were found in the system' style={{marginTop: '145px'}} />
+            { quotes.length === 0 ? (
+              <Message danger text='No quotes were found in the system' style={{ marginTop: '145px'}} />
             ) : (
               <div style={{maxHeight: 'auto', marginTop: '10px', backgroundColor: '#2BE8A2'}}>
                 {/* { getQuotesTable(quotes, this.state, this.props, this.getCaret, this.isExpandableRow, this.expandComponent, this.expandColumnComponent, cellEditProp, clientFormatter, options) } */}
