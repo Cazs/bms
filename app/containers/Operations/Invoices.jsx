@@ -78,6 +78,7 @@ export class Invoices extends React.Component
     this.duplicateInvoice = this.duplicateInvoice.bind(this);
     this.setInvoiceStatus = this.setInvoiceStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
+    this.getCaret = this.getCaret.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -93,6 +94,7 @@ export class Invoices extends React.Component
                     selected_invoice: null,
                     active_row: null,
                     column_toggles_top: -200,
+                    info: {x: 200, y: 200, display: 'none'},
                     // Table Column Toggles
                     col_id_visible: false,
                     col_object_number_visible: true,
@@ -188,19 +190,41 @@ export class Invoices extends React.Component
     if (direction === 'asc')
     {
       return (
-        <img src="../static/open-iconic-master/svg/caret-top.svg" alt='up' />
+        <img
+          src="../static/open-iconic-master/svg/caret-top.svg"
+          alt='up'
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+        />
       );
     }
     if (direction === 'desc')
     {
       return (
-        <img src="../static/open-iconic-master/svg/caret-bottom.svg" alt='down' />
+        <img
+          src="../static/open-iconic-master/svg/caret-bottom.svg"
+          alt='down'
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+        />
       );
     }
+    
     return (
-      <span>
-        <img src="../static/open-iconic-master/svg/info.svg" alt='info' style={{width: '13px', height: '13px', marginLeft: '10px'}} />
-        (click&nbsp;to&nbsp;sort)
+      <span
+        style={{marginLeft: '5px'}}
+      >
+        <img
+          src="../static/open-iconic-master/svg/info.svg"
+          alt='info'
+          style={{
+            width: '13px',
+            height: '13px',
+            marginLeft: '0px'
+            }}
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+        />
       </span>
     );
   }
@@ -295,9 +319,15 @@ export class Invoices extends React.Component
 
     const clientFormatter = (cell, row) => `<i class='glyphicon glyphicon-${cell.client_name}'></i> ${cell.client_name}`;
 
+    const info = (
+      <div style={{position: 'fixed', display: this.state.info.display, top: this.state.info.y, left: this.state.info.x, background:'rgba(0,0,0,.8)', borderRadius: '4px', boxShadow: '0px 0px 10px #343434', border: '1px solid #000', zIndex: '300'}}>
+        <p style={{color: '#fff', marginTop: '5px'}}>&nbsp;click&nbsp;to&nbsp;sort&nbsp;by&nbsp;this&nbsp;column&nbsp;</p>
+      </div>);
+      
     return (
       <PageContent bare>
         <div style={{maxHeight: 'auto'}}>
+          {info}
           {/* Invoices table & Column toggles */}
           <div style={{paddingTop: '0px'}}>
             {/* Invoices Table column toggles */}
@@ -323,7 +353,7 @@ export class Invoices extends React.Component
               { window.onresize = () => {
                 Object.assign(this.toggle_container.style, {marginLeft: (-45 + (window.outerWidth * 0.01)) + 'px'});
               }}
-              <div ref={(r)=>this.toggle_container = r} key='invoices_col_toggles' style={{boxShadow: '0px 10px 35px #343434', marginLeft: '-35px', position: 'fixed', top:  '130px'}}>
+              <div ref={(r)=>this.toggle_container = r} key='invoices_col_toggles' style={{boxShadow: '0px 10px 35px #343434', marginLeft: '-35px', position: 'fixed', top:  '130px', zIndex: '20'}}>
                 <h2 style={{textAlign: 'center', fontWeight: 'lighter'}}>Show/Hide Table Columns</h2>
                 <Part>
                   <Row>

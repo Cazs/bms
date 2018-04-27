@@ -78,6 +78,7 @@ export class Jobs extends React.Component
     this.duplicateJob = this.duplicateJob.bind(this);
     this.setJobStatus = this.setJobStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
+    this.getCaret = this.getCaret.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -93,6 +94,7 @@ export class Jobs extends React.Component
                     selected_job: null,
                     active_row: null,
                     column_toggles_top: -200,
+                    info: {x: 200, y: 200, display: 'none'},
                     // Table Column Toggles
                     col_id_visible: false,
                     col_object_number_visible: true,
@@ -224,20 +226,42 @@ export class Jobs extends React.Component
     if (direction === 'asc')
     {
       return (
-        <img src="../static/open-iconic-master/svg/caret-top.svg" alt='up' />
+        <img
+          src="../static/open-iconic-master/svg/caret-top.svg"
+          alt='up'
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+        />
       );
     }
     if (direction === 'desc')
     {
       return (
-        <img src="../static/open-iconic-master/svg/caret-bottom.svg" alt='down' />
+        <img
+          src="../static/open-iconic-master/svg/caret-bottom.svg"
+          alt='down'
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+        />
       );
     }
+    
     return (
-      <i>
-        <img src="../static/open-iconic-master/svg/info.svg" alt='info' style={{width: '13px', height: '13px', marginLeft: '10px'}} />
-        (click&nbsp;to&nbsp;sort)
-      </i>
+      <span
+        style={{marginLeft: '5px'}}
+      >
+        <img
+          src="../static/open-iconic-master/svg/info.svg"
+          alt='info'
+          style={{
+            width: '13px',
+            height: '13px',
+            marginLeft: '0px'
+            }}
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+        />
+      </span>
     );
   }
 
@@ -795,8 +819,6 @@ export class Jobs extends React.Component
       afterSaveCell: this.onAfterSaveCell  // a hook for after saving cell
     };
 
-    
-
     const options =
     {
       defaultSortName: 'object_number',  // default sort column name
@@ -807,12 +829,18 @@ export class Jobs extends React.Component
     // const clientFormatter = (cell, row) => (<div>test</div>);
     const clientFormatter = (cell, row) => `<i class='glyphicon glyphicon-${cell.client_name}'></i> ${cell.client_name}`;
 
+    const info = (
+      <div style={{position: 'fixed', display: this.state.info.display, top: this.state.info.y, left: this.state.info.x, background:'rgba(0,0,0,.8)', borderRadius: '4px', boxShadow: '0px 0px 10px #343434', border: '1px solid #000', zIndex: '300'}}>
+        <p style={{color: '#fff', marginTop: '5px'}}>&nbsp;click&nbsp;to&nbsp;sort&nbsp;by&nbsp;this&nbsp;column&nbsp;</p>
+      </div>);
+
     const no_jobs_msg = (
       <Message danger text='No jobs were found in the system' style={{marginTop: '145px'}} />
     );
     return (
       <PageContent bare>
         <div style={{maxHeight: 'auto'}}>
+          {info}
           {/* Job Creation Modal */}
           <Modal
             isOpen={this.state.is_new_job_modal_open}
@@ -979,7 +1007,7 @@ export class Jobs extends React.Component
             >
               {/* Jobs Table column toggles */}
               {/* ref={(el)=> this.col_toggles_container = el} style={{position: 'fixed',background: 'rgb(180, 180, 180)', top: '-70px', left: window.innerWidth * 0.010 + '%', boxShadow: '0px 10px 35px #343434'}} */}
-              <div key='jobs_col_toggles' style={{position: 'fixed', top: '130px', width: '1175px', boxShadow: '0px 10px 35px #343434'}}>
+              <div key='jobs_col_toggles' style={{position: 'fixed', top: '130px', width: '1175px', boxShadow: '0px 10px 35px #343434', zIndex: '20'}}>
                 <h2 style={{textAlign: 'center', fontWeight: 'lighter'}}>Show/Hide Table Columns</h2>
                 <Part>
                   <Row>

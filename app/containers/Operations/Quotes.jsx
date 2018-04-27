@@ -86,6 +86,7 @@ export class Quotes extends React.Component
     this.duplicateQuote = this.duplicateQuote.bind(this);
     this.setQuoteStatus = this.setQuoteStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
+    this.getCaret = this.getCaret.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -100,6 +101,7 @@ export class Quotes extends React.Component
                     selected_quote: null,
                     active_row: null,
                     column_toggles_top: -200,
+                    info: {x: 200, y: 200, display: 'none'},
                     extra_cost_modal_props: {x: 0, y: 0, visible: false},
                     // Table Column Toggles
                     col_id_visible: false,
@@ -222,18 +224,41 @@ export class Quotes extends React.Component
     if (direction === 'asc')
     {
       return (
-        <img src="../static/open-iconic-master/svg/caret-top.svg" alt='up' />
+        <img
+          src="../static/open-iconic-master/svg/caret-top.svg"
+          alt='up'
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+        />
       );
     }
-    if (direction === 'desc') {
+    if (direction === 'desc')
+    {
       return (
-        <img src="../static/open-iconic-master/svg/caret-bottom.svg" alt='down' />
+        <img
+          src="../static/open-iconic-master/svg/caret-bottom.svg"
+          alt='down'
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+        />
       );
     }
+    
     return (
-      <span>
-        <img src="../static/open-iconic-master/svg/info.svg" alt='info' style={{width: '13px', height: '13px', marginLeft: '10px'}} />
-        (click&nbsp;to&nbsp;sort)
+      <span
+        style={{marginLeft: '5px'}}
+      >
+        <img
+          src="../static/open-iconic-master/svg/info.svg"
+          alt='info'
+          style={{
+            width: '13px',
+            height: '13px',
+            marginLeft: '0px'
+            }}
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+        />
       </span>
     );
   }
@@ -346,7 +371,7 @@ export class Quotes extends React.Component
       <div>
         {/* form for adding a new QuoteItem */}
         <div style={{backgroundColor: 'rgba(255,255,255,.6)', borderRadius: '4px', marginTop: '20px'}}>
-          <h3 style={{textAlign: 'center', 'fontWeight': 'lighter'}}>Add materials to quote #{row.object_number}</h3>
+          <h3 style={{textAlign: 'center', 'fontWeight': 'lighter'}}>Add&nbsp;materials&nbsp;to&nbsp;quote&nbsp;#{row.object_number}</h3>
           <div className="row">
             <div className="pageItem col-md-6">
               <label className="itemLabel">Material</label>
@@ -495,7 +520,7 @@ export class Quotes extends React.Component
         <div style={{maxHeight: 'auto'}}>
           { /* Quote options */ }
           { quote_options }
-          <h3 style={{textAlign: 'center', 'fontWeight': 'lighter'}}>List of materials for quote #{row.object_number}</h3>
+          <h3 style={{textAlign: 'center', 'fontWeight': 'lighter'}}>List&nbsp;of&nbsp;materials&nbsp;for&nbsp;quote&nbsp;#{row.object_number}</h3>
           <BootstrapTable
             id='tblQuoteResources'
             key='tblQuoteResources'
@@ -515,7 +540,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_object_number_visible}
-            > Item Number
+            > Item&nbsp;Number
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -526,7 +551,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_object_number_visible}
-            > Item Description
+            > Item&nbsp;Description
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -556,7 +581,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_sitename_visible}
-            >  Measurement/Unit
+            >  Unit
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -651,7 +676,7 @@ export class Quotes extends React.Component
                     </div>)
                 }
               }}
-            > Extra Costs
+            > Extra&nbsp;Costs
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -753,12 +778,18 @@ export class Quotes extends React.Component
       expandRowBgColor: 'rgba(0, 0, 0, .4)',
     };
 
+    const info = (
+      <div style={{position: 'fixed', display: this.state.info.display, top: this.state.info.y, left: this.state.info.x, background:'rgba(0,0,0,.8)', borderRadius: '4px', boxShadow: '0px 0px 10px #343434', border: '1px solid #000', zIndex: '300'}}>
+        <p style={{color: '#fff', marginTop: '5px'}}>&nbsp;click&nbsp;to&nbsp;sort&nbsp;by&nbsp;this&nbsp;column&nbsp;</p>
+      </div>);
+
     // const clientFormatter = (cell, row) => (<div>test</div>);
     const clientFormatter = (cell, row) => `<i class='glyphicon glyphicon-${cell.client_name}'></i> ${cell.client_name}`;
 
     return (
       <PageContent bare>
         <div style={{maxHeight: 'auto'}}>
+          {info}
           {/* Extra costs modal */}
           <div
             style={{
@@ -1120,7 +1151,7 @@ export class Quotes extends React.Component
                 left: window.innerWidth * 0.010 + '%',
               }}
             >  
-              <div key='col_toggle' style={{boxShadow: '0px 10px 35px #343434', position: 'fixed', top:  '130px', width: '1175px'}}>
+              <div key='col_toggle' style={{boxShadow: '0px 10px 35px #343434', position: 'fixed', top:  '130px', width: '1175px', zIndex: '20'}}>
                 <h2 style={{textAlign: 'center', fontWeight: 'lighter'}}>Show/Hide Table Columns</h2>
                 <Part>
                   <Row>
@@ -1431,7 +1462,7 @@ export class Quotes extends React.Component
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 'px', background: 'lime'}}
                     tdStyle={() => {({'fontWeight': 'lighter'})}}
                     hidden={!this.state.col_object_number_visible}
-                  > Quote Number
+                  > Quote&nbsp;Number
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1460,7 +1491,7 @@ export class Quotes extends React.Component
                       getElement: (func, props) =>
                         <ComboBox items={this.props.users} selected_item={props.row.contact} label='name' />
                     }}
-                  > Contact Person
+                  > Contact&nbsp;Person
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
@@ -1557,7 +1588,7 @@ export class Quotes extends React.Component
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_date_logged_visible}
-                  > Date Logged
+                  > Date&nbsp;Logged
                   </TableHeaderColumn>
                 </BootstrapTable>
               </div>
