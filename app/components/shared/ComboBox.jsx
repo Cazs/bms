@@ -24,7 +24,7 @@ class ComboBox extends React.Component
       return (
         <span>
           <select
-            value={this.state.selected_item}
+            // defaultValue={this.state.selected}
             onKeyDown={this.props.onKeyDown}
             onChange={(ev) =>
                       {
@@ -35,8 +35,8 @@ class ComboBox extends React.Component
           >
             {
               this.props.items ? 
-              this.props.items.map(item =>
-                (<option key={item._id} value={JSON.stringify(item)}>{ item[this.props.label] }</option>)) :
+              this.props.items.map((item, index) =>
+                (<option key={index} value={JSON.stringify(item)} selected={index == this.props.selected_index}>{item[this.props.label] }</option>)) :
               (<option />)
             }
           </select>

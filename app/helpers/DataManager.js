@@ -24,6 +24,8 @@ export const db_requisitions = new NeDatastore({ filename: path.join(__dirname, 
 export const db_leave_applications = new NeDatastore({ filename: path.join(__dirname,  '../db/leave_applications.db'), autoload: true });
 export const db_overtime_applications = new NeDatastore({ filename: path.join(__dirname,  '../db/overtime_applications.db'), autoload: true });
 
+export const db_safety_documents = new NeDatastore({ filename: path.join(__dirname,  '../db/safety_documents.db'), autoload: true });
+
 export const getAll = (dispatch, action, endpoint, db, collection_name) => new Promise((resolve, reject) =>
 {
     // TODO:  check if local storage is up-to-date
@@ -147,7 +149,7 @@ export const putRemoteResource = (dispatch, db, resource, endpoint, collection_n
                         {
                           if(response.status == 200) // Success, successfully created record
                           {
-                            resolve(response);
+                            resolve(response.data);
                             dispatch(UIActions.newNotification('success', 'Successfully added a new record to collection ['+collection_name+']'));
                             // save to local store, if db is defined
                             if(db)
@@ -236,6 +238,43 @@ export const postRemoteResource = (dispatch, db, resource, endpoint, collection_
                           {
                             reject(new Error('Error ['+response.status+']: No '+collection_name+' were found in the database.'));
                             dispatch(UIActions.newNotification('warning', 'Error ['+response.status+']: No '+collection_name+' were found in the database.'));
+                          } else // Some other error
+                          {
+                            reject(new Error('Error: ' + response.status));
+                            dispatch(UIActions.newNotification('danger', 'Error: ' + response.status));
+                          }
+                        } else // No response
+                        {
+                          reject(new Error('Error: Could not get a valid response from the server.'));
+                          dispatch(UIActions.newNotification('danger', 'Error: Could not get a valid response from the server.'));
+                        }
+                      })
+                      .catch(err => 
+                      {
+                        dispatch(
+                        {
+                          type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                          payload:
+                        {
+                            type: 'warning',
+                            message: err.message,
+                          },
+                        });
+                      });
+});
+
+export const emailDocument = (dispatch, email, endpoint) =>  new Promise((resolve, reject) =>
+{
+    const { HttpClient } = require('../helpers/HttpClient');
+    return HttpClient.post(endpoint, email, {_id: 'test', message: 'test', subject: 'test'})
+                      .then(response =>
+                      { 
+                        if(response)
+                        {
+                          if(response.status == 200) // Success, successfully emailed documetn
+                          {
+                            dispatch(UIActions.newNotification('success', 'Successfully emailed document.'));
+                            resolve(response);
                           } else // Some other error
                           {
                             reject(new Error('Error: ' + response.status));

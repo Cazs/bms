@@ -29,7 +29,6 @@ import { getEmployees } from '../../reducers/HR/EmployeesReducer';
 import { getMaterials } from '../../reducers/Operations/MaterialsReducer';
 import { getClients } from '../../reducers/Operations/ClientsReducer';
 import { getQuotes } from '../../reducers/Operations/QuotesReducer';
-import { getQuotesTable } from '../../App'
 
 // Components
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
@@ -100,6 +99,7 @@ export class Quotes extends React.Component
     this.setQuoteStatus = this.setQuoteStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
     this.getCaret = this.getCaret.bind(this);
+    this.sendEmail = this.sendEmail.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -111,11 +111,23 @@ export class Quotes extends React.Component
     this.state = {  filter: null,
                     is_new_quote_modal_open: false,
                     is_quote_items_modal_open: false,
-                    selected_quote: {extra_costs: []},
+                    is_email_modal_open: false,
                     active_row: null,
                     column_toggles_top: -200,
-                    info: {x: 200, y: 200, display: 'none'},
+                    info: {x: 200, y: 200, message: '', display: 'none'},
                     extra_cost_modal_props: {x: 0, y: 0, visible: false, edit_mode: false},
+
+                    new_email:
+                    {
+                      destination: '',
+                      subject: '',
+                      message: '',
+                      path: null,
+                      file: null
+                    },
+                    
+                    selected_quote: null,
+                    selected_quote_item: {extra_costs: []},
                     selected_extra_cost:
                     {
                       quote_item_id: null,
@@ -125,7 +137,8 @@ export class Quotes extends React.Component
                       markup: 0,
                       creator: SessionManager.session_usr.usr,
                       creator_employee: SessionManager.session_usr,
-                      date_logged: new Date().getTime()
+                      date_logged: new Date().getTime(), // current date in epoch millis
+                      logged_date: new Date()// current date
                     },
                     // Table Column Toggles
                     col_id_visible: false,
@@ -176,6 +189,13 @@ export class Quotes extends React.Component
         this.confirmedDeleteQuote(quoteId);
       }
     });
+
+    ipc.on('email-document-ready', (event, doc_path) =>
+    {
+      // alert('PDF document ready');
+      console.log(doc_path);
+      this.setState({new_email: Object.assign(this.state.new_email, {path: doc_path})});
+    });
   }
 
   // Remove all IPC listeners when unmounted
@@ -201,12 +221,6 @@ export class Quotes extends React.Component
       'confirmed-delete-quote',
       quoteId
     );
-  }
-
-  showQuotePreview(quote)
-  {
-    // Preview Window
-    ipc.send('preview-quote', quote);
   }
 
   // Confirm Delete an quote
@@ -251,8 +265,8 @@ export class Quotes extends React.Component
         <img
           src="../static/open-iconic-master/svg/caret-top.svg"
           alt='up'
-          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
-          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, { message: 'click to toggle sort order', display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, { message: '', display: 'none'})})}
         />
       );
     }
@@ -262,8 +276,8 @@ export class Quotes extends React.Component
         <img
           src="../static/open-iconic-master/svg/caret-bottom.svg"
           alt='down'
-          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
-          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, { message: 'click to toggle sort order', display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, { message: '', display: 'none'})})}
         />
       );
     }
@@ -280,8 +294,8 @@ export class Quotes extends React.Component
             height: '13px',
             marginLeft: '0px'
             }}
-          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'block', x: evt.clientX, y: evt.clientY})})}
-          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, {display: 'none'})})}
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, { message: 'click to toggle sort order', display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, { message: '', display: 'none'})})}
         />
       </span>
     );
@@ -313,6 +327,121 @@ export class Quotes extends React.Component
     return true;
   }
 
+  showQuotePreview(quote)
+  {
+    // Preview Window
+    ipc.send('preview-quote', quote);
+  }
+
+  showEmailDialog(quote)
+  {
+    this.setState({selected_quote: quote, is_email_modal_open: true});
+    ipc.send('quote-to-pdf', quote);
+  }
+
+  sendEmail()
+  {
+    // alert('sending email');
+    // if(!this.txt_email_address.value) // TODO: stricter validation
+    if(!this.state.new_email.destination) // TODO: stricter validation
+    {
+      this.props.dispatch(
+      {
+        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+        payload: 
+        {
+          type: 'danger',
+          message: 'Invalid destination email address'
+        }
+      });
+      // return alert('Invalid destination email address');
+      // return openDialog(
+      // {
+      //   type: 'danger',
+      //   title: 'Error',
+      //   message: 'Invalid destination email address'
+      // });
+    }
+
+    if(!this.txt_subject.value)
+    {
+      // return openDialog(
+      // {
+      //   type: 'danger',
+      //   title: 'Error',
+      //   message: 'Invalid subject.'
+      // });
+    }
+
+    if(!this.txt_message.value)
+    {
+      // return openDialog(
+      // {
+      //   type: 'danger',
+      //   title: 'Error',
+      //   message: 'Invalid message'
+      // });
+    }
+
+    // Prepare eMail
+    // const emailProps =
+    // {
+    //   destination: this.txt_email_address.value,
+    //   subject: this.txt_subject.value,
+    //   message: this.txt_message.value,
+    //   metafile: null, // to be generated by mailer
+    //   quote_id: this.state.selected_quote._id,
+    //   session_id: SessionManager.session_id,
+    //   quote: this.state.selected_quote
+    // }
+
+    // const appConfig = require('electron-settings');
+    // const path = require('path');
+    // const fs = require('fs');
+    // const exportDir = appConfig.get('invoice.exportDir');
+    // const pdfPath = path.join(exportDir, `${this.state.pdf_data._id}.pdf`);
+
+    // const file_data = fs.readFileSync(path);
+    // const file_base64_str =
+    // `data:application/pdf;base64,${file_data.toString('base64')}`;
+
+    // console.log('file_data: ', file_data);
+
+    // const file =
+    // {
+    //   filename: this.state.pdf_data._id,
+    //   content_type: 'application/pdf',
+    //   file: file_data.toString('base64') // file_base64_str.split('base64,').pop()
+    // }
+
+    // console.log('emailing: ', file);
+
+    // then: (response) =>
+    // {
+    
+      
+    // },
+    // catch: (err) =>
+    //   openDialog(
+    //   {
+    //     type: 'danger',
+    //     title: 'Error',
+    //     message: err.message
+    //   })
+
+    // ipc.send('email-quote', emailProps);
+    // .then((data)=>Log('info', data))
+    // .catch((err)=>Log('error', err));
+
+    // dispatch action to create email quote
+    // this.props.dispatch(
+    // {
+    //   type: ACTION_TYPES.QUOTE_EMAIL,
+    //   payload: this.state.new_quote
+    // });
+    
+  }
+
   expandComponent(row)
   {
     const cellEditProp =
@@ -336,6 +465,13 @@ export class Quotes extends React.Component
     const quote_options = (
       <div>
         <Button primary onClick={() => this.showQuotePreview(row)}>PDF Preview</Button>
+        <Button
+          primary
+          style={{marginLeft: '15px'}}
+          onClick={() => this.showEmailDialog(row)}
+        >
+          eMail&nbsp;Quote
+        </Button>
         <Button
           primary
           style={{marginLeft: '15px'}}
@@ -371,7 +507,8 @@ export class Quotes extends React.Component
               tasks: [],
               creator: SessionManager.session_usr.usr,
               creator_employee: SessionManager.session_usr,
-              date_logged: new Date().getTime()/1000 // current date in epoch SECONDS
+              date_logged: new Date().getTime(), // current date in epoch millis
+              logged_date: new Date()// current date
             }
 
             // this.props.jobs.push(new_job);
@@ -484,7 +621,8 @@ export class Quotes extends React.Component
                     if(this.state.new_quote_item.resource_id && this.state.new_quote_item.quote_id)
                     {
                       const quote_item = this.state.new_quote_item;
-                      quote_item.date_logged = new Date().getTime()/1000; // epoch sec
+                      quote_item.date_logged = new Date().getTime(); // current date in epoch millis
+                      quote_item.logged_date = new Date();// current date
                       quote_item.creator = SessionManager.session_usr.usr;
                       console.log('creating new quote item: ', quote_item);
 
@@ -595,7 +733,7 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_contact_person_id_visible}
-            >Quantity
+            >Qty
             </TableHeaderColumn>
             
             <TableHeaderColumn
@@ -609,7 +747,7 @@ export class Quotes extends React.Component
             </TableHeaderColumn>
 
             <TableHeaderColumn
-              dataField='extra_costs_summary'
+              dataField='extra_costs_total'
               dataSort
               caretRender={this.getCaret}
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
@@ -659,10 +797,10 @@ export class Quotes extends React.Component
                         style={{marginLeft: '5%'}}
                         onClick={(evt)=>
                         {
-                          const modal = this.state.extra_cost_modal_props;
-                          modal.x = evt.clientX - 450;
-                          modal.y = evt.clientY - 30;
-                          modal.visible = true;// !modal.visible;
+                          const modal_props = this.state.extra_cost_modal_props;
+                          modal_props.x = evt.clientX - 450;
+                          modal_props.y = evt.clientY - 30;
+                          modal_props.visible = true;// !modal_props.visible;
                           this.setState(
                             {
                               selected_quote: row,
@@ -676,9 +814,10 @@ export class Quotes extends React.Component
                                                       markup: 0,
                                                       creator: SessionManager.session_usr.usr,
                                                       creator_employee: SessionManager.session_usr,
-                                                      date_logged: new Date().getTime()
+                                                      date_logged: new Date().getTime(), // current date in epoch ms
+                                                      logged_date: new Date()// current date
                                                     },
-                              extra_cost_modal_props: modal,
+                              extra_cost_modal_props: modal_props,
                               selected_quote_item: props.row,
                               edit_mode: false
                             });
@@ -701,19 +840,28 @@ export class Quotes extends React.Component
                                 <ExtraCost
                                   key={extra_cost.object_number}
                                   style={{marginTop: '7px'}}
-                                  onClick={()=>
+                                  onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, { message: 'click to edit', display: 'block', x: evt.clientX, y: evt.clientY})})}
+                                  onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, { message: '', display: 'none'})})}
+                                  onClick={(evt)=>
+                                    {
+                                      const modal_props = this.state.extra_cost_modal_props;
+                                      modal_props.x = evt.clientX - 450;
+                                      modal_props.y = evt.clientY - 30;
+                                      modal_props.visible = true;// !modal.visible;
+                                      modal_props.edit_mode = true;
+
                                       this.setState(
-                                        {
-                                          selected_quote: row,
-                                          selected_quote_item: props.row,
-                                          selected_extra_cost: extra_cost,
-                                          extra_cost_modal_props: Object.assign(this.state.extra_cost_modal_props,
-                                                                  { visible: true, edit_mode: true })
-                                        })}
+                                      {
+                                        selected_quote: row,
+                                        selected_quote_item: props.row,
+                                        selected_extra_cost: extra_cost,
+                                        extra_cost_modal_props: modal_props
+                                      });
+                                    }}
                                 >
                                   <p style={{marginTop: '2px', marginLeft: '2px'}}>
                                     <i style={{fontWeight: 'lighter', textAlign: 'left', float: 'left'}}>{extra_cost.title}</i>
-                                    <em style={{ textAlign: 'right', float: 'right'}}>{GlobalConstants.currency_symbol} {markedup_cost}</em>
+                                    <em style={{ textAlign: 'right', float: 'right'}}>{GlobalConstants.CURRENCY_SYMBOL} {markedup_cost}</em>
                                   </p>
                                 </ExtraCost>)
                             }) : 
@@ -723,7 +871,28 @@ export class Quotes extends React.Component
                     </div>)
                 }
               }}
-            >Extra&nbsp;Costs
+            >Extras
+            </TableHeaderColumn>
+
+            <TableHeaderColumn
+              dataField='category'
+              dataSort
+              caretRender={this.getCaret}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
+              thStyle={{ whiteSpace: 'normal' }}
+              hidden={false}
+            >Category
+            </TableHeaderColumn>
+
+            <TableHeaderColumn
+              dataField='total'
+              dataSort
+              caretRender={this.getCaret}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
+              thStyle={{ whiteSpace: 'normal' }}
+              hidden={false}
+              editable={false}
+            >Total
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -827,16 +996,290 @@ export class Quotes extends React.Component
 
     const info = (
       <div style={{position: 'fixed', display: this.state.info.display, top: this.state.info.y, left: this.state.info.x, background:'rgba(0,0,0,.8)', borderRadius: '4px', boxShadow: '0px 0px 10px #343434', border: '1px solid #000', zIndex: '300'}}>
-        <p style={{color: '#fff', marginTop: '5px'}}>&nbsp;click&nbsp;to&nbsp;sort&nbsp;by&nbsp;this&nbsp;column&nbsp;</p>
+        <p style={{color: '#fff', marginTop: '5px'}}>{this.state.info.message}</p>
       </div>);
 
     // const clientFormatter = (cell, row) => (<div>test</div>);
     const clientFormatter = (cell, row) => `<i class='glyphicon glyphicon-${cell.client_name}'></i> ${cell.client_name}`;
 
+    const email_modal = (
+      <div>
+        {/* eMailing Modal */}
+        <Modal
+          isOpen={this.state.is_email_modal_open}
+            // onAfterOpen={this.afterOpenModal}
+            // onRequestClose={this.closeModal}
+          style={modalStyle}
+          contentLabel="eMail Quote"
+        >
+          <h2 ref={email_subtitle => this.email_subtitle = email_subtitle} style={{color: 'black'}}>eMail Quote</h2>
+          <div>
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">eMail Address</label>
+                <input
+                  ref={(txt_email_address)=>this.txt_email_address = txt_email_address}
+                  name="email_address"
+                  type="text"
+                  value={this.state.new_email.destination}
+                  onChange={(new_val)=>
+                  {
+                    const email = this.state.new_email;
+                    email.destination = new_val.currentTarget.value;
+                    this.setState({new_email: email});
+                  }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Subject</label>
+                <input
+                  name="subject"
+                  type="text"
+                  ref={(txt_subject)=>this.txt_subject = txt_subject}
+                  value={this.state.new_email.subject}
+                  onChange={(new_val)=>
+                  {
+                    const email = this.state.new_email;
+                    email.subject = new_val.currentTarget.value;
+                    this.setState({new_email: email});
+                  }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Message</label>
+                <textarea
+                  name="message"
+                  ref={(txt_message)=>this.txt_message = txt_message}
+                  value={this.state.new_email.message}
+                  onChange={(new_val)=>
+                  {
+                    const email = this.state.new_email;
+                    email.message = new_val.currentTarget.value;
+                    this.setState({new_email: email});
+                  }}
+                  style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <Button
+                  onClick={(event)=>
+                  {
+                    if(!this.state.new_email.destination) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid destination email address'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_email.subject) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid email subject'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_email.message) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid email message'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_email.path) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid destination email address'
+                        }
+                      });
+                    }
+
+                    if(!this.state.selected_quote) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid quote selected'
+                        }
+                      });
+                    }
+
+                    // Prepare eMail
+                    // const emailProps =
+                    // {
+                    //   destination: this.txt_email_address.value,
+                    //   subject: this.txt_subject.value,
+                    //   message: this.txt_message.value,
+                    //   metafile: null, // to be generated by mailer
+                    //   quote_id: this.state.selected_quote._id,
+                    //   session_id: SessionManager.session_id,
+                    //   quote: this.state.selected_quote
+                    // }
+
+                    // const appConfig = require('electron-settings');
+                    // const path = require('path');
+                    const fs = require('fs');
+                    // const exportDir = appConfig.get('invoice.exportDir');
+                    // const pdfPath = path.join(this.state.new_email.path, `${this.state.selected_quote._id}.pdf`);
+
+                    const file_data = fs.readFileSync(this.state.new_email.path);
+                    const file_base64_str = `data:application/pdf;base64,${file_data.toString('base64')}`;
+
+                    // console.log('file_data: ', file_data);
+
+                    const file =
+                    {
+                      filename: this.state.selected_quote._id,
+                      content_type: 'application/pdf',
+                      file: file_data.toString('base64') // file_base64_str.split('base64,').pop()
+                    }
+
+                    console.log('new file to be emailed: ', file);
+
+                    const Http = require('axios').create(
+                    {
+                        headers:
+                        {
+                          quote_id: this.state.selected_quote._id,
+                          destination: this.state.new_email.destination,
+                          subject: this.state.new_email.subject,
+                          message : this.state.new_email.message,
+                          session_id : SessionManager.session_id,
+                          'Content-Type': 'application/json'
+                        }
+                    });
+
+                    return Http.post('http://127.0.0.1:8080/quote/mailto', file)
+                                    .then(response =>
+                                    {
+                                      if(response)
+                                      {
+                                        if(response.status == 200) // Success, successfully emailed document
+                                        {
+                                          console.log('Successfully emailed document.');
+                                          return this.props.dispatch(
+                                          {
+                                            type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                            payload: 
+                                            {
+                                              type: 'success',
+                                              message: 'Successfully emailed document.'
+                                            }
+                                          });
+                                        } 
+                                        console.log('Error: ' + response.status);
+                                        return this.props.dispatch(
+                                        {
+                                          type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                          payload: 
+                                          {
+                                            type: 'danger',
+                                            message: 'Error ['+response.status+']: ' + (response.statusText || response.data)
+                                          }
+                                        });
+                                      } 
+                                      console.log('Error: Could not get a valid response from the server.');
+                                      return this.props.dispatch(
+                                      {
+                                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                        payload: 
+                                        {
+                                          type: 'danger',
+                                          message: 'Error: Could not get a valid response from the server.'
+                                        }
+                                      });
+                                    })
+                                    .catch(err =>
+                                    {
+                                      console.log('Error: ', err);
+                                      this.props.dispatch(
+                                      {
+                                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                        payload: 
+                                        {
+                                          type: 'danger',
+                                          message: err.message
+                                        }
+                                      })
+                                    });
+
+                  }}
+                  style={{width: '120px', height: '50px', float: 'right'}}
+                  success
+                >Send
+                </Button>
+              </div>
+
+              <div className="pageItem col-md-6">
+                <Button
+                  danger
+                  style={{width: '120px', height: '50px', float: 'left'}}
+                  onClick={()=>this.setState({is_email_modal_open: false})}
+                >Dismiss
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      </div>);
+
+
+    const quote_statuses = 
+    [
+      {
+        status: 0,
+        status_description: 'pending'
+      },
+      {
+        status: 1,
+        status_description: 'authorised'
+      },
+      {
+        status: 2,
+        status_description: 'rejected'
+      }
+    ];
     return (
       <PageContent bare>
         <div style={{maxHeight: 'auto'}}>
           {info}
+          {/* eMailing modal  */}
+          {email_modal}
+
           {/* Extra costs modal */}
           <div
             style={{
@@ -957,38 +1400,49 @@ export class Quotes extends React.Component
                         }
                       }
 
+                      // if selected quote item has no extra costs, init quote item's extra_costs prop with empty array
+                      if(!this.state.selected_quote_item.extra_costs)
+                        this.state.selected_quote_item.extra_costs = [];
+
+                      // prepare new extra cost
                       const extra_cost =
                       {
                         _id: this.state.selected_extra_cost._id,
+                        // assign new object number if creating new cost, else use current object number if in edit mode
+                        object_number: this.state.extra_cost_modal_props.edit_mode ? this.state.selected_extra_cost.object_number : this.state.selected_quote_item.extra_costs.length,
                         quote_item_id: this.state.selected_quote_item._id,
-                        object_number: this.state.selected_quote_item.extra_costs ? this.state.selected_quote_item.extra_costs.length : 0,
+                        // quote_item: this.state.selected_quote_item,
                         title: this.txt_title.value,
                         markup: this.txt_markup.value,
                         cost: this.txt_cost.value,
                         date_logged: new Date().getTime(),
+                        logged_date: new Date(),// current date
                         creator: SessionManager.session_usr.usr,
                         creator_employee: SessionManager.session_usr
                       };
-
-                      // this.setState(
-                      //   {
-                      //     selected_extra_cost: Object.assign(this.state.selected_extra_cost,
-                      //                           {
-                      //                             object_number: this.state.selected_quote_item.extra_costs ? this.state.selected_quote_item.extra_costs.length : 0
-                      //                           })
-                      //   });
-
-                      if(!this.state.selected_quote_item.extra_costs)
-                        this.state.selected_quote_item.extra_costs = [];
                       
                       // push new cost to selected_quote_item's list of costs if not in edit mode
                       if(!this.state.extra_cost_modal_props.edit_mode)
                         this.state.selected_quote_item.extra_costs.push(extra_cost);
 
+                      // get quote item's extra costs total
+                      let new_extra_costs_total = 0;
+                      this.state.selected_quote_item.extra_costs.map((cost) => new_extra_costs_total += Number(cost.cost) + (Number(cost.cost) * Number(cost.markup)/100));
+                      // rate = marked up unit cost + extra_cost_total
+                      const quote_item_rate = this.state.selected_quote_item.unit_cost + (Number(this.state.selected_quote_item.unit_cost) * Number(this.state.selected_quote_item.markup)/100) + new_extra_costs_total;
+                      // total = rate * quantity
+                      const quote_item_total = quote_item_rate * Number(this.state.selected_quote_item.quantity);
+
                       // update state
                       this.setState(
                       {
-                        selected_quote_item: this.state.selected_quote_item,
+                        // TODO: currency format below
+                        selected_quote_item: Object.assign(this.state.selected_quote_item,
+                                              {
+                                                // all these updates below are purely to update local fs state, remote values are computed/derived
+                                                extra_costs_total: new_extra_costs_total > 0 ? GlobalConstants.CURRENCY_SYMBOL + ' ' + new_extra_costs_total : 'No extra costs',
+                                                total: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_total
+                                              }),
                         extra_cost_modal_props: this.state.extra_cost_modal_props.edit_mode ? this.state.extra_cost_modal_props :
                                                 Object.assign(this.state.extra_cost_modal_props, {visible: false}),
                         // if is editing leave current as selected, else if adding reset selected_extra_cost
@@ -1001,7 +1455,8 @@ export class Quotes extends React.Component
                                                 markup: 0,
                                                 creator: SessionManager.session_usr.usr,
                                                 creator_employee: SessionManager.session_usr,
-                                                date_logged: new Date().getTime()
+                                                date_logged: new Date().getTime(), // current date in epoch millis
+                                                logged_date: new Date()// current date
                                               }
                       });
 
@@ -1237,7 +1692,8 @@ export class Quotes extends React.Component
                   quote.creator_name = SessionManager.session_usr.name;
                   quote.creator = SessionManager.session_usr.usr;
                   quote.creator_employee = SessionManager.session_usr;
-                  quote.date_logged = new Date().getTime()/1000;// current date in epoch SECONDS
+                  quote.date_logged = new Date().getTime();// current date in epoch millis
+                  quote.logged_date = new Date(); // current date
 
                   this.setState({new_quote: quote, is_new_quote_modal_open: false});
 
@@ -1265,7 +1721,6 @@ export class Quotes extends React.Component
               </Button>
             </div>
           </Modal>
-
           {/* Quotes table & Column toggles */}
           <div style={{ paddingTop: '0px' }}>
             
@@ -1585,7 +2040,7 @@ export class Quotes extends React.Component
                     // thStyle={{position: 'fixed', left: '190px', background: 'lime'}}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_id_visible}
-                  > Quote ID
+                  >Quote&nbsp;ID
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1598,7 +2053,7 @@ export class Quotes extends React.Component
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 'px', background: 'lime'}}
                     tdStyle={() => {({'fontWeight': 'lighter'})}}
                     hidden={!this.state.col_object_number_visible}
-                  > Quote&nbsp;Number
+                  >Quote&nbsp;Number
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1613,7 +2068,7 @@ export class Quotes extends React.Component
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 240 + 'px', background: 'lime'}}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_client_id_visible}
-                  > Client
+                  >Client
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1627,7 +2082,7 @@ export class Quotes extends React.Component
                       getElement: (func, props) =>
                         <ComboBox items={this.props.users} selected_item={props.row.contact} label='name' />
                     }}
-                  > Contact&nbsp;Person
+                  >Contact&nbsp;Person
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
@@ -1650,7 +2105,7 @@ export class Quotes extends React.Component
                         />)
                     }}
                     hidden={!this.state.col_sitename_visible}
-                  > Sitename
+                  >Sitename
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1683,7 +2138,7 @@ export class Quotes extends React.Component
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_vat_visible}
-                  > VAT
+                  >VAT
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1693,17 +2148,61 @@ export class Quotes extends React.Component
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_revision_visible}
-                  > Revision
+                  >Revision
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
-                    dataField='status'
+                    dataField='status_description'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_status_visible}
-                  > Status
+                    customEditor={{
+                      getElement: (func, props) =>
+                      {
+                        const selected_quote = props.row;
+                        
+                        return (<ComboBox
+                          ref={(cbx_status)=>this.cbx_status = cbx_status}
+                          items={quote_statuses}
+                          // value={GlobalConstants.ACCESS_LEVELS[selected_quote.status]}
+                          selected_index={selected_quote.status} // {GlobalConstants.ACCESS_LEVELS[1]}
+                          label='status_description'
+                          onUpdate={(new_val)=>
+                          {
+                              const selected_status = JSON.parse(new_val);
+                              console.log(selected_status);
+                              console.log(props.row);
+
+                              if(SessionManager.session_usr.access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                              {
+                                // revert combo box selection
+                                // this.cbx_status.state.selected_item = GlobalConstants.ACCESS_LEVELS[0];
+
+                                this.props.dispatch(
+                                {
+                                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                  payload: {type: 'danger', message: 'You are not authorised to update the state of this quote.'}
+                                });
+
+                                // this.cbx_status.blur();
+                                return;
+                              }
+
+                              selected_quote.status = selected_status.status;
+                              // TODO: update on server
+                              // const quote = this.state.new_quote;
+                              // quote.client_id = selected_client._id;
+                              // quote.client = selected_client;
+
+                              // this.setState({new_quote: quote});
+                              // this.sitename = selected_client.physical_address;
+                          }}
+                        />)
+                      }
+                    }}
+                  >Status
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1714,17 +2213,17 @@ export class Quotes extends React.Component
                     // thStyle={{position: 'fixed', right: this.width, border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_creator_visible}
-                  > Creator
+                  >Creator
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='date_logged'
+                    dataField='logged_date'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_date_logged_visible}
-                  > Date&nbsp;Logged
+                  >Date&nbsp;Logged
                   </TableHeaderColumn>
                 </BootstrapTable>
               </div>

@@ -539,7 +539,7 @@ export class OvertimeApplications extends React.Component
                           this.setState({column_toggles_top: -200});
                       }}
                     >
-                  Toggle Filters
+                    Toggle&nbsp;Filters
                     </CustomButton>
                   </Row>
                 </Part>
@@ -580,7 +580,7 @@ export class OvertimeApplications extends React.Component
                     // thStyle={{position: 'fixed', left: '190px', background: 'lime'}}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_id_visible}
-                  > Overtime&nbsp;App&nbsp;ID
+                  >Overtime&nbsp;App&nbsp;ID
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -593,7 +593,7 @@ export class OvertimeApplications extends React.Component
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 'px', background: 'lime'}}
                     tdStyle={() => {({'fontWeight': 'lighter'})}}
                     hidden={!this.state.col_object_number_visible}
-                  > Overtime&nbsp;App&nbsp;Number
+                  >Overtime&nbsp;App&nbsp;Number
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -607,7 +607,7 @@ export class OvertimeApplications extends React.Component
                       getElement: (func, props) =>
                         <ComboBox items={this.props.employees} selected_item={props.row.contact} label='name' />
                     }}
-                  > Employee
+                  >Employee
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
@@ -617,7 +617,7 @@ export class OvertimeApplications extends React.Component
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_job_visible}
-                  > Start&nbsp;date
+                  >Start&nbsp;date
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -627,7 +627,7 @@ export class OvertimeApplications extends React.Component
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_time_in_visible}
-                  > End&nbsp;date
+                  >End&nbsp;date
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -637,7 +637,7 @@ export class OvertimeApplications extends React.Component
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_time_out_visible}
-                  > Date&nbsp;Returned
+                  >Date&nbsp;Returned
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
@@ -647,7 +647,7 @@ export class OvertimeApplications extends React.Component
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_status_visible}
-                  > Status
+                  >Status
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -658,17 +658,17 @@ export class OvertimeApplications extends React.Component
                     // thStyle={{position: 'fixed', right: this.width, border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_creator_visible}
-                  > Creator
+                  >Creator
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='date_logged'
+                    dataField='logged_date'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_date_logged_visible}
-                  > Date&nbsp;Logged
+                  >Date&nbsp;Logged
                   </TableHeaderColumn>
                 </BootstrapTable>
               </div>

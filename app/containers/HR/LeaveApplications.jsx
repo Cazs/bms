@@ -464,7 +464,8 @@ export class LeaveApplications extends React.Component
                   leave_application.creator_name = SessionManager.session_usr.name;
                   leave_application.creator = SessionManager.session_usr.usr;
                   leave_application.creator_employee = SessionManager.session_usr;
-                  leave_application.date_logged = new Date().getTime()/1000;// current date in epoch SECONDS
+                  leave_application.date_logged = new Date().getTime();// current date in epoch ms
+                  leave_application.logged_date = new Date(); // current date
 
                   this.setState({new_leave_application: leave_application, is_new_leave_modal_open: false});
 
@@ -907,7 +908,7 @@ export class LeaveApplications extends React.Component
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='date_logged'
+                    dataField='logged_date'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}

@@ -29,8 +29,10 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "base64topdf": "^1.1.8",
     "dotenv": "^5.0.1",
     "electron-is-dev": "^0.3.0",
+    "electron-pdf-window": "^1.0.12",
     "electron-settings": "^3.1.2",
     "electron-updater": "^2.21.0",
     "glob": "^7.1.2",
@@ -41,6 +43,7 @@
     "moment": "^2.21.0",
     "muicss": "^0.9.39-rc1",
     "nedb": "^1.8.0",
+    "npm": "^6.0.0",
     "rc-progress": "^2.2.5",
     "react": "^16.2.0",
     "react-addons-shallow-compare": "^15.6.2",

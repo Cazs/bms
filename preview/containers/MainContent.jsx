@@ -90,6 +90,7 @@ import QuoteTemplate from '../templates/quote/Quote';
 import JobCardTemplate from '../templates/job/JobCard';
 import InvoiceTemplate from '../templates/invoice/Invoice';
 import PurchaseOrderTemplate from '../templates/po/PurchaseOrder';
+import DocumentTemplate from '../templates/DocumentTemplate';
 
 class MainContent extends Component
 {
@@ -101,6 +102,8 @@ class MainContent extends Component
       return <InvoiceTemplate {...this.props} />;
     else if(this.props.type === 'po')
       return <PurchaseOrderTemplate {...this.props} />;
+    else if(this.props.type === 'document')
+      return <DocumentTemplate {...this.props} />;
     return <JobCardTemplate {...this.props} />;
   }
 

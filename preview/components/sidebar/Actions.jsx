@@ -37,6 +37,13 @@ function Actions({ saveConfigs, savePDF, t })
         <Button block primary onClick={savePDF}>
           {t('preview:sidebar:actions:savePDF')}
         </Button>
+        {/* <Button
+          success
+          style={{marginLeft: '0px'}}
+          onClick={() => {savePDF(); return emailPDF()}}
+        >
+          eMail
+        </Button> */}
         <Button block secondary onClick={saveConfigs}>
           {t('preview:sidebar:actions:saveConfigs')}
         </Button>

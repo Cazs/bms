@@ -212,16 +212,22 @@ function setInitialValues() {
 
   // Set initial values conditionally work for 2 level depth key only,
   // Changing anything deeper would need to be done with migration
-  for (const key in defaultOptions) {
+  for (const key in defaultOptions)
+  {
     // Add level 1 key if not exist
-    if (Object.prototype.hasOwnProperty.call(defaultOptions, key)) {
-      if (!appConfig.has(`${key}`)) {
+    if (Object.prototype.hasOwnProperty.call(defaultOptions, key))
+    {
+      if (!appConfig.has(`${key}`))
+      {
         appConfig.set(`${key}`, defaultOptions[key]);
       }
       // Add level 2 key if not exist
-      for (const childKey in defaultOptions[key]) {
-        if (Object.prototype.hasOwnProperty.call(defaultOptions[key], childKey)) {
-          if (!appConfig.has(`${key}.${childKey}`)) {
+      for (const childKey in defaultOptions[key])
+      {
+        if (Object.prototype.hasOwnProperty.call(defaultOptions[key], childKey))
+        {
+          if (!appConfig.has(`${key}.${childKey}`))
+          {
             appConfig.set(`${key}.${childKey}`, defaultOptions[key][childKey]);
           }
         }
@@ -230,25 +236,32 @@ function setInitialValues() {
   }
 }
 
-function migrateData() {
+function migrateData()
+{
   // Migration scheme
-  const migrations = {
-    1: configs => {
+  const migrations =
+  {
+    1: configs =>
+    {
       // Get the current configs
       const { info, appSettings } = configs;
       // Return current configs if this is the first time install
-      if (info === undefined || appSettings === undefined) {
+      if (info === undefined || appSettings === undefined)
+      {
         return configs;
       }
       // Update current configs
-      const migratedConfigs = Object.assign({}, configs, {
+      const migratedConfigs = Object.assign({}, configs,
+      {
         profile: info,
-        general: {
+        general:
+        {
           language: appSettings.language,
           sound: appSettings.sound,
           muted: appSettings.muted,
         },
-        invoice: {
+        invoice:
+        {
           exportDir: appSettings.exportDir,
           template: appSettings.template,
           currency: appSettings.currency,
@@ -258,7 +271,8 @@ function migrateData() {
             method: 'default',
             amount: 0,
           },
-          required_fields: {
+          required_fields:
+          {
             dueDate: false,
             currency: false,
             discount: false,
@@ -268,7 +282,8 @@ function migrateData() {
         },
       });
       // Omit old keys
-      return omit(migratedConfigs, [
+      return omit(migratedConfigs,
+      [
         'info',
         'appSettings',
         'printOptions',
@@ -276,15 +291,20 @@ function migrateData() {
       ]);
     },
 
-    2: configs => {
+    2: configs =>
+    {
       // Return current configs if this is the first time install
-      if ( configs.invoice.currency.placement !== undefined) {
+      if ( configs.invoice.currency.placement !== undefined)
+      {
         return configs;
       }
       // Update current configs
-      return Object.assign({}, configs, {
-        invoice: Object.assign({}, configs.invoice, {
-          currency: {
+      return Object.assign({}, configs,
+      {
+        invoice: Object.assign({}, configs.invoice,
+        {
+          currency:
+          {
             code: configs.invoice.currency,
             placement: 'before',
             separator: 'commaDot',

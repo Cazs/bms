@@ -795,7 +795,7 @@ export class Invoices extends React.Component
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='date_logged'
+                    dataField='logged_date'
                     dataSort
                     editable={false}
                     caretRender={this.getCaret}

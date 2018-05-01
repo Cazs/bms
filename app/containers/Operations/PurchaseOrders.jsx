@@ -415,7 +415,8 @@ export class PurchaseOrders extends React.Component
                 {
                   const po_item = this.state.new_po_item;
 
-                  po_item.date_logged = new Date().getTime()/1000; // epoch sec
+                  po_item.date_logged = new Date().getTime(); // current date in epoch msec
+                  po_item.logged_date = new Date(); // current date
                   po_item.creator = SessionManager.session_usr.usr;
                   console.log('creating new po item: ', po_item);
 
@@ -779,7 +780,8 @@ export class PurchaseOrders extends React.Component
                   purchase_order.creator_name = SessionManager.session_usr.name;
                   purchase_order.creator = SessionManager.session_usr.usr;
                   purchase_order.creator_employee = SessionManager.session_usr;
-                  purchase_order.date_logged = new Date().getTime()/1000;// current date in epoch SECONDS
+                  purchase_order.date_logged = new Date().getTime();// current date in epoch ms
+                  purchase_order.logged_date = new Date(); // current date
 
                   this.setState({new_purchase_order: purchase_order, is_new_purchase_order_modal_open: false});
 
@@ -1134,7 +1136,7 @@ export class PurchaseOrders extends React.Component
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='date_logged'
+                    dataField='logged_date'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}

@@ -465,7 +465,8 @@ export class OvertimeApplications extends React.Component
                   overtime_application.creator_name = SessionManager.session_usr.name;
                   overtime_application.creator = SessionManager.session_usr.usr;
                   overtime_application.creator_employee = SessionManager.session_usr;
-                  overtime_application.date_logged = new Date().getTime()/1000;// current date in epoch SECONDS
+                  overtime_application.date_logged = new Date().getTime();// current date in epoch ms
+                  overtime_application.logged_date = new Date(); // current date
 
                   this.setState({new_overtime_application: overtime_application, is_new_overtime_modal_open: false});
 
@@ -903,7 +904,7 @@ export class OvertimeApplications extends React.Component
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='date_logged'
+                    dataField='logged_date'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}

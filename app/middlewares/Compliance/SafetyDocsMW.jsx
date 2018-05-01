@@ -16,80 +16,35 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
 {
   switch (action.type)
   {
-    case ACTION_TYPES.SAFETY_GET_ALL:
+    case ACTION_TYPES.SAFETY_DOC_NEW:
     {
-      // Get safety documents index
-      // return DataManager.getAll(dispatch, action, '/safety', DataManager.db_safety, 'safety')
-      //                   .then(docs => next(Object.assign({}, action, { payload: docs  })));
-      // return next(action);
-      return next({
-              type: ACTION_TYPES.SAFETY_GET_ALL,
-              payload: []
-            });
+      console.log('safety doc add:', action.payload);
+      return DataManager.putRemoteResource(dispatch, DataManager.db_safety_documents, action.payload, '/document/safety', 'safety_documents')
+                        .then(response =>
+                          next({ type: ACTION_TYPES.SAFETY_DOC_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+    }
+    
+    case ACTION_TYPES.SAFETY_DOC_GET_ALL:
+    {
+      // Get safety documents
+      return DataManager.getAll(dispatch, action, '/documents/safety', DataManager.db_safety_documents, 'safety_documents')
+                        .then(docs => next({ type: ACTION_TYPES.SAFETY_DOC_GET_ALL, payload: docs }));
     }
 
-    case ACTION_TYPES.SAFETY_SAVE:
+
+    case ACTION_TYPES.SAFETY_DOC_UPDATE:
     {
-      // Save doc to db
-      // return saveDoc('users', action.payload)
-      //   .then(newDocs => {
-      //     next({
-      //       type: ACTION_TYPES.SAFETY_SAVE,
-      //       payload: newDocs,
-      //     });
-      //     dispatch({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'success',
-      //         message: i18n.t('messages:user:saved'),
-      //       },
-      //     });
-      //     // Preview Window
-      //     ipc.send('preview-user', action.payload);
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
+      console.log('safety document update:', action.payload);
+      return DataManager.postRemoteResource(dispatch, DataManager.db_safety_documents, action.payload, '/document/safety', 'safety_documents')
+                        .then(response => next({ type: ACTION_TYPES.SAFETY_DOC_UPDATE, payload: response }));
     }
 
-    case ACTION_TYPES.SAFETY_EDIT:
-    {
-      // Continue
-      // return getAllDocs('contacts')
-      //   .then(allDocs => {
-      //     next(
-      //       Object.assign({}, action, {
-      //         payload: Object.assign({}, action.payload, {
-      //           contacts: allDocs
-      //         })
-      //       })
-      //     );
-      //     // Change Tab to Form
-      //     dispatch(UIActions.changeActiveTab('form'));
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
-    }
-
-    case ACTION_TYPES.SAFETY_DELETE:
+    case ACTION_TYPES.SAFETY_DOC_DELETE:
     {
       // return deleteDoc('users', action.payload)
       //   .then(remainingDocs => {
       //     next({
-      //       type: ACTION_TYPES.SAFETY_DELETE,
+      //       type: ACTION_TYPES.SAFETY_DOC_DELETE,
       //       payload: remainingDocs,
       //     });
       //     // Send Notification
@@ -119,7 +74,7 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
       //   });
     }
 
-    case ACTION_TYPES.SAFETY_DUPLICATE:
+    case ACTION_TYPES.SAFETY_DOC_DUPLICATE:
     {
       const duplicateUser = Object.assign({}, action.payload,
       {
@@ -129,17 +84,17 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
       });
       return dispatch(
       {
-        type: ACTION_TYPES.SAFETY_SAVE,
+        type: ACTION_TYPES.SAFETY_DOC_SAVE,
         payload: duplicateUser
       });
     }
 
-    case ACTION_TYPES.SAFETY_UPDATE:
+    case ACTION_TYPES.SAFETY_DOC_UPDATE:
     {
       // return updateDoc('users', action.payload)
       //   .then(docs => {
       //     next({
-      //       type: ACTION_TYPES.SAFETY_UPDATE,
+      //       type: ACTION_TYPES.SAFETY_DOC_UPDATE,
       //       payload: docs,
       //     });
       //     dispatch({
@@ -161,13 +116,13 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
       //   });
     }
 
-    case ACTION_TYPES.SAFETY_CONFIGS_SAVE:
+    case ACTION_TYPES.SAFETY_DOC_CONFIGS_SAVE:
     {
       // const { userID, configs } = action.payload;
       // return getSingleDoc('users', userID)
       //   .then(doc => {
       //     dispatch({
-      //       type: ACTION_TYPES.SAFETY_UPDATE,
+      //       type: ACTION_TYPES.SAFETY_DOC_UPDATE,
       //       payload: Object.assign({}, doc, {configs})
       //     })
       //   })
@@ -182,13 +137,13 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
       //   });
     }
 
-    case ACTION_TYPES.SAFETY_SET_STATUS:
+    case ACTION_TYPES.SAFETY_DOC_SET_STATUS:
     {
       // const { userID, status } = action.payload;
       // return getSingleDoc('users', userID)
       //   .then(doc => {
       //     dispatch({
-      //       type: ACTION_TYPES.SAFETY_UPDATE,
+      //       type: ACTION_TYPES.SAFETY_DOC_UPDATE,
       //       payload: Object.assign({}, doc, { status })
       //     })
       //   })

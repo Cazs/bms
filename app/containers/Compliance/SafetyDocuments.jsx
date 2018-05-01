@@ -13,6 +13,10 @@ import { translate } from 'react-i18next';
 import Option from 'muicss/lib/react/option';
 import Select from 'muicss/lib/react/select';
 
+// Actions
+import * as ACTION_TYPES from '../../constants/actions.jsx';
+import * as UIActions from '../../actions/ui';
+
 // Animation
 import { Motion, spring } from 'react-motion';
 import Transition from 'react-motion-ui-pack'
@@ -28,7 +32,7 @@ import { getSafetyDocuments } from '../../reducers/Compliance/SafetyDocsReducer'
 import ComboBox from '../../components/shared/ComboBox';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import Message from '../../components/shared/Message';
-import CustomButton, { ButtonsGroup } from '../../components/shared/Button';
+import Button, { ButtonsGroup } from '../../components/shared/Button';
 import { Field, Part, Row } from '../../components/shared/Part';
 import Logo from '../../components/settings/_partials/profile/Logo';
 
@@ -36,6 +40,10 @@ import Modal from 'react-modal';
 
 // Styles
 import styled from 'styled-components';
+
+// Helpers
+import * as SessionManager from '../../helpers/SessionManager';
+import Log from '../../helpers/Logger';
 
 import _withFadeInAnimation from '../../components/shared/hoc/_withFadeInAnimation';
 import
@@ -72,6 +80,8 @@ export class SafetyDocuments extends React.Component
     this.duplicateSafetyDocument = this.duplicateSafetyDocument.bind(this);
     this.setSafetyDocumentStatus = this.setSafetyDocumentStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
+    this.showDocumentPreview = this.showDocumentPreview.bind(this);
+    this.getCaret = this.getCaret.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -87,19 +97,34 @@ export class SafetyDocuments extends React.Component
                     selected_safety_doc: null,
                     active_row: null,
                     column_toggles_top: -200,
+                    info: {x: 200, y: 200, message: '', display: 'none'},
+
+                    new_safety_document:
+                    {
+                      document:
+                      {
+                        filename: '',
+                        content_type: null,
+                        file: null,
+                        other: null,
+                        creator: SessionManager.session_usr.usr,
+                        creator_employee: SessionManager.session_usr,
+                        date_logged: new Date().getTime(),
+                        logged_date: new Date()// current date
+                      },
+                      creator: SessionManager.session_usr.usr,
+                      creator_employee: SessionManager.session_usr,
+                      logged_date: new Date()// current date
+                    },
                     // Table Column Toggles
                     col_id_visible: false,
                     col_object_number_visible: true,
-                    col_doc_path_visible: true,
-                    col_doc_type_visible: false,
-                    col_filename_visible: false,
-                    col_request_visible: true,
-                    col_amount_received_visible: true,
-                    col_vat_visible: false,
-                    col_revision_visible: false,
+                    col_doc_title_visible: true,
+                    col_doc_type_visible: true,
+                    col_doc_desc_visible: false,
                     col_status_visible: true,
-                    col_creator_visible: false,
-                    col_date_logged_visible: false,
+                    col_creator_visible: true,
+                    col_date_logged_visible: true,
     };
   }
 
@@ -180,19 +205,41 @@ export class SafetyDocuments extends React.Component
     if (direction === 'asc')
     {
       return (
-        <img src="../static/open-iconic-master/svg/caret-top.svg" alt='up' />
+        <img
+          src="../static/open-iconic-master/svg/caret-top.svg"
+          alt='up'
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, { message: 'click to toggle sort order', display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, { message: '', display: 'none'})})}
+        />
       );
     }
     if (direction === 'desc')
     {
       return (
-        <img src="../static/open-iconic-master/svg/caret-bottom.svg" alt='down' />
+        <img
+          src="../static/open-iconic-master/svg/caret-bottom.svg"
+          alt='down'
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, { message: 'click to toggle sort order', display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, { message: '', display: 'none'})})}
+        />
       );
     }
+    
     return (
-      <span>
-        <img src="../static/open-iconic-master/svg/info.svg" alt='info' style={{width: '13px', height: '13px', marginLeft: '10px'}} />
-        (click&nbsp;to&nbsp;sort)
+      <span
+        style={{marginLeft: '5px'}}
+      >
+        <img
+          src="../static/open-iconic-master/svg/info.svg"
+          alt='info'
+          style={{
+            width: '13px',
+            height: '13px',
+            marginLeft: '0px'
+            }}
+          onMouseEnter={(evt)=>this.setState({info: Object.assign(this.state.info, { message: 'click to toggle sort order', display: 'block', x: evt.clientX, y: evt.clientY})})}
+          onMouseLeave={(evt)=>this.setState({info: Object.assign(this.state.info, { message: '', display: 'none'})})}
+        />
       </span>
     );
   }
@@ -223,9 +270,81 @@ export class SafetyDocuments extends React.Component
     return true;
   }
 
+  showDocumentPreview(safety_doc)
+  {
+    // Preview Window
+    ipc.send('preview-document', safety_doc.document);
+    // Open the PDF with default Reader
+    // shell.openExternal('file://' + pdfPath);
+  }
+
   expandComponent(row)
   {
-    return (<div />);
+    return (
+      <div>
+        <div className='row'>
+          <div className="pageItem col-md-6">
+            <Button
+              primary
+              style={{width: '140px', height: '40px'}}
+              onClick={() => this.showDocumentPreview(row)}
+            >
+            PDF&nbsp;Preview
+            </Button>
+          </div>
+          <div className="pageItem col-md-6">
+            <p style={{background: 'rgba(255,255,255,.3)', borderRadius: '3px', padding: '3px', float: 'left', textAlign: 'left'}}>
+              <i style={{marginLeft: '20px', float: 'left', textAlign: 'left'}}>Update&nbsp;file&nbsp;from&nbsp;[{row.document.filename}]:</i>
+              <input
+                name="file_path"
+                type="file"
+                ref={(file_path_upd) => this.file_path_upd = file_path_upd}
+                style={{marginLeft: '20px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                onChange={(new_val)=>
+                {
+                  if(this.file_path_upd.files.length > 0)
+                  {
+                    const safety_document = row;// this.state.selected_safety_document;
+
+                    console.log('>>>>>> Chosen File: ', this.file_path_upd.files[0]);
+                    console.log('>>>>>> File Path: ', this.file_path_upd.files[0].path);
+                    const actual_file_path = require('path').resolve(this.file_path_upd.files[0].path);
+
+                    const file_data = require('fs').readFileSync(actual_file_path);
+                    const file_base64_str =
+                      `data:${this.file_path_upd.files[0].type};base64,${file_data.toString('base64')}`;
+                    
+                    safety_document.document.file = file_base64_str;
+                    safety_document.document.content_type = this.file_path_upd.files[0].type;
+
+                    if(!safety_document.document.filename) // if filename hasn't been manually entered
+                      safety_document.document.filename = this.file_path_upd.files[0].name.split('.')[0];
+
+                    // this.setState({selected_safety_document: safety_document});
+
+                    // dispatch action to update the safety document on local & remote stores
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.SAFETY_DOC_UPDATE,
+                      payload: safety_document // this.state.selected_safety_document
+                    });
+                  } else 
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {
+                        type: 'warning',
+                        message: 'Cancelled file upload because an invalid document was chosen.',
+                      },
+                    });
+                  }
+                }}
+              />
+            </p>
+          </div>
+        </div>
+      </div>);
   }
 
   expandColumnComponent({ isExpandableRow, isExpanded })
@@ -278,8 +397,14 @@ export class SafetyDocuments extends React.Component
 
     const clientFormatter = (cell, row) => `<i class='glyphicon glyphicon-${cell.client_name}'></i> ${cell.client_name}`;
 
+    const info = (
+      <div style={{position: 'fixed', display: this.state.info.display, top: this.state.info.y, left: this.state.info.x, background:'rgba(0,0,0,.8)', borderRadius: '4px', boxShadow: '0px 0px 10px #343434', border: '1px solid #000', zIndex: '300'}}>
+        <p style={{color: '#fff', marginTop: '5px'}}>{this.state.info.message}</p>
+      </div>);
+      
     return (
       <PageContent bare>
+        {info}
         <div style={{maxHeight: 'auto'}}>
           {/* SafetyDocuments table & Column toggles */}
           <div style={{paddingTop: '0px'}}>
@@ -357,6 +482,49 @@ export class SafetyDocuments extends React.Component
                       </label>
                     </Field>
 
+
+                    {/* File path column toggle */}
+                    <Field className="col-lg-1 col-md-2 col-sm-3 col-xs-4">
+                      <label className="itemLabel">Document&nbsp;Title</label>
+                      <label className="switch">
+                        <input
+                          name="toggle_title"
+                          type="checkbox"
+                          checked={this.state.col_doc_title_visible}
+                          onChange={() =>
+                          {
+                            this.setState(
+                            {
+                              col_doc_title_visible: !this.state.col_doc_title_visible
+                            });
+                            // this.toggleColumnVisibility()
+                          }}
+                        />
+                        <span className="slider round" />
+                      </label>
+                    </Field>
+
+                    {/* Filename column toggle */}
+                    <Field className="col-lg-1 col-md-2 col-sm-3 col-xs-4">
+                      <label className="itemLabel">Description</label>
+                      <label className="switch">
+                        <input
+                          name="toggle_description"
+                          type="checkbox"
+                          checked={this.state.col_doc_desc_visible}
+                          onChange={() =>
+                          {
+                            this.setState(
+                            {
+                              col_doc_desc_visible: !this.state.col_doc_desc_visible
+                            });
+                            // this.toggleColumnVisibility()
+                          }}
+                        />
+                        <span className="slider round" />
+                      </label>
+                    </Field>
+
                     {/* Content Type column toggle */}
                     <Field className="col-lg-1 col-md-2 col-sm-3 col-xs-4">
                       <label className="itemLabel">Document&nbsp;Type</label>
@@ -377,49 +545,7 @@ export class SafetyDocuments extends React.Component
                         <span className="slider round" />
                       </label>
                     </Field>
-
-                    {/* File path column toggle */}
-                    <Field className="col-lg-1 col-md-2 col-sm-3 col-xs-4">
-                      <label className="itemLabel">Path</label>
-                      <label className="switch">
-                        <input
-                          name="toggle_doc_path"
-                          type="checkbox"
-                          checked={this.state.col_doc_path_visible}
-                          onChange={() =>
-                          {
-                            this.setState(
-                            {
-                              col_doc_path_visible: !this.state.col_doc_path_visible
-                            });
-                            // this.toggleColumnVisibility()
-                          }}
-                        />
-                        <span className="slider round" />
-                      </label>
-                    </Field>
-
-                    {/* Filename column toggle */}
-                    <Field className="col-lg-1 col-md-2 col-sm-3 col-xs-4">
-                      <label className="itemLabel">Filename</label>
-                      <label className="switch">
-                        <input
-                          name="toggle_filename"
-                          type="checkbox"
-                          checked={this.state.col_filename_visible}
-                          onChange={() =>
-                          {
-                            this.setState(
-                            {
-                              col_filename_visible: !this.state.col_filename_visible
-                            });
-                            // this.toggleColumnVisibility()
-                          }}
-                        />
-                        <span className="slider round" />
-                      </label>
-                    </Field>
-
+                    
                     {/* Creator column toggle */}
                     <Field className="col-lg-1 col-md-2 col-sm-3 col-xs-4">
                       <label className="itemLabel">Creator</label>
@@ -463,8 +589,8 @@ export class SafetyDocuments extends React.Component
                     </Field>
                   </Row>
                   <Row>
-                    <CustomButton onClick={this.openModal} success>New Safety Doc</CustomButton>
-                    <CustomButton
+                    <Button onClick={this.openModal} success>New&nbsp;Safety&nbsp;Doc</Button>
+                    <Button
                       success
                       style={{marginLeft: '20px'}}
                       onClick={() => 
@@ -475,12 +601,153 @@ export class SafetyDocuments extends React.Component
                           this.setState({column_toggles_top: -200});
                       }}
                     >
-                  Toggle Filters
-                    </CustomButton>
+                    Toggle&nbsp;Filters
+                    </Button>
                   </Row>
                 </Part>
               </div>
             </Transition>
+
+            {/* Safety doc creation Modal */}
+            <Modal
+              isOpen={this.state.is_new_safety_doc_modal_open}
+              onAfterOpen={this.afterOpenModal}
+              onRequestClose={this.closeModal}
+              style={modalStyle}
+              contentLabel="Create New Safety Document Reference"
+            >
+              <h2 ref={subtitle => this.subtitle = subtitle} style={{color: 'black'}}>Create&nbsp;New&nbsp;Safety&nbsp;Document&nbsp;Reference</h2>
+              <div>
+                <div className="row">
+                  <div className="pageItem col-md-6">
+                    <label className="itemLabel">File</label>
+                    <input
+                      name="file_path"
+                      type="file"
+                      ref={(file_path) => this.file_path = file_path}
+                      onChange={(new_val)=>
+                      {
+                        const safety_document = this.state.new_safety_document;
+
+                        console.log('>>>>>> Chosen File: ', this.file_path.files[0]);
+                        console.log('>>>>>> File Path: ', this.file_path.files[0].path);
+                        const actual_file_path = require('path').resolve(this.file_path.files[0].path);
+
+                        const file_data = require('fs').readFileSync(actual_file_path);
+                        const file_base64_str =
+                          `data:${this.file_path.files[0].type};base64,${file_data.toString('base64')}`;
+
+                        // console.log('>>>>>> File Base64: ', file_base64_str);
+                        safety_document.document.file = file_base64_str;
+                        safety_document.document.content_type = this.file_path.files[0].type;
+
+                        if(!safety_document.document.filename) // if hasn't been manually entered
+                          safety_document.document.filename = this.file_path.files[0].name.split('.')[0];
+
+                        this.setState({new_safety_document: safety_document});
+
+                        console.log('>>>>>> New Safety Doc: ', safety_document);
+                      }}
+                      style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                    />
+                  </div>
+
+                  <div className="pageItem col-md-6">
+                    <label className="itemLabel">Document&nbsp;Title</label>
+                    <input
+                      ref={(txt_document_title)=>this.txt_document_title = txt_document_title}
+                      name="document_title"
+                      type="text"
+                      value={this.state.new_safety_document.document.filename}
+                      onChange={(new_val)=>
+                      {
+                        const safety_document = this.state.new_safety_document;
+                        safety_document.document.filename = new_val.currentTarget.value;
+                        this.setState({new_safety_document: safety_document});
+                      }}
+                      style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                    />
+                  </div>
+                </div>
+
+                <div className="row">
+                  <div className="pageItem col-md-6">
+                    <label className="itemLabel">Document&nbsp;Description</label>
+                    <textarea
+                      name="notes"
+                      value={this.state.new_safety_document.other}
+                      onChange={this.handleInputChange}
+                      style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={this.closeModal}
+                  style={{width: '120px', height: '50px', float: 'right'}}
+                  danger
+                >Dismiss
+                </Button>
+
+                <Button
+                  onClick={()=>
+                  {
+                    const safety_document = this.state.new_safety_document;
+
+                    if(!safety_document.document.filename)
+                    {
+                      return this.props.dispatch({
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {
+                          type: 'danger',
+                          message: 'Invalid document title.',
+                        },
+                      });
+                    }
+
+                    if(!safety_document.document.file)
+                    {
+                      return this.props.dispatch({
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {
+                          type: 'danger',
+                          message: 'Invalid file. Please choose a valid file from the file chooser.',
+                        },
+                      });
+                    }
+
+                    // Prepare Safety Document
+                    // Update common attributes
+                    safety_document.object_number = this.props.safetyDocuments.length;
+                    safety_document.creator_name = SessionManager.session_usr.name;
+                    safety_document.creator = SessionManager.session_usr.usr;
+                    safety_document.creator_employee = SessionManager.session_usr;
+                    safety_document.date_logged = new Date().getTime();// current date in epoch millis
+                    safety_document.logged_date = new Date();// current date
+                    // Update common attributes for actual document
+                    safety_document.document.creator_name = SessionManager.session_usr.name;
+                    safety_document.document.creator = SessionManager.session_usr.usr;
+                    safety_document.document.creator_employee = SessionManager.session_usr;
+                    safety_document.document.logged_date = new Date();// current date
+
+                    this.setState({new_safety_document: safety_document, is_new_safety_document_modal_open: false});
+
+                    this.props.safetyDocuments.push(this.state.new_safety_document);
+                    mapStateToProps(this.state);
+
+                    // dispatch action to create safety_document on local & remote stores
+                    this.props.dispatch({
+                      type: ACTION_TYPES.SAFETY_DOC_NEW,
+                      payload: this.state.new_safety_document
+                    });
+                    
+                  }}
+                  style={{width: '120px', height: '50px', float: 'left'}}
+                  success
+                >Create
+                </Button>
+              </div>
+            </Modal>
 
             {/* List of SafetyDocuments */}
             {safetyDocuments.length === 0 ? (
@@ -530,28 +797,39 @@ export class SafetyDocuments extends React.Component
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 'px', background: 'lime'}}
                     tdStyle={() => {({'fontWeight': 'lighter'})}}
                     hidden={!this.state.col_object_number_visible}
-                  > Document&nbsp;Number
+                  >Document&nbsp;Number
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='content_type'
+                    dataField='document_title'
+                    dataSort
+                    caretRender={this.getCaret}
+                    // editable={{type: 'text'}}
+                    // thStyle={{position: 'fixed', left: this.state.col_id_end + 240 + 'px', background: 'lime'}}
+                    tdStyle={{'fontWeight': 'lighter'}}
+                    hidden={!this.state.col_doc_title_visible}
+                  >Document&nbsp;Title
+                  </TableHeaderColumn>
+
+                  <TableHeaderColumn
+                    dataField='document_description'
+                    dataSort
+                    caretRender={this.getCaret}
+                    // editable={{type: 'text'}}
+                    // thStyle={{position: 'fixed', left: this.state.col_id_end + 240 + 'px', background: 'lime'}}
+                    tdStyle={{'fontWeight': 'lighter'}}
+                    hidden={!this.state.col_doc_desc_visible}
+                  >Document&nbsp;Description
+                  </TableHeaderColumn>
+
+                  <TableHeaderColumn
+                    dataField='document_type'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_doc_type_visible}
                   > Document&nbsp;Type
-                  </TableHeaderColumn>
-                  
-                  <TableHeaderColumn
-                    dataField='path'
-                    dataSort
-                    caretRender={this.getCaret}
-                    // editable={{type: 'text'}}
-                    // thStyle={{position: 'fixed', left: this.state.col_id_end + 240 + 'px', background: 'lime'}}
-                    tdStyle={{'fontWeight': 'lighter'}}
-                    hidden={!this.state.col_doc_path_visible}
-                  > File Path
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -566,7 +844,7 @@ export class SafetyDocuments extends React.Component
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='date_logged'
+                    dataField='logged_date'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}

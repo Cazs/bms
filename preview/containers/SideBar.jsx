@@ -162,7 +162,7 @@ SideBar.propTypes =
   configs: PropTypes.object.isRequired,
   updateConfigs: PropTypes.func.isRequired,
   // pdf_data: PropTypes.object.isRequired,
-  t: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 };
 
 export default SideBar;

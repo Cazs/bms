@@ -1,10 +1,15 @@
 // Libs
 const { BrowserWindow, ipcMain, shell } = require('electron');
+const ipc = require('electron').ipcRenderer;
 const appConfig = require('electron-settings');
 const path = require('path');
 const fs = require('fs');
 
-ipcMain.on('save-pdf', (event, docId) => {
+const mainWindowID = appConfig.get('mainWindowID');
+const mainWindow = BrowserWindow.fromId(mainWindowID);
+
+ipcMain.on('save-pdf', (event, docId) =>
+{
   const exportDir = appConfig.get('invoice.exportDir');
   const pdfPath = path.join(exportDir, `${docId}.pdf`);
   const win = BrowserWindow.fromWebContents(event.sender);
@@ -31,8 +36,11 @@ ipcMain.on('save-pdf', (event, docId) => {
         // Open the PDF with default Reader
         shell.openExternal('file://' + pdfPath);
       }
+      
+      mainWindow.webContents.send('email-document-ready', pdfPath);
+
       // Show notification
-      win.webContents.send('pfd-exported', {
+      win.webContents.send('pdf-exported', {
         title: 'PDF Exported',
         body: 'Click to reveal file.',
         location: pdfPath,
