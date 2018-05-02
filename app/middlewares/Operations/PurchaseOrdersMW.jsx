@@ -29,10 +29,7 @@ const PurchaseOrdersMW = ({ dispatch, getState }) => next => action =>
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_purchase_orders, new_po, '/purchaseorder', 'purchase_orders')
       .then(response => 
-        {
-          next(action);
-          // next({ type: ACTION_TYPES.QUOTE_GET_ALL, payload: docs });
-        });
+        next({ type: ACTION_TYPES.PURCHASE_ORDER_NEW, payload: Object.assign(action.payload, {_id: response}) }));
     }
     
     case ACTION_TYPES.PURCHASE_ORDER_UPDATE:

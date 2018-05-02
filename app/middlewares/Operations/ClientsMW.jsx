@@ -16,6 +16,22 @@ const ClientsMW = ({ dispatch, getState }) => next => action =>
 {
   switch (action.type)
   {
+    case ACTION_TYPES.CLIENT_NEW:
+    {
+      const new_client = Object.assign(action.payload, {object_number: getState().clients.length});
+      // Save to remote store then local store
+      return DataManager.putRemoteResource(dispatch, DataManager.db_clients, new_client, '/client', 'clients')
+                        .then(response => 
+                            next({ type: ACTION_TYPES.CLIENT_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+    }
+
+    case ACTION_TYPES.CLIENT_UPDATE:
+    {
+      console.log('client update:', action.payload);
+      return DataManager.postRemoteResource(dispatch, DataManager.db_clients, action.payload, '/client', 'clients')
+                        .then(response => next({ type: ACTION_TYPES.CLIENT_UPDATE, payload: response }));
+    }
+
     case ACTION_TYPES.CLIENT_GET_ALL:
     {
       // Get all Clients from DB server

@@ -772,7 +772,7 @@ export class Invoices extends React.Component
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
-                    dataField='status'
+                    dataField='status_description'
                     dataSort
                     editable
                     caretRender={this.getCaret}

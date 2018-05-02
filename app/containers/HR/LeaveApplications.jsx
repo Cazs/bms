@@ -15,8 +15,7 @@ import * as UIActions from '../../actions/ui';
 
 // Helpers
 import * as SessionManager from '../../helpers/SessionManager';
-import Log from '../../helpers/Logger';
-import * as PurchaseOrderActions from '../../actions/operations/purchase_orders';
+import Log, { formatDate } from '../../helpers/Logger';
 
 // import Select from 'react-select';
 import Option from 'muicss/lib/react/option';
@@ -325,13 +324,13 @@ export class LeaveApplications extends React.Component
                     name="start_date"
                     type="date"
                     ref={(start_date)=>this.start_date=start_date}
-                    defaultValue={new Date()}
+                    defaultValue={formatDate(new Date())}
                     onChange={(new_val)=>
                     {
                       const leave_application = this.state.new_leave_application;
                       
-                      leave_application.startDate = new Date(new_val.currentTarget.value);
-                      leave_application.start_date = leave_application.startDate.getTime()/1000;
+                      leave_application.date_started = formatDate(new Date(new_val.currentTarget.value));
+                      leave_application.start_date = leave_application.date_started.getTime();
                       
                       this.setState({new_leave_application: leave_application});
                     }}
@@ -345,13 +344,13 @@ export class LeaveApplications extends React.Component
                     name="end_date"
                     type="date"
                     ref={(end_date)=>this.end_date=end_date}
-                    defaultValue={new Date()}
+                    defaultValue={formatDate(new Date())}
                     onChange={(new_val)=>
                     {
                       const leave_application = this.state.new_leave_application;
                       
-                      leave_application.endDate = new Date(new_val.currentTarget.value);
-                      leave_application.end_date = leave_application.endDate.getTime()/1000;
+                      leave_application.date_ended = formatDate(new Date(new_val.currentTarget.value));
+                      leave_application.end_date = leave_application.date_ended.getTime();
                       
                       this.setState({new_leave_application: leave_application});
                     }}
@@ -465,7 +464,7 @@ export class LeaveApplications extends React.Component
                   leave_application.creator = SessionManager.session_usr.usr;
                   leave_application.creator_employee = SessionManager.session_usr;
                   leave_application.date_logged = new Date().getTime();// current date in epoch ms
-                  leave_application.logged_date = new Date(); // current date
+                  leave_application.logged_date = formatDate(new Date()); // current date
 
                   this.setState({new_leave_application: leave_application, is_new_leave_modal_open: false});
 
@@ -857,7 +856,7 @@ export class LeaveApplications extends React.Component
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='start_date'
+                    dataField='date_started'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
@@ -867,7 +866,7 @@ export class LeaveApplications extends React.Component
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='end_date'
+                    dataField='date_ended'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
@@ -877,7 +876,7 @@ export class LeaveApplications extends React.Component
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='return_date'
+                    dataField='date_returned'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
@@ -887,7 +886,7 @@ export class LeaveApplications extends React.Component
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
-                    dataField='status'
+                    dataField='status_description'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}

@@ -15,8 +15,8 @@ import * as ACTION_TYPES from '../../constants/actions.jsx';
 import * as UIActions from '../../actions/ui';
 // Helpers
 import * as SessionManager from '../../helpers/SessionManager';
-import Log from '../../helpers/Logger';
 import * as PurchaseOrderActions from '../../actions/operations/purchase_orders';
+import Log, { formatDate } from '../../helpers/Logger';
 
 // Animation
 import { Motion, spring } from 'react-motion';
@@ -52,7 +52,6 @@ import {
   PageHeaderActions,
   PageContent,
 } from '../../components/shared/Layout';
-
 
 const modalStyle = {
   content : {
@@ -416,7 +415,7 @@ export class PurchaseOrders extends React.Component
                   const po_item = this.state.new_po_item;
 
                   po_item.date_logged = new Date().getTime(); // current date in epoch msec
-                  po_item.logged_date = new Date(); // current date
+                  po_item.logged_date = formatDate(new Date()); // current date
                   po_item.creator = SessionManager.session_usr.usr;
                   console.log('creating new po item: ', po_item);
 
@@ -781,7 +780,7 @@ export class PurchaseOrders extends React.Component
                   purchase_order.creator = SessionManager.session_usr.usr;
                   purchase_order.creator_employee = SessionManager.session_usr;
                   purchase_order.date_logged = new Date().getTime();// current date in epoch ms
-                  purchase_order.logged_date = new Date(); // current date
+                  purchase_order.logged_date = formatDate(new Date()); // current date
 
                   this.setState({new_purchase_order: purchase_order, is_new_purchase_order_modal_open: false});
 
@@ -1115,7 +1114,7 @@ export class PurchaseOrders extends React.Component
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
-                    dataField='status'
+                    dataField='status_description'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}

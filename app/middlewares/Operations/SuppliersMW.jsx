@@ -23,6 +23,22 @@ const SuppliersMW = ({ dispatch, getState }) => next => action =>
                         .then(docs => next(Object.assign({}, action, { payload: docs  })));
     }
 
+    case ACTION_TYPES.SUPPLIER_NEW:
+    {
+      const new_supplier = Object.assign(action.payload, {object_number: getState().suppliers.length});
+      // Save to remote store then local store
+      return DataManager.putRemoteResource(dispatch, DataManager.db_suppliers, new_supplier, '/supplier', 'suppliers')
+                        .then(response => 
+                            next({ type: ACTION_TYPES.SUPPLIER_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+    }
+
+    case ACTION_TYPES.SUPPLIER_UPDATE:
+    {
+      console.log('supplier update:', action.payload);
+      return DataManager.postRemoteResource(dispatch, DataManager.db_suppliers, action.payload, '/supplier', 'suppliers')
+                        .then(response => next({ type: ACTION_TYPES.SUPPLIER_UPDATE, payload: response }));
+    }
+
     case ACTION_TYPES.SUPPLIER_SAVE:
     {
       // Save doc to db

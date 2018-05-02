@@ -49,7 +49,7 @@ import styled from 'styled-components';
 
 // Helpers
 import * as SessionManager from '../../helpers/SessionManager';
-import Log from '../../helpers/Logger';
+import Log, { formatDate } from '../../helpers/Logger';
 
 import
   {
@@ -138,7 +138,7 @@ export class Quotes extends React.Component
                       creator: SessionManager.session_usr.usr,
                       creator_employee: SessionManager.session_usr,
                       date_logged: new Date().getTime(), // current date in epoch millis
-                      logged_date: new Date()// current date
+                      logged_date: formatDate(new Date())// current date
                     },
                     // Table Column Toggles
                     col_id_visible: false,
@@ -508,7 +508,7 @@ export class Quotes extends React.Component
               creator: SessionManager.session_usr.usr,
               creator_employee: SessionManager.session_usr,
               date_logged: new Date().getTime(), // current date in epoch millis
-              logged_date: new Date()// current date
+              logged_date: formatDate(new Date())// current date
             }
 
             // this.props.jobs.push(new_job);
@@ -622,7 +622,7 @@ export class Quotes extends React.Component
                     {
                       const quote_item = this.state.new_quote_item;
                       quote_item.date_logged = new Date().getTime(); // current date in epoch millis
-                      quote_item.logged_date = new Date();// current date
+                      quote_item.logged_date = formatDate(new Date());// current date
                       quote_item.creator = SessionManager.session_usr.usr;
                       console.log('creating new quote item: ', quote_item);
 
@@ -815,7 +815,7 @@ export class Quotes extends React.Component
                                                       creator: SessionManager.session_usr.usr,
                                                       creator_employee: SessionManager.session_usr,
                                                       date_logged: new Date().getTime(), // current date in epoch ms
-                                                      logged_date: new Date()// current date
+                                                      logged_date: formatDate(new Date())// current date
                                                     },
                               extra_cost_modal_props: modal_props,
                               selected_quote_item: props.row,
@@ -1416,7 +1416,7 @@ export class Quotes extends React.Component
                         markup: this.txt_markup.value,
                         cost: this.txt_cost.value,
                         date_logged: new Date().getTime(),
-                        logged_date: new Date(),// current date
+                        logged_date: formatDate(new Date()),// current date
                         creator: SessionManager.session_usr.usr,
                         creator_employee: SessionManager.session_usr
                       };
@@ -1456,7 +1456,7 @@ export class Quotes extends React.Component
                                                 creator: SessionManager.session_usr.usr,
                                                 creator_employee: SessionManager.session_usr,
                                                 date_logged: new Date().getTime(), // current date in epoch millis
-                                                logged_date: new Date()// current date
+                                                logged_date: formatDate(new Date())// current date
                                               }
                       });
 
@@ -1693,7 +1693,7 @@ export class Quotes extends React.Component
                   quote.creator = SessionManager.session_usr.usr;
                   quote.creator_employee = SessionManager.session_usr;
                   quote.date_logged = new Date().getTime();// current date in epoch millis
-                  quote.logged_date = new Date(); // current date
+                  quote.logged_date = formatDate(new Date()); // current date
 
                   this.setState({new_quote: quote, is_new_quote_modal_open: false});
 

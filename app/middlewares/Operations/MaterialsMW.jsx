@@ -23,6 +23,22 @@ const ResourcesMW = ({ dispatch, getState }) => next => action =>
                         .then(docs => next(Object.assign({}, action, { payload: docs  })));
     }
 
+    case ACTION_TYPES.MATERIAL_NEW:
+    {
+      const new_resource = Object.assign(action.payload, {object_number: getState().suppliers.length});
+      // Save to remote store then local store
+      return DataManager.putRemoteResource(dispatch, DataManager.db_materials, new_resource, '/resource', 'resources')
+                        .then(response => 
+                            next({ type: ACTION_TYPES.MATERIAL_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+    }
+
+    case ACTION_TYPES.MATERIAL_UPDATE:
+    {
+      console.log('resource update:', action.payload);
+      return DataManager.postRemoteResource(dispatch, DataManager.db_materials, action.payload, '/resource', 'resources')
+                        .then(response => next({ type: ACTION_TYPES.MATERIAL_UPDATE, payload: response }));
+    }
+
     case ACTION_TYPES.MATERIAL_SAVE:
     {
       // Save doc to db

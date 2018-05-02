@@ -116,14 +116,17 @@ class MainContent extends Component
           <div className="print-area">
             <div style={
               {
-                width: '100%',
+                width: '80%',
                 height: '110px',
+                marginLeft: 'auto',
+                marginRight: 'auto',
                 backgroundColor: '#A183E8',
                 background: 'url(../static/images/header.jpg)', // TODO: custom headers
-                backgroundSize: 'cover' 
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat'
               }}
             />
-            <Page>
+            <Page style={{marginTop: '-20px'}}>
               <PageContent baseFontSize={setBaseFontSize(this.props.configs.fontSize)}>
                 {this.renderTemplate()}
               </PageContent>

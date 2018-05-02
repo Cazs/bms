@@ -27,8 +27,8 @@ const Table = styled.table`
   border-collapse: collapse;
   margin-top: 20px;
   th {
-    border-bottom: 2px solid #efefd1;
-    border-top: 2px solid #efefd1;
+    border-bottom: 1px solid #efefd1;
+    border-top: 1px solid #efefd1;
     padding-bottom: 0.8em;
     &:last-child {
       text-align: right;
@@ -56,7 +56,7 @@ const Table = styled.table`
     font-weight: 300;
     line-height: 2.75;
     font-size: 0.7em;
-    border-bottom: 2px solid #ecf1f1;
+    border-bottom: 1px solid #000;
     &:first-child {
       color: #c4c8cc;
     }
@@ -142,7 +142,21 @@ function Quote({ pdf_data, configs, t })
   // const currencyBefore = placement === 'before';
   // Set Currency Sign
   // const currency = configs.useSymbol ? currencies[code].symbol : code;
-  
+  const blank_table_row = (
+    <tr style={{height: '30px'}}>
+      <td>{ }</td>
+      <td>{ }</td>
+      <td>{ }</td>
+      <td>{ }</td>
+      <td>{ }</td>
+      <td>{ }</td>
+    </tr>);
+
+  const font_family = 'Calibri';
+  const font_weight = 'light';
+  const font_size= '11pt';
+  const heading_font_size = '13pt';
+
   let sub_total = 0;
   pdf_data.resources.map(item => sub_total += item.unit_cost * item.quantity); // TODO: account for additional costs
   const vat = sub_total * pdf_data.vat / 100;
@@ -151,37 +165,38 @@ function Quote({ pdf_data, configs, t })
   // Render Items
   return (
     <QuoteContent alignItems={setAlignItems(configs)}>
-      <div style={{marginTop: '-72px'}}>
-        <table style={{width: '100%', fontSize: '16pt'}} border='1px solid red'>
-          <thead>
+      <div style={{marginTop: '-72px', marginLeft: '30px'}}>
+        <table style={{width: '100%', border: '1px solid #000'}} border='1px solid #000'>
+          <thead style={{fontSize: heading_font_size, fontFamily: font_family}}>
             <tr>
-              <td><strong>Client Details</strong></td>
+              <td colSpan='2'><p style={{fontSize: heading_font_size, textAlign: 'center', fontWeight: 'bold', width: '341px'}}>Client Details</p></td>
               <td>
-                <strong>Quotation No.</strong>
-                <i style={{marginLeft: '15px'}}>
-                  {SessionManager.session_usr.firstname}-
-                  {SessionManager.session_usr.firstname.charAt(0) + SessionManager.session_usr.lastname.charAt(0)}-00
-                  {pdf_data.object_number}
-                  &nbsp;REV&nbsp;{pdf_data.revision}
-                </i>
+                <p style={{fontSize: '13pt', textAlign: 'center', fontWeight: 'bold'}}>Quote No.
+                  <i style={{marginLeft: '15px', fontSize: '11pt'}}>
+                    {SessionManager.session_usr.firstname}-
+                    {SessionManager.session_usr.firstname.charAt(0) + SessionManager.session_usr.lastname.charAt(0)}-00
+                    {pdf_data.object_number}
+                    &nbsp;REV&nbsp;{pdf_data.revision}
+                  </i>
+                </p>
               </td>
             </tr>
           </thead>
-          <tbody>
+          <tbody style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>
             <tr>
-              <td><p>Contact Person: {pdf_data.contact_person}</p></td>
-              <td><p>Date: {pdf_data.date_logged}</p></td>
+              <td colSpan='2'><p>Contact Person: {pdf_data.contact_person}</p></td>
+              <td><p>Date: {pdf_data.logged_date}</p></td>
             </tr>
 
             <tr>
-              <td><p>Company: {pdf_data.client_name}</p></td>
+              <td colSpan='2'><p>Company: {pdf_data.client_name}</p></td>
               <td>
                 <p>Sale Consultant: {SessionManager.session_usr.name} </p>
               </td>
             </tr>
 
             <tr>
-              <td><p>Cell: {pdf_data.contact.cell}</p></td>
+              <td colSpan='2'><p>Cell: {pdf_data.contact.cell}</p></td>
               <td>
                 <p>Consultant Cell: {SessionManager.session_usr.cell} </p>
                 <p>Consultant eMail: {SessionManager.session_usr.email} </p>
@@ -189,81 +204,118 @@ function Quote({ pdf_data, configs, t })
             </tr>
 
             <tr>
-              <td><p>Tel: {pdf_data.contact.tel ? pdf_data.contact.tel : ''} {pdf_data.client.tel ? ' / ' : ''} {pdf_data.client.tel ? pdf_data.client.tel : '' }</p></td>
-              <td><p>Fax: {pdf_data.fax}</p></td>
+              <td colSpan='2'>
+                <p>
+                  <p style={{display: 'inline', fontSize: font_size}}>Tel: {pdf_data.contact.tel ? pdf_data.contact.tel : ''} {pdf_data.client.tel ? ' / ' : ''} {pdf_data.client.tel ? pdf_data.client.tel : '' }</p>
+                  <p style={{display: 'inline', marginLeft: '20px', fontSize: font_size}}>Fax: {pdf_data.fax}</p>
+                </p>
+              </td>
+              <td>
+                <p>
+                  <p style={{display: 'inline', fontSize: font_size}}>Rubeshen: 073 361 323</p>
+                  <p style={{display: 'inline', marginLeft: '5px', fontSize: font_size}}>eMail: rubeshen@omegafs.co.za</p>
+                </p>
+                <p>
+                  <p style={{display: 'inline', fontSize: font_size}}>Graham: 082 880 8659</p>
+                  <p style={{display: 'inline', marginLeft: '5px', fontSize: font_size}}>eMail: graham@foag.co.za</p>
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td colSpan='2'><p>eMail: {pdf_data.contact_email}</p></td>
+              <td>
+                <p> {' '} </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td colSpan='2'><p>Site: {pdf_data.sitename}</p></td>
+              <td>
+                <p> {' '} </p>
+              </td>
+            </tr>
+
+            <tr />
+          </tbody>
+        </table>
+
+        <table style={{width: '100%', border: '1px solid #000'}} border='1px solid #000'>
+          <thead style={{fontSize: heading_font_size, fontFamily: font_family}}>
+            <tr>
+              <th style={{borderLeft: '1px solid #000', borderRight: '1px solid #000', textAlign: 'center'}}>Item</th>
+              <th style={{borderRight: '1px solid #000', textAlign: 'center', width: '290px'}}>Description</th>
+              <th style={{borderRight: '1px solid #000', textAlign: 'center'}}>Unit</th>
+              <th style={{borderRight: '1px solid #000', textAlign: 'center'}}>Qty</th>
+              <th style={{borderRight: '1px solid #000', textAlign: 'center'}}>Rate</th>
+              <th style={{borderRight: '1px solid #000', textAlign: 'center'}}>Total&nbsp;Cost</th>
+            </tr>
+          </thead>
+          <tbody style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>
+            
+            { blank_table_row }
+
+            {/* Print Request */}
+            <tr>
+              <td>{ }</td>
+              <td>{ pdf_data.request }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+            </tr>
+
+            { blank_table_row }
+
+            {/* Print Quote Items */}
+            { pdf_data.resources.map((row, index) => (
+              <tr key={index}>
+                <td>{padStart(index + 1, 2, 0)}</td>
+                <td>{ row.item_description }</td>
+                <td>{ row.unit }</td>
+                <td>{ row.quantity }</td>
+                <td>R&nbsp;{ row.unit_cost.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,") }</td>
+                <td>R&nbsp;{ (row.unit_cost * row.quantity).toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,") }</td>
+              </tr> ))
+            }
+
+            { blank_table_row }
+
+            {/* Print totals */}
+            <tr style={{height: '30px'}}>
+              <td>{ }</td>
+              <td>Sub-total excluding VAT:</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>R{ sub_total.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,") }</td>
+            </tr>
+
+            <tr style={{height: '30px'}}>
+              <td>{ }</td>
+              <td>VAT:</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>R { vat.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,") }</td>
+            </tr>
+
+            <tr style={{height: '30px'}}>
+              <td>{ }</td>
+              <td>Total including VAT:</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>R{ total.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,") }</td>
             </tr>
           </tbody>
         </table>
 
-        <p style={{borderBottom: '1px solid black', borderLeft: '1px solid black', borderRight: '1px solid black'}}>Sitename: {pdf_data.sitename}</p>
-        <p style={{borderBottom: '1px solid black', borderLeft: '1px solid black', borderRight: '1px solid black'}}>Request: {pdf_data.request}</p>
+        {/* <p style={{borderBottom: '1px solid black', borderLeft: '1px solid black', borderRight: '1px solid black'}}>Sitename: {pdf_data.sitename}</p>
+        <p style={{borderBottom: '1px solid black', borderLeft: '1px solid black', borderRight: '1px solid black'}}>Request: {pdf_data.request}</p> */}
         
-        <Table
-          accentColor='#A183E8'
-          customAccentColor='lime'
-        >
-          <thead>
-            <tr>
-              <th style={{borderLeft: '1px solid #A183E8', borderRight: '1px solid #A183E8'}}>Item&nbsp;Number</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Item&nbsp;Description</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Unit</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Qty</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Rate</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Total&nbsp;Cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            { pdf_data.resources.map((row, index) => (
-              <tr key={index}>
-                <td>{padStart(index + 1, 2, 0)}.</td>
-                <td>{ row.item_description }</td>
-                <td>{ row.unit }</td>
-                <td>{ row.quantity }</td>
-                <td>R&nbsp;{ row.unit_cost }</td>
-                <td>R&nbsp;{ row.unit_cost * row.quantity }</td>
-              </tr> ))
-            }
-          </tbody>
-          <tfoot style={{marginTop: '40px'}}>
-            <tr>
-              <td>Sub-Total: </td>
-              <td colSpan="5">R&nbsp;{ sub_total }</td>
-            </tr>
-
-            <tr>
-              <td>VAT: </td>
-              <td colSpan="5">R&nbsp;{ vat }</td>
-            </tr>
-
-            <tr>
-              <td>Total: </td>
-              <td colSpan="5">R&nbsp;{ total }</td>
-            </tr>
-
-            {/* <tr className="quote__subtotal">
-              <td colSpan="2" />
-              <td className="label" colSpan="2">
-                {t('preview:common:subtotal')}
-              </td>
-              <td>
-                R { 10000 - 10000 * 0.15 }
-              </td>
-            </tr>
-
-            <QuoteTotal
-              accentColor='red'
-              customAccentColor='lime'
-            >
-              <td colSpan="2" />
-              <td className="label">{t('preview:common:total')}</td>
-              <td colSpan="2">
-                R 10, 000
-              </td>
-            </QuoteTotal> */}
-          </tfoot>
-        </Table>
-        <div style={{width: '100%', backgroundColor: '#eeeeee', marginLeft: 'auto', marginRight: 'auto', marginTop: '20px', fontSize: '18pt'}}>
-          <p style={{textAlign: 'center'}}>Terms and Conditions of Sale</p>
+        <div style={{width: '100%', backgroundColor: '#fff', marginLeft: 'auto', marginRight: 'auto', marginTop: '20px', fontSize: font_size, fontFamily: font_family}}>
+          <p style={{textAlign: 'center', fontSize: heading_font_size}}>Terms and Conditions of Sale</p>
           <p>*Validity: Quote valid subject to rate of exchange (30days)</p>
           <p>*Payment Terms: COD / 30 Days on approved accounts.</p>
           <p>*Delivery: 1 - 6 Weeks, subject to stock availability.</p>
@@ -271,29 +323,29 @@ function Quote({ pdf_data, configs, t })
           <p>*All goods / equipment remain the property Omega Fire and Security until paid for completely.</p>
           <p>*Omega Fire and Security reserves the right to retake possession of all equipment not paid for completely within the payment term set out above E &amp; OE</p>
 
-          <table style={{marginTop: '20px'}}>
+          <table style={{marginTop: '20px', width: '100%', backgroundColor: '#fff'}}>
             <tbody>
               <tr>
-                <td style={{paddingRight: '200px'}}><p>Acceptance: (Full Name)</p></td>
+                <td style={{paddingRight: '0px'}}><p>Acceptance: (Full Name)</p></td>
                 <td><p>&nbsp;</p></td>
-                <td><p>Signature:</p></td>
+                <td><p style={{float:'right', textAlign: 'right'}}>Signature:</p></td>
               </tr>
               <tr>
                 <td><p> _________________________</p></td>
                 <td><p>&nbsp;</p></td>
-                <td colSpan='4'><p>_________________________</p></td>
+                <td colSpan='4'><p p style={{float:'right', textAlign: 'right'}}>_________________________</p></td>
               </tr>
 
               <tr>
                 <td><p>Order / Reference No.:</p></td>
                 <td><p>&nbsp;</p></td>
-                <td colSpan='4'><p>Date:</p></td>
+                <td colSpan='4'><p p style={{float:'right', textAlign: 'right'}}>Date:</p></td>
               </tr>
 
               <tr>
                 <td><p>_________________________</p></td>
                 <td><p>&nbsp;</p></td>
-                <td colSpan='4'><p>_________________________</p></td>
+                <td colSpan='4'><p p style={{float:'right', textAlign: 'right'}}>_________________________</p></td>
               </tr>
             </tbody>
           </table>

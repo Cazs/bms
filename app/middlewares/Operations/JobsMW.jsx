@@ -28,10 +28,7 @@ const JobsMW = ({ dispatch, getState }) => next => action =>
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_jobs, new_job, '/job', 'jobs')
                         .then(response => 
-                          {
-                            // next(action);
-                            next({ type: ACTION_TYPES.JOB_NEW, payload: response })
-                          });
+                          next({ type: ACTION_TYPES.JOB_NEW, payload: Object.assign(action.payload, {_id: response}) }));
     }
 
     case ACTION_TYPES.JOB_UPDATE:

@@ -28,10 +28,7 @@ const LeaveApplicationsMW = ({ dispatch, getState }) => next => action =>
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_leave_applications, new_leave_app, '/leave_application', 'leave_applications')
                         .then(response => 
-                          {
-                            next(action);
-                            // next({ type: ACTION_TYPES.LEAVE_GET_ALL, payload: docs });
-                          });
+                          next({ type: ACTION_TYPES.LEAVE_NEW, payload: Object.assign(action.payload, {_id: response}) }));
     }
 
     case ACTION_TYPES.LEAVE_UPDATE:

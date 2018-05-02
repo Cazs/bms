@@ -16,8 +16,9 @@ export const UI_CHECK_UPDATES_MESSAGE = 'UI_CHECK_UPDATES_MESSAGE';
 
 // EMPLOYEE
 // ===========================================================
-export const EMPLOYEE_EDIT = 'EMPLOYEE_EDIT';
+export const EMPLOYEE_NEW = 'EMPLOYEE_NEW';
 export const EMPLOYEE_UPDATE = 'EMPLOYEE_UPDATE';
+export const EMPLOYEE_EDIT = 'EMPLOYEE_EDIT';
 export const EMPLOYEE_SAVE = 'EMPLOYEE_SAVE';
 export const EMPLOYEE_DELETE = 'EMPLOYEE_DELETE';
 export const EMPLOYEE_GET_ALL = 'EMPLOYEE_GET_ALL';
@@ -27,8 +28,9 @@ export const EMPLOYEE_DUPLICATE = 'EMPLOYEE_DUPLICATE';
 
 // CLIENT
 // ===========================================================
-export const CLIENT_EDIT = 'CLIENT_EDIT';
+export const CLIENT_NEW = 'CLIENT_NEW';
 export const CLIENT_UPDATE = 'CLIENT_UPDATE';
+export const CLIENT_EDIT = 'CLIENT_EDIT';
 export const CLIENT_SAVE = 'CLIENT_SAVE';
 export const CLIENT_DELETE = 'CLIENT_DELETE';
 export const CLIENT_GET_ALL = 'CLIENT_GET_ALL';
@@ -38,8 +40,9 @@ export const CLIENT_DUPLICATE = 'CLIENT_DUPLICATE';
 
 // SUPPLIER
 // ===========================================================
-export const SUPPLIER_EDIT = 'SUPPLIER_EDIT';
+export const SUPPLIER_NEW = 'SUPPLIER_NEW';
 export const SUPPLIER_UPDATE = 'SUPPLIER_UPDATE';
+export const SUPPLIER_EDIT = 'SUPPLIER_EDIT';
 export const SUPPLIER_SAVE = 'SUPPLIER_SAVE';
 export const SUPPLIER_DELETE = 'SUPPLIER_DELETE';
 export const SUPPLIER_GET_ALL = 'SUPPLIER_GET_ALL';
@@ -49,8 +52,9 @@ export const SUPPLIER_DUPLICATE = 'INVOICE_DUPLICATE';
 
 // MATERIAL
 // ===========================================================
-export const MATERIAL_EDIT = 'MATERIAL_EDIT';
+export const MATERIAL_NEW = 'MATERIAL_NEW';
 export const MATERIAL_UPDATE = 'MATERIAL_UPDATE';
+export const MATERIAL_EDIT = 'MATERIAL_EDIT';
 export const MATERIAL_SAVE = 'MATERIAL_SAVE';
 export const MATERIAL_DELETE = 'MATERIAL_DELETE';
 export const MATERIAL_GET_ALL = 'MATERIAL_GET_ALL';

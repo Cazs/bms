@@ -148,7 +148,7 @@ class Viewer extends Component
 
       const pause = async () =>
       {
-        await snooze(2000); // sleep for 2 sec, wait for preview to update
+        await snooze(500); // sleep for 2 sec, wait for preview to update
         // trigger save-pdf message to export preview content to PDF
         ipc.send('save-pdf', this.state.pdf_data._id);
         is_exporting = false;

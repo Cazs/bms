@@ -15,8 +15,7 @@ import * as UIActions from '../../actions/ui';
 
 // Helpers
 import * as SessionManager from '../../helpers/SessionManager';
-import Log from '../../helpers/Logger';
-import * as PurchaseOrderActions from '../../actions/operations/purchase_orders';
+import Log, { formatDate } from '../../helpers/Logger';
 
 // import Select from 'react-select';
 import Option from 'muicss/lib/react/option';
@@ -348,13 +347,13 @@ export class OvertimeApplications extends React.Component
                     name="date"
                     type="date"
                     ref={(date)=>this.date=date}
-                    defaultValue={new Date()}
+                    defaultValue={formatDate(new Date())}
                     onChange={(new_val)=>
                     {
                       const overtime_application = this.state.new_overtime_application;
                       
-                      overtime_application.date_str = new Date(new_val.currentTarget.value);
-                      overtime_application.date = overtime_application.date_str.getTime()/1000;
+                      overtime_application.overtime_date = formatDate(new Date(new_val.currentTarget.value));
+                      overtime_application.date = overtime_application.overtime_date.getTime();
                       
                       this.setState({new_overtime_application: overtime_application});
                     }}
@@ -370,13 +369,13 @@ export class OvertimeApplications extends React.Component
                     name="time_in"
                     type="date"
                     ref={(time_in)=>this.time_in=time_in}
-                    defaultValue={new Date()}
+                    defaultValue={formatDate(new Date())}
                     onChange={(new_val)=>
                     {
                       const overtime_application = this.state.new_overtime_application;
                       
-                      overtime_application.timeIn = new Date(new_val.currentTarget.value);
-                      overtime_application.time_in = overtime_application.timeIn.getTime()/1000;
+                      overtime_application.in_time = formatDate(new Date(new_val.currentTarget.value));
+                      overtime_application.time_in = overtime_application.in_time.getTime();
                       
                       this.setState({new_overtime_application: overtime_application});
                     }}
@@ -390,13 +389,13 @@ export class OvertimeApplications extends React.Component
                     name="time_out"
                     type="date"
                     ref={(time_out)=>this.time_out=time_out}
-                    defaultValue={new Date().toDateString()}
+                    defaultValue={formatDate(new Date())}
                     onChange={(new_val)=>
                     {
                       const overtime_application = this.state.new_overtime_application;
                       
-                      overtime_application.timeOut = new Date(new_val.currentTarget.value);
-                      overtime_application.time_out = overtime_application.timeOut.getTime()/1000;
+                      overtime_application.out_time = formatDate(new Date(new_val.currentTarget.value));
+                      overtime_application.time_out = overtime_application.out_time.getTime();
                       
                       this.setState({new_overtime_application: overtime_application});
                     }}
@@ -466,7 +465,7 @@ export class OvertimeApplications extends React.Component
                   overtime_application.creator = SessionManager.session_usr.usr;
                   overtime_application.creator_employee = SessionManager.session_usr;
                   overtime_application.date_logged = new Date().getTime();// current date in epoch ms
-                  overtime_application.logged_date = new Date(); // current date
+                  overtime_application.logged_date = formatDate(new Date()); // current date
 
                   this.setState({new_overtime_application: overtime_application, is_new_overtime_modal_open: false});
 
@@ -853,37 +852,37 @@ export class OvertimeApplications extends React.Component
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='date'
+                    dataField='overtime_date'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_date_visible}
-                  > Start&nbsp;date
+                  > Date
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='time_in'
+                    dataField='in_time'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_time_in_visible}
-                  > End&nbsp;date
+                  > Time&nbsp;In
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='time_out'
+                    dataField='out_time'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_time_out_visible}
-                  > Date&nbsp;Returned
+                  > Time&nbsp;Out 
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
-                    dataField='status'
+                    dataField='status_description'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}

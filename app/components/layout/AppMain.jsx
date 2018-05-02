@@ -3,6 +3,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // Custom Components
+import Login from '../../containers/Login';
+import Home from '../../containers/Home';
 import Operations from '../../containers/Operations';
 import HR from '../../containers/HR';
 import Safety from '../../containers/Compliance';
@@ -23,6 +25,8 @@ class AppMain extends Component
     const { activeTab } = this.props;    
     return (
       <AppMainContent>
+        {activeTab === 'login' && <Login changeTab={this.props.changeTab} />}
+        {activeTab === 'home' && <Home changeTab={this.props.changeTab} />}
         {activeTab === 'operations' && <Operations />}
         {activeTab === 'hr' && <HR />}
         {activeTab === 'safety' && <Safety />}
@@ -35,6 +39,7 @@ class AppMain extends Component
 AppMain.propTypes =
 {
   activeTab: PropTypes.string.isRequired,
+  changeTab: PropTypes.func.isRequired
 };
 
 export default AppMain;

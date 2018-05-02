@@ -23,6 +23,22 @@ const EmployeesMW = ({ dispatch, getState }) => next => action =>
                         .then(docs => next({type: ACTION_TYPES.EMPLOYEE_GET_ALL, payload: docs }));
     }
 
+    case ACTION_TYPES.EMPLOYEE_NEW:
+    {
+      const new_employee = Object.assign(action.payload, {object_number: getState().employees.length});
+      // Save to remote store then local store
+      return DataManager.putRemoteResource(dispatch, DataManager.db_employees, new_employee, '/employee', 'employees')
+                        .then(response => 
+                            next({ type: ACTION_TYPES.EMPLOYEE_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+    }
+
+    case ACTION_TYPES.EMPLOYEE_UPDATE:
+    {
+      console.log('employee update:', action.payload);
+      return DataManager.postRemoteResource(dispatch, DataManager.db_employees, action.payload, '/employee', 'employees')
+                        .then(response => next({ type: ACTION_TYPES.EMPLOYEE_UPDATE, payload: response }));
+    }
+
     case ACTION_TYPES.EMPLOYEE_SAVE:
     {
       // Save doc to db

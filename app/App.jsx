@@ -70,7 +70,7 @@ class App extends PureComponent
     // // Get compliance document index
     dispatch(ComplianceActions.getSafetyDocuments());
 
-    this.changeTab('operations');
+    this.changeTab('login');
     // Add Event Listener
     ipc.on('menu-change-tab', (event, tabName) => this.changeTab(tabName));
     // Save configs to invoice
@@ -113,9 +113,11 @@ class App extends PureComponent
     const { activeTab, notifications, checkUpdatesMessage } = this.props.ui;
     return (
       <AppWrapper>
-        <AppNav activeTab={activeTab} changeTab={this.changeTab} />
+        {activeTab !== 'home' && activeTab !== 'login' ? 
+          <AppNav activeTab={activeTab} changeTab={this.changeTab} />
+          : '' }
         <AppNotification notifications={notifications} removeNotification={this.removeNotification} />
-        <AppMain activeTab={activeTab} />
+        <AppMain activeTab={activeTab} changeTab={this.changeTab}/>
       </AppWrapper>
     );
   }

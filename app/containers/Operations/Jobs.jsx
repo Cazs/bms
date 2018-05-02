@@ -52,7 +52,7 @@ import {
 
 // Helpers
 import * as SessionManager from '../../helpers/SessionManager';
-import Log from '../../helpers/Logger';
+import Log, { formatDate } from '../../helpers/Logger';
 
 const modalStyle =
 {
@@ -126,7 +126,7 @@ export class Jobs extends React.Component
                       assignees: [],
                       assignee_names: [],
                       date_scheduled: new Date().getTime(),
-                      scheduled_date: new Date()
+                      scheduled_date: formatDate(new Date())
                     },
                     // TODO: Job Task Item to be added
                     new_task_item: {
@@ -373,17 +373,16 @@ export class Jobs extends React.Component
                 name="date_scheduled"
                 type="date"
                 ref={(date_started)=>this.date_started=date_started}
-                value={this.state.new_job_task.scheduled_date.getFullYear() + '-' 
-                  + ((this.state.new_job_task.scheduled_date.getMonth()+1) >= 10 ? this.state.new_job_task.scheduled_date.getMonth() + 1 : '0' + (this.state.new_job_task.scheduled_date.getMonth() + 1)) + '-'
-                  + (this.state.new_job_task.scheduled_date.getDate() >= 10 ? this.state.new_job_task.scheduled_date.getDate() : '0' + this.state.new_job_task.scheduled_date.getDate())}
-                onChange={(new_val)=> {
-                    console.log(new_val.currentTarget.value);
-                    const job_task = this.state.new_job_task;
-                    
-                    job_task.scheduled_date = new Date(new_val.currentTarget.value);
-                    job_task.date_scheduled = job_task.scheduled_date.getTime()/1000;
-                    this.setState({new_job_task: job_task});
-                  }}
+                value={this.state.new_job_task.scheduled_date}
+                onChange={(new_val)=>
+                {
+                  const job_task = this.state.new_job_task;
+                  
+                  job_task.scheduled_date = formatDate(new Date(new_val.currentTarget.value));
+                  job_task.date_scheduled = job_task.scheduled_date.getTime();
+
+                  this.setState({new_job_task: job_task});
+                }}
                 style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
               />
             </div>
@@ -409,7 +408,8 @@ export class Jobs extends React.Component
                     {
                       this.state.new_job_task.job_id = row._id;
                       this.state.new_job_task.object_number = row.tasks.length;
-                      this.state.new_job_task.date_logged = new Date().getTime()/1000; // epoch sec
+                      this.state.new_job_task.date_logged = new Date().getTime(); // epoch sec
+                      this.state.new_job_task.logged_date = formatDate(new Date());// current date
                       this.state.new_job_task.creator = SessionManager.session_usr.usr;
                       this.state.new_job_task.creator_name = SessionManager.session_usr.name;
                       // update state
@@ -488,7 +488,8 @@ export class Jobs extends React.Component
               status: 0,
               creator: SessionManager.session_usr.usr,
               creator_employee: SessionManager.session_usr,
-              date_logged: new Date().getTime()/1000 // current date in epoch SECONDS
+              date_logged: new Date().getTime(), // current date in epoch SECONDS
+              logged_date: formatDate(new Date()) // current date
             }
 
             // this.props.invoices.push(new_job);
@@ -520,11 +521,9 @@ export class Jobs extends React.Component
                 defaultValue={row.start_date}
                 onChange={(new_val)=>
                 {
-                  console.log('new job start date in epoch millis: ', new Date(new_val.currentTarget.value).getTime());
-
                   this.props.dispatch({
                     type: ACTION_TYPES.JOB_UPDATE,
-                    payload: Object.assign(row, {date_started: new Date(new_val.currentTarget.value).getTime()/1000, start_date : new_val.currentTarget.value})
+                    payload: Object.assign(row, {date_started: new Date(new_val.currentTarget.value).getTime(), start_date : formatDate(new Date(new_val.currentTarget.value))})
                   });
                   // row.date_started = new Date(new_val.currentTarget.value).getTime();
                   // console.log(new_val.currentTarget.value);
@@ -546,12 +545,12 @@ export class Jobs extends React.Component
                 name="date_completed"
                 ref={(date_completed)=>this.date_completed=date_completed}
                 defaultValue={row.end_date}
-                onChange={(new_val)=> {
-                  console.log('new job end date in epoch millis: ', new Date(new_val.currentTarget.value).getTime());
-
-                  this.props.dispatch({
+                onChange={(new_val)=>
+                {
+                  this.props.dispatch(
+                  {
                     type: ACTION_TYPES.JOB_UPDATE,
-                    payload: Object.assign(row, {date_completed: new Date(new_val.currentTarget.value).getTime()/1000, end_date : new_val.currentTarget.value})
+                    payload: Object.assign(row, {date_completed: new Date(new_val.currentTarget.value).getTime(), end_date : formatDate(new Date(new_val.currentTarget.value))})
                   });
                 }}
                 style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
@@ -568,12 +567,12 @@ export class Jobs extends React.Component
                 name="date_scheduled"
                 ref={(date_scheduled)=>this.date_scheduled=date_scheduled}
                 defaultValue={row.scheduled_date}
-                onChange={(new_val)=> {
-                  console.log('new job scheduled date in epoch millis: ', new Date(new_val.currentTarget.value).getTime());
-
-                  this.props.dispatch({
+                onChange={(new_val)=>
+                {
+                  this.props.dispatch(
+                  {
                     type: ACTION_TYPES.JOB_UPDATE,
-                    payload: Object.assign(row, {planned_start_date: new Date(new_val.currentTarget.value).getTime()/1000, scheduled_date : new_val.currentTarget.value})
+                    payload: Object.assign(row, {planned_start_date: new Date(new_val.currentTarget.value).getTime(), scheduled_date : formatDate(new Date(new_val.currentTarget.value))})
                   });
                 }}
                 style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
@@ -654,7 +653,7 @@ export class Jobs extends React.Component
             </TableHeaderColumn>
 
             <TableHeaderColumn
-              dataField='date_scheduled'
+              dataField='scheduled_date'
               dataSort
               caretRender={this.getCaret}
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
@@ -1379,7 +1378,7 @@ export class Jobs extends React.Component
                     </TableHeaderColumn>
                     
                     <TableHeaderColumn
-                      dataField='status'
+                      dataField='status_description'
                       dataSort
                       caretRender={this.getCaret}
                       editable={false}
@@ -1400,7 +1399,7 @@ export class Jobs extends React.Component
                     </TableHeaderColumn>
 
                     <TableHeaderColumn
-                      dataField='date_logged'
+                      dataField='logged_date'
                       dataSort
                       caretRender={this.getCaret}
                       editable={false}

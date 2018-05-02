@@ -43,7 +43,7 @@ import styled from 'styled-components';
 
 // Helpers
 import * as SessionManager from '../../helpers/SessionManager';
-import Log from '../../helpers/Logger';
+import Log, { formatDate } from '../../helpers/Logger';
 
 import _withFadeInAnimation from '../../components/shared/hoc/_withFadeInAnimation';
 import
@@ -110,11 +110,12 @@ export class SafetyDocuments extends React.Component
                         creator: SessionManager.session_usr.usr,
                         creator_employee: SessionManager.session_usr,
                         date_logged: new Date().getTime(),
-                        logged_date: new Date()// current date
+                        logged_date: formatDate(new Date())// current date
                       },
                       creator: SessionManager.session_usr.usr,
                       creator_employee: SessionManager.session_usr,
-                      logged_date: new Date()// current date
+                      date_logged: new Date().getTime(),
+                      logged_date: formatDate(new Date())// current date
                     },
                     // Table Column Toggles
                     col_id_visible: false,
@@ -719,16 +720,20 @@ export class SafetyDocuments extends React.Component
                     // Prepare Safety Document
                     // Update common attributes
                     safety_document.object_number = this.props.safetyDocuments.length;
+                    safety_document.document_title = this.state.new_safety_document.document.filename;
+                    safety_document.document_description = this.state.new_safety_document.document.other;
+                    safety_document.document_type = this.state.new_safety_document.document.content_type;
                     safety_document.creator_name = SessionManager.session_usr.name;
                     safety_document.creator = SessionManager.session_usr.usr;
                     safety_document.creator_employee = SessionManager.session_usr;
                     safety_document.date_logged = new Date().getTime();// current date in epoch millis
-                    safety_document.logged_date = new Date();// current date
+                    safety_document.logged_date = formatDate(new Date());// current date
                     // Update common attributes for actual document
                     safety_document.document.creator_name = SessionManager.session_usr.name;
                     safety_document.document.creator = SessionManager.session_usr.usr;
                     safety_document.document.creator_employee = SessionManager.session_usr;
-                    safety_document.document.logged_date = new Date();// current date
+                    safety_document.document.date_logged = new Date().getTime();// current date in epoch millis
+                    safety_document.document.logged_date = formatDate(new Date());// current date
 
                     this.setState({new_safety_document: safety_document, is_new_safety_document_modal_open: false});
 

@@ -29,10 +29,7 @@ const QuotesMW = ({ dispatch, getState }) => next => action =>
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_quotes, new_quote, '/quote', 'quotes')
                         .then(response => 
-                          {
-                            next(action);
-                            // next({ type: ACTION_TYPES.QUOTE_GET_ALL, payload: docs });
-                          });
+                          next({ type: ACTION_TYPES.QUOTE_NEW, payload: Object.assign(action.payload, {_id: response})}));
     }
 
     case ACTION_TYPES.QUOTE_UPDATE:

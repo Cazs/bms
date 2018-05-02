@@ -42,11 +42,6 @@ const allTabs = [
     icon: 'ion-calculator',
   },
   {
-    title: 'Tasks',
-    name: 'tasks',
-    icon: 'ion-calendar',
-  },
-  {
     title: 'Timesheet',
     name: 'timesheet',
     icon: 'ion-clock',
@@ -55,6 +50,11 @@ const allTabs = [
     title: 'Settings',
     name: 'settings',
     icon: 'ion-ios-gear',
+  },
+  {
+    title: 'Home',
+    name: 'home',
+    icon: 'ion-home',
   }
 ];
 
@@ -107,7 +107,7 @@ export const Icon = styled.i`
   ${props => props.id === 'safety' && `color: #469fe5;`};
   ${props => props.id === 'hr' && `color: #C4C8CC;`};
   ${props => props.id === 'accounting' && `color: #E84906;`};
-  ${props => props.id === 'tasks' && `color: #cbc189;`};
+  ${props => props.id === 'home' && `color: #cbc189;`};
   ${props => props.id === 'timesheet' && `color: #cbc189;`};
   ${props => props.id === 'settings' && `color: #cbc189;`};
 `;

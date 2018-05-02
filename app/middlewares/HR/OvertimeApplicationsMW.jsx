@@ -28,10 +28,7 @@ const OvertimeApplicationsMW = ({ dispatch, getState }) => next => action =>
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_overtime_applications, new_overtime_app, '/overtime_application', 'overtime_applications')
                         .then(response => 
-                          {
-                            next(action);
-                            // next({ type: ACTION_TYPES.OVERTIME_GET_ALL, payload: docs });
-                          });
+                          next({ type: ACTION_TYPES.OVERTIME_NEW, payload: Object.assign(action.payload, {_id: response}) }));
     }
 
     case ACTION_TYPES.OVERTIME_UPDATE:
