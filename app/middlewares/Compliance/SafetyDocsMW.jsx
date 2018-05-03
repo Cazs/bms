@@ -88,55 +88,7 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
         payload: duplicateUser
       });
     }
-
-    case ACTION_TYPES.SAFETY_DOC_UPDATE:
-    {
-      // return updateDoc('users', action.payload)
-      //   .then(docs => {
-      //     next({
-      //       type: ACTION_TYPES.SAFETY_DOC_UPDATE,
-      //       payload: docs,
-      //     });
-      //     dispatch({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'success',
-      //         message: i18n.t('messages:user:updated'),
-      //       },
-      //     });
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
-    }
-
-    case ACTION_TYPES.SAFETY_DOC_CONFIGS_SAVE:
-    {
-      // const { userID, configs } = action.payload;
-      // return getSingleDoc('users', userID)
-      //   .then(doc => {
-      //     dispatch({
-      //       type: ACTION_TYPES.SAFETY_DOC_UPDATE,
-      //       payload: Object.assign({}, doc, {configs})
-      //     })
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
-    }
-
+    
     case ACTION_TYPES.SAFETY_DOC_SET_STATUS:
     {
       // const { userID, status } = action.payload;

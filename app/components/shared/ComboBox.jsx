@@ -8,15 +8,25 @@ class ComboBox extends React.Component
       super(props);
       this.updateData = this.updateData.bind(this);
       this.state = 
-        { 
-          selected_item: props.defaultValue
-        };
+      { 
+        selected_item: props.defaultValue
+      };
+    }
+
+    componentDidMount()
+    {
+      // this.combobox.value = this.props.items[0];
+      // this.updateData(this.props.items[0]);
+      this.combobox.value = this.props.selected_index ? this.props.items[this.props.selected_index] : undefined;
     }
     
-    focus() {
-      this.inputRef.focus();
+    focus()
+    {
+      this.combobox.focus();
     }
-    updateData(value) {
+    
+    updateData(value)
+    {
       // this.props.onUpdate({ selected_item: this.state.selected_item });
       this.props.onUpdate(value);
     }
@@ -25,6 +35,7 @@ class ComboBox extends React.Component
         <span>
           <select
             // defaultValue={this.state.selected}
+            ref={(r)=>this.combobox = r}
             onKeyDown={this.props.onKeyDown}
             onChange={(ev) =>
                       {

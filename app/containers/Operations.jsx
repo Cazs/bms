@@ -1002,8 +1002,9 @@ class Operations extends Component
                         }
                       });
                     }
+
                     // Prepare material object
-                    const material = this.state.new_material;
+                    const material = Object.assign(this.state.new_material);
                     material.object_number = this.props.materials.length;
                     material.creator_name = SessionManager.session_usr.name;
                     material.creator = SessionManager.session_usr.usr;
@@ -1011,9 +1012,15 @@ class Operations extends Component
                     material.date_logged = new Date().getTime();// current date in epoch millis
                     material.logged_date = formatDate(new Date()); // current date
 
-                    this.setState({new_material: material, is_new_material_modal_open: false});
+                    this.props.materials.push(material);
 
-                    this.props.materials.push(this.state.new_material);
+                    this.setState(
+                    {
+                      // reset selected material
+                      new_material: this.createMaterial(),
+                      is_new_material_modal_open: false
+                    });
+                    
                     mapStateToProps(this.state);
 
                     // this.props.dispatch({
@@ -1031,7 +1038,7 @@ class Operations extends Component
                       payload: material
                     });
 
-                    this.setState({new_material: this.createMaterial()});
+                    // this.setState({new_material: this.createMaterial()});
                   }}
                   style={{width: '120px', height: '50px', float: 'right'}}
                   success

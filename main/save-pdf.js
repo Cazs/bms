@@ -26,29 +26,37 @@ ipcMain.on('save-pdf', (event, docId) =>
     };
   }
 
-  win.webContents.printToPDF(printOptions, (error, data) => {
+  win.webContents.printToPDF(printOptions, (error, data) =>
+  {
     if (error) throw error;
-    fs.writeFile(pdfPath, data, error => {
-      if (error) {
+    fs.writeFile(pdfPath, data, error =>
+    {
+      if (error)
+      {
         throw error;
       }
-      if (appConfig.get('general.previewPDF')) {
-        // Open the PDF with default Reader
-        shell.openExternal('file://' + pdfPath);
-      }
-      
-      mainWindow.webContents.send('email-document-ready', pdfPath);
+      // if (appConfig.get('general.previewPDF'))
+      // {
+      //   // Open the PDF with default Reader
+      //   shell.openExternal('file://' + pdfPath);
+      // }
+      // Open the PDF with default Reader
+      shell.openExternal('file://' + pdfPath);
 
       // Show notification
-      win.webContents.send('pdf-exported', {
+      win.webContents.send('pdf-exported',
+      {
         title: 'PDF Exported',
         body: 'Click to reveal file.',
         location: pdfPath,
       });
+
+      mainWindow.webContents.send('email-document-ready', pdfPath);
     });
   });
 });
 
-ipcMain.on('reveal-file', (event, location) => {
+ipcMain.on('reveal-file', (event, location) =>
+{
   shell.showItemInFolder(location);
 });

@@ -25,7 +25,7 @@ const ResourcesMW = ({ dispatch, getState }) => next => action =>
 
     case ACTION_TYPES.MATERIAL_NEW:
     {
-      const new_resource = Object.assign(action.payload, {object_number: getState().suppliers.length});
+      const new_resource = Object.assign(action.payload, {object_number: getState().materials.length});
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_materials, new_resource, '/resource', 'resources')
                         .then(response => 

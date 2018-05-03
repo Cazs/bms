@@ -82,6 +82,7 @@ export class SafetyDocuments extends React.Component
     this.expandComponent = this.expandComponent.bind(this);
     this.showDocumentPreview = this.showDocumentPreview.bind(this);
     this.getCaret = this.getCaret.bind(this);
+    this.createNewSafetyDoc = this.createNewSafetyDoc.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -99,24 +100,7 @@ export class SafetyDocuments extends React.Component
                     column_toggles_top: -200,
                     info: {x: 200, y: 200, message: '', display: 'none'},
 
-                    new_safety_document:
-                    {
-                      document:
-                      {
-                        filename: '',
-                        content_type: null,
-                        file: null,
-                        other: null,
-                        creator: SessionManager.session_usr.usr,
-                        creator_employee: SessionManager.session_usr,
-                        date_logged: new Date().getTime(),
-                        logged_date: formatDate(new Date())// current date
-                      },
-                      creator: SessionManager.session_usr.usr,
-                      creator_employee: SessionManager.session_usr,
-                      date_logged: new Date().getTime(),
-                      logged_date: formatDate(new Date())// current date
-                    },
+                    new_safety_document: this.createNewSafetyDoc(),
                     // Table Column Toggles
                     col_id_visible: false,
                     col_object_number_visible: true,
@@ -127,6 +111,27 @@ export class SafetyDocuments extends React.Component
                     col_creator_visible: true,
                     col_date_logged_visible: true,
     };
+  }
+
+  createNewSafetyDoc()
+  {
+    return {
+      document:
+      {
+        filename: '',
+        content_type: null,
+        file: null,
+        other: null,
+        creator: SessionManager.session_usr.usr,
+        creator_employee: SessionManager.session_usr,
+        date_logged: new Date().getTime(),
+        logged_date: formatDate(new Date())// current date
+      },
+      creator: SessionManager.session_usr.usr,
+      creator_employee: SessionManager.session_usr,
+      date_logged: new Date().getTime(),
+      logged_date: formatDate(new Date())// current date
+    }
   }
 
   // Load SafetyDocuments & add event listeners
@@ -734,7 +739,7 @@ export class SafetyDocuments extends React.Component
                     safety_document.document.creator_employee = SessionManager.session_usr;
                     safety_document.document.date_logged = new Date().getTime();// current date in epoch millis
                     safety_document.document.logged_date = formatDate(new Date());// current date
-
+                    
                     this.setState({new_safety_document: safety_document, is_new_safety_document_modal_open: false});
 
                     this.props.safetyDocuments.push(this.state.new_safety_document);
@@ -745,6 +750,9 @@ export class SafetyDocuments extends React.Component
                       type: ACTION_TYPES.SAFETY_DOC_NEW,
                       payload: this.state.new_safety_document
                     });
+
+                    // reset selected safety doc
+                    this.setState({new_safety_document: this.createNewSafetyDoc()});
                     
                   }}
                   style={{width: '120px', height: '50px', float: 'left'}}

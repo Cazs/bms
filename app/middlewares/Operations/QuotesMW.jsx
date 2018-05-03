@@ -44,9 +44,16 @@ const QuotesMW = ({ dispatch, getState }) => next => action =>
       console.log('quote item add:', action.payload);
       return DataManager.putRemoteResource(dispatch, null, action.payload, '/quote/resource', 'quote resources')
                         .then(response =>
-                          next({ type: ACTION_TYPES.QUOTE_ITEM_ADD, payload: response }));
+                          next({ type: ACTION_TYPES.QUOTE_ITEM_ADD, payload: Object.assign(action.payload, {_id: response}) }));
     }
 
+    case ACTION_TYPES.QUOTE_ITEM_UPDATE:
+    {
+      console.log('quote item update:', action.payload);
+      return DataManager.postRemoteResource(dispatch, null, action.payload, '/quote/resource', 'quote resources')
+                        .then(response => next({ type: ACTION_TYPES.QUOTE_ITEM_UPDATE, payload: response }));
+    }
+    
     case ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_ADD:
     {
       // console.log('quote item extra cost add:', action.payload);

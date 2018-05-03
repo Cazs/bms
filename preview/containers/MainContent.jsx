@@ -113,13 +113,14 @@ class MainContent extends Component
     return (
       <Wrapper>
         {(
-          <div className="print-area">
+          <div className="print-area" style={{ marginLeft: '30px'}}>
             <div style={
               {
-                width: '80%',
+                width: '87%',
                 height: '110px',
                 marginLeft: 'auto',
                 marginRight: 'auto',
+                marginBottom: '10px',
                 backgroundColor: '#A183E8',
                 background: 'url(../static/images/header.jpg)', // TODO: custom headers
                 backgroundSize: 'contain',
@@ -127,7 +128,10 @@ class MainContent extends Component
               }}
             />
             <Page style={{marginTop: '-20px'}}>
-              <PageContent baseFontSize={setBaseFontSize(this.props.configs.fontSize)}>
+              <PageContent
+                baseFontSize={setBaseFontSize(this.props.configs.fontSize)}
+                style={{border: '0px solid #000'}}
+              >
                 {this.renderTemplate()}
               </PageContent>
             </Page>
