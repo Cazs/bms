@@ -637,7 +637,7 @@ export class Invoices extends React.Component
             {invoices.length === 0 ? (
               <Message danger text='No invoices were found in the system' style={{marginTop: '145px'}} />
             ) : (
-              <div style={{maxHeight: 'auto', marginTop: '20px', marginLeft: '-40px', backgroundColor: '#2BE8A2'}}>
+              <div style={{maxHeight: 'auto', marginTop: '20px', marginLeft: '-40px', backgroundColor: '#eeeeee'}}>
                 <BootstrapTable
                   id='tblInvoices'
                   key='tblInvoices'
@@ -649,7 +649,7 @@ export class Invoices extends React.Component
                   selectRow={{bgColor: 'red'}}
                   expandableRow={this.isExpandableRow}
                   expandComponent={this.expandComponent}
-                  trStyle={(row) => ({background: 'lightblue'})}
+                  trStyle={(row) => ({background: 'rgba(255, 128, 23, .6)'})}
                   expandColumnOptions={{
                     expandColumnVisible: true,
                     expandColumnComponent: this.expandColumnComponent,

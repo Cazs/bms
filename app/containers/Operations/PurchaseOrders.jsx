@@ -1029,7 +1029,7 @@ export class PurchaseOrders extends React.Component
             {purchaseOrders.length === 0 ? (
               <Message danger text='No purchaseOrders were found in the system' style={{marginTop: '145px'}} />
             ) : (
-              <div style={{maxHeight: 'auto', marginTop: '5px', backgroundColor: '#2BE8A2'}}>
+              <div style={{maxHeight: 'auto', marginTop: '5px', backgroundColor: '#eeeeee'}}>
                 <BootstrapTable
                   id='tblPurchaseOrders'
                   data={purchaseOrders}
@@ -1040,7 +1040,7 @@ export class PurchaseOrders extends React.Component
                   selectRow={{bgColor: 'red'}}
                   expandableRow={this.isExpandableRow}
                   expandComponent={this.expandComponent}
-                  trStyle={(row) => ({background: 'lightblue'})}
+                  trStyle={(row) => ({background: 'rgba(255, 128, 23, .6)'})}
                   expandColumnOptions={{
                     expandColumnVisible: true,
                     expandColumnComponent: this.expandColumnComponent,

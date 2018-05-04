@@ -1276,7 +1276,7 @@ export class Jobs extends React.Component
                 (no_jobs_msg)
               ) : (
                 // , marginLeft: '-40px'
-                <div style={{maxHeight: 'auto', marginTop: '20px', backgroundColor: '#2BE8A2'}}>
+                <div style={{maxHeight: 'auto', marginTop: '20px', backgroundColor: '#eeeeee'}}>
                   <BootstrapTable
                     id='tblJobs'
                     data={jobs}
@@ -1286,7 +1286,7 @@ export class Jobs extends React.Component
                     selectRow={{bgColor: 'lime'}}
                     expandableRow={this.isExpandableRow}
                     expandComponent={this.expandComponent}
-                    trStyle={(row) => ({background: 'lightblue'})}
+                    trStyle={(row) => ({background: 'rgba(255, 128, 23, .6)'})}
                     expandColumnOptions={{
                       expandColumnVisible: true,
                       expandColumnComponent: this.expandColumnComponent,

@@ -24,6 +24,7 @@ import styled from 'styled-components';
 import * as SessionManager from '../helpers/SessionManager';
 import Log, { formatDate } from '../helpers/Logger';
 import * as GlobalConstants from '../constants/globals';
+import Material from '../helpers/Material';
 
 // Components
 import { Field, Part, Row } from '../components/shared/Part';
@@ -72,7 +73,6 @@ class Operations extends Component
     this.changeTab = this.changeTab.bind(this);
     this.createClient = this.createClient.bind(this);
     this.createSupplier = this.createSupplier.bind(this);
-    this.createMaterial = this.createMaterial.bind(this);
 
     this.state =
     {
@@ -84,7 +84,7 @@ class Operations extends Component
 
       new_client: this.createClient(),
       new_supplier: this.createSupplier(),
-      new_material: this.createMaterial()
+      new_material: Material()
     };
     this.header_actions = React.createRef();
   }
@@ -131,32 +131,6 @@ class Operations extends Component
       creator_employee: SessionManager.session_usr,
       logged_date: formatDate(new Date()),
       date_logged: new Date().getTime()
-    }
-  }
-
-  createMaterial()
-  {
-    const current_date = new Date();
-                              
-    return {
-      brand_name: '',
-      resource_description: '',
-      resource_code: '',
-      resource_type: 'hardware',
-      resource_value: 0,
-      quantity: 1,
-      unit: 'ea',
-      acquired_date: formatDate(current_date),
-      date_acquired: current_date.getTime(),
-      date_exhausted: 0,
-      exhausted_date: '1970-01-01',
-      supplier_id: '',
-      part_number: '',
-      creator_name: SessionManager.session_usr.name,
-      creator: SessionManager.session_usr.usr,
-      creator_employee: SessionManager.session_usr,
-      logged_date: formatDate(current_date),
-      date_logged: current_date.getTime()
     }
   }
 
@@ -309,7 +283,7 @@ class Operations extends Component
 
             <div className="row">
               <div className="pageItem col-md-6">
-                <label className="itemLabel">Tax Number</label>
+                <label className="itemLabel">Tax Number*</label>
                 <input
                   name="tax_number"
                   type='text'
@@ -326,7 +300,7 @@ class Operations extends Component
               </div>
 
               <div className="pageItem col-md-6">
-                <label className="itemLabel">Registration Number</label>
+                <label className="itemLabel">Registration Number*</label>
                 <input
                   name="registration_number"
                   type='text'
@@ -424,6 +398,32 @@ class Operations extends Component
                         {
                           type: 'danger',
                           message: 'Invalid client email address'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_client.tax_number) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid client tax number'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_client.registration_number) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid client registration number'
                         }
                       });
                     }
@@ -1017,19 +1017,11 @@ class Operations extends Component
                     this.setState(
                     {
                       // reset selected material
-                      new_material: this.createMaterial(),
+                      new_material: Material(),
                       is_new_material_modal_open: false
                     });
                     
                     mapStateToProps(this.state);
-
-                    // this.props.dispatch({
-                    //   type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                    //   payload: {
-                    //     type: 'success',
-                    //     message: 'Successfully created new material',
-                    //   },
-                    // });
 
                     // dispatch action to create material on local & remote stores
                     this.props.dispatch(
@@ -1037,8 +1029,6 @@ class Operations extends Component
                       type: ACTION_TYPES.MATERIAL_NEW,
                       payload: material
                     });
-
-                    // this.setState({new_material: this.createMaterial()});
                   }}
                   style={{width: '120px', height: '50px', float: 'right'}}
                   success

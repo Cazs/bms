@@ -739,7 +739,7 @@ export class SafetyDocuments extends React.Component
                     safety_document.document.creator_employee = SessionManager.session_usr;
                     safety_document.document.date_logged = new Date().getTime();// current date in epoch millis
                     safety_document.document.logged_date = formatDate(new Date());// current date
-                    
+
                     this.setState({new_safety_document: safety_document, is_new_safety_document_modal_open: false});
 
                     this.props.safetyDocuments.push(this.state.new_safety_document);
@@ -766,7 +766,7 @@ export class SafetyDocuments extends React.Component
             {safetyDocuments.length === 0 ? (
               <Message danger text='No safety docs were found in the system' style={{marginTop: '145px'}} />
             ) : (
-              <div style={{maxHeight: 'auto', marginTop: '20px', marginLeft: '-40px', backgroundColor: '#2BE8A2'}}>
+              <div style={{maxHeight: 'auto', marginTop: '20px', marginLeft: '-40px', backgroundColor: '#eeeeee'}}>
                 <BootstrapTable
                   id='tblSafetyDocuments'
                   key='tblSafetyDocuments'
@@ -778,7 +778,7 @@ export class SafetyDocuments extends React.Component
                   selectRow={{bgColor: 'red'}}
                   expandableRow={this.isExpandableRow}
                   expandComponent={this.expandComponent}
-                  trStyle={(row) => ({background: 'lightblue'})}
+                  trStyle={(row) => ({background: 'rgba(255, 128, 23, .6)'})}
                   expandColumnOptions={{
                     expandColumnVisible: true,
                     expandColumnComponent: this.expandColumnComponent,

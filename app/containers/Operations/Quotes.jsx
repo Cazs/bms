@@ -50,6 +50,7 @@ import styled from 'styled-components';
 // Helpers
 import * as SessionManager from '../../helpers/SessionManager';
 import Log, { formatDate } from '../../helpers/Logger';
+import Material from '../../helpers/Material';
 
 import
   {
@@ -100,7 +101,8 @@ export class Quotes extends React.Component
     this.setQuoteStatus = this.setQuoteStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
     this.getCaret = this.getCaret.bind(this);
-    
+    this.newQuote = this.newQuote.bind(this);
+
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
     this.afterOpenModal = this.afterOpenModal.bind(this);
@@ -112,6 +114,8 @@ export class Quotes extends React.Component
                     is_new_quote_modal_open: false,
                     is_quote_items_modal_open: false,
                     is_email_modal_open: false,
+                    is_new_material_modal_open: false,
+
                     active_row: null,
                     column_toggles_top: -200,
                     info: {x: 200, y: 200, message: '', display: 'none'},
@@ -152,20 +156,11 @@ export class Quotes extends React.Component
                     col_status_visible: true,
                     col_creator_visible: false,
                     col_date_logged_visible: false,
+
+                    new_material: Material(),
+                    
                     // Quote to be created
-                    new_quote:
-                    {
-                      client_id: null,
-                      client: null,
-                      contact_id: null,
-                      contact: null,
-                      request: null,
-                      sitename: null,
-                      notes: null,
-                      vat: GlobalConstants.VAT,
-                      status: 0,
-                      resources: []
-                    },
+                    new_quote: this.newQuote(),
                     // Quote Item to be added
                     new_quote_item:
                     {
@@ -180,6 +175,24 @@ export class Quotes extends React.Component
     };
   }
 
+  newQuote()
+  {
+    return {
+      client_id: null,
+      client: null,
+      contact_id: null,
+      contact: null,
+      request: null,
+      sitename: null,
+      notes: null,
+      vat: GlobalConstants.VAT,
+      status: 0,
+      revision: 1,
+      status_description: 'pending',
+      resources: []
+    }
+  }
+
   // Load Quotes & add event listeners
   componentDidMount()
   {
@@ -192,6 +205,7 @@ export class Quotes extends React.Component
       }
     });
 
+    // TODO: check if removed listeners on close
     ipc.on('email-document-ready', (event, doc_path) =>
     {
       // alert('PDF document ready');
@@ -363,75 +377,84 @@ export class Quotes extends React.Component
 
     const quote_options = (
       <div>
-        <Button primary onClick={() => this.showQuotePreview(row)}>PDF Preview</Button>
-        <Button
-          primary
-          style={{marginLeft: '15px'}}
-          onClick={() => this.showEmailDialog(row)}
-        >
-          eMail&nbsp;Quote
-        </Button>
-        <Button
-          primary
-          style={{marginLeft: '15px'}}
-          onClick={(evt) =>
-          {
-            // if(!row.status == 0)
-            // {
-            //   return this.props.dispatch({
-            //     type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-            //     payload: {
-            //       type: 'danger',
-            //       message: 'Error: Quote has not yet been approved',
-            //     },
-            //   });
-            // }
-
-            // Prepare Job
-            const new_job =
+        <div style={{borderRadius: '5px', background: 'rgba(255,255,255,.5)', padding: '8px'}}>
+          <Button
+            success
+            onClick={() => this.setState({is_new_material_modal_open: true, selected_quote: row})}
+            style={{marginRight: '20px'}}
+          >
+          New Material
+          </Button>
+          <Button primary onClick={() => this.showQuotePreview(row)}>PDF Preview</Button>
+          <Button
+            primary
+            style={{marginLeft: '15px'}}
+            onClick={() => this.showEmailDialog(row)}
+          >
+            eMail&nbsp;Quote
+          </Button>
+          <Button
+            primary
+            style={{marginLeft: '15px'}}
+            onClick={(evt) =>
             {
-              // object_number = this.props.quotes.length,
-              quote_id: row._id,
-              quote: row,
-              client_name: row.client_name,
-              client: row.client,
-              contact_person: row.contact_person,
-              contact: row.contact,
-              request: row.request,
-              sitename: row.sitename,
-              vat: row.vat,
-              creator_name: SessionManager.session_usr.name,
-              status: 0,
-              quote_revisions: row.revision,
-              tasks: [],
-              creator: SessionManager.session_usr.usr,
-              creator_employee: SessionManager.session_usr,
-              date_logged: new Date().getTime(), // current date in epoch millis
-              logged_date: formatDate(new Date())// current date
-            }
+              // if(!row.status == 0)
+              // {
+              //   return this.props.dispatch({
+              //     type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+              //     payload: {
+              //       type: 'danger',
+              //       message: 'Error: Quote has not yet been approved',
+              //     },
+              //   });
+              // }
 
-            // this.props.jobs.push(new_job);
+              // Prepare Job
+              const new_job =
+              {
+                // object_number = this.props.quotes.length,
+                quote_id: row._id,
+                quote: row,
+                client_name: row.client_name,
+                client: row.client,
+                contact_person: row.contact_person,
+                contact: row.contact,
+                request: row.request,
+                sitename: row.sitename,
+                vat: row.vat,
+                creator_name: SessionManager.session_usr.name,
+                status: 0,
+                quote_revisions: row.revision,
+                tasks: [],
+                creator: SessionManager.session_usr.usr,
+                creator_employee: SessionManager.session_usr,
+                date_logged: new Date().getTime(), // current date in epoch millis
+                logged_date: formatDate(new Date())// current date
+              }
 
-            // ipc.send(evt, 'change-operations-tab', 2);
+              // this.props.jobs.push(new_job);
 
-            // dispatch action to create job on local & remote stores
-            this.props.dispatch({
-              type: ACTION_TYPES.JOB_NEW,
-              payload: new_job
-            });
+              // ipc.send(evt, 'change-operations-tab', 2);
 
-            // this.props.changeTab(2);
-          }}
-        >Create&nbsp;New&nbsp;Job
-        </Button>
+              // dispatch action to create job on local & remote stores
+              this.props.dispatch({
+                type: ACTION_TYPES.JOB_NEW,
+                payload: new_job
+              });
+
+              // this.props.changeTab(2);
+            }}
+          >Create&nbsp;New&nbsp;Job
+          </Button>
+        </div>
       </div>
     );
 
     const new_quote_item_form = (
       <div>
         {/* form for adding a new QuoteItem */}
-        <div style={{backgroundColor: 'rgba(255,255,255,.6)', borderRadius: '4px', marginTop: '20px'}}>
-          <h3 style={{textAlign: 'center', 'fontWeight': 'lighter'}}>Add&nbsp;materials&nbsp;to&nbsp;quote&nbsp;#{row.object_number}</h3>
+        <div style={{backgroundColor: 'rgba(255, 255, 255, .6)', borderRadius: '4px', marginTop: '20px'}}>
+          <h3 style={{textAlign: 'center', 'fontWeight': 'lighter'}}>Add&nbsp;existing&nbsp;materials&nbsp;to&nbsp;quote&nbsp;#{row.object_number}</h3>
           <div className="row">
             <div className="pageItem col-md-6">
               <label className="itemLabel">Material</label>
@@ -800,7 +823,7 @@ export class Quotes extends React.Component
                           const assignee_html = 
                             '<p style="background-color: rgba(255,255,255,.2);line-height: 45px; border-radius: 15px; border: 1px solid #fff; margin-top: 5px;">'
                               + selected_user.name
-                              + '<span class="ion-close-circled" onmouseover="this.style.color=\'red\';this.style.cursor=\'pointer\'" onmouseout="this.style.color=\'#fff\'" style="float:right;width: 20px;height: 20px;color: #fff;"></span>'
+                              + '<span class="ion-close-circled" onmouseover="this.style.color=\'#ff7400\';this.style.cursor=\'pointer\'" onmouseout="this.style.color=\'#fff\'" style="float:right;width: 20px;height: 20px;color: #fff;"></span>'
                             + '</p>';
                           if(assignees.length>1)
                             this.assignee_container.innerHTML += assignee_html;// existing items, append
@@ -815,6 +838,7 @@ export class Quotes extends React.Component
                         style={{marginLeft: '5%'}}
                         onClick={(evt)=>
                         {
+                          console.log('selected quote item: ', props.row);
                           const modal_props = this.state.extra_cost_modal_props;
                           modal_props.x = evt.clientX - 450;
                           modal_props.y = evt.clientY - 30;
@@ -824,9 +848,9 @@ export class Quotes extends React.Component
                               selected_quote: row,
                               selected_extra_cost: // Object.assign( this.state.selected_extra_cost,
                                                     {
-                                                      _id: null,
-                                                      quote_item_id: null,
-                                                      object_number: 0,
+                                                      // _id: null,
+                                                      quote_item_id: props.row._id,
+                                                      object_number: props.row.extra_costs ? props.row.extra_costs.length : 0,
                                                       title: '',
                                                       cost: 0,
                                                       markup: 0,
@@ -1012,7 +1036,7 @@ export class Quotes extends React.Component
       expandRowBgColor: 'rgba(0, 0, 0, .4)',
     };
 
-    const info = (
+    const info_modal = (
       <div style={{position: 'fixed', display: this.state.info.display, top: this.state.info.y, left: this.state.info.x, background:'rgba(0,0,0,.8)', borderRadius: '4px', boxShadow: '0px 0px 10px #343434', border: '1px solid #000', zIndex: '300'}}>
         <p style={{color: '#fff', marginTop: '5px'}}>{this.state.info.message}</p>
       </div>);
@@ -1273,8 +1297,8 @@ export class Quotes extends React.Component
             </div>
           </div>
         </Modal>
-      </div>);
-
+      </div>
+    );
 
     const quote_statuses = 
     [
@@ -1291,16 +1315,244 @@ export class Quotes extends React.Component
         status_description: 'rejected'
       }
     ];
-    return (
-      <PageContent bare>
-        <div style={{maxHeight: 'auto'}}>
-          {info}
-          {/* eMailing modal  */}
-          {email_modal}
 
-          {/* Extra costs modal */}
-          <div
-            style={{
+    const new_quote_modal = (
+      <Modal
+        isOpen={this.state.is_new_quote_modal_open}
+        onAfterOpen={this.afterOpenModal}
+        onRequestClose={this.closeModal}
+        style={modalStyle}
+        contentLabel="New Quote Modal"
+      >
+        <h2 ref={subtitle => this.subtitle = subtitle} style={{color: 'black'}}>Create New Quote</h2>
+        <div>
+          <div className="pageItem">
+            {/* <label className="itemLabel">{t('settings:fields:logo:name')}</label>
+                  <Logo
+                    logo={this.state.logo}
+                    handleLogoChange={this.handleLogoChange}
+                  /> */}
+          </div>
+          <div className="row">
+            <div className="pageItem col-md-6">
+              <label className="itemLabel">{t('common:fields:company')}</label>
+              <div>
+                <ComboBox
+                  ref={(cbx_clients)=>this.cbx_clients = cbx_clients}
+                  items={this.props.clients}
+                        // selected_item={this.state.new_quote.client}
+                  label='client_name'
+                  onUpdate={(new_val)=>{
+                          const selected_client = JSON.parse(new_val);
+                          
+                          const quote = this.state.new_quote;
+                          quote.client_id = selected_client._id;
+                          quote.client = selected_client;
+
+                          this.setState({new_quote: quote});
+                          this.sitename = selected_client.physical_address;
+                        }}
+                />
+              </div>
+            </div>
+            <div className="pageItem col-md-6">
+              <label className="itemLabel"> Contact </label>
+              {/* TODO: common:fields:email? */}
+              <div>
+                <ComboBox 
+                  ref={(cbx_contacts)=>this.cbx_contacts = cbx_contacts}
+                  items={this.props.employees}
+                        // selected_item={this.state.new_quote.contact}
+                  label='name'
+                  onUpdate={(new_val)=>{
+                          const selected_contact = JSON.parse(new_val);
+                          const quote = this.state.new_quote;
+                          quote.contact_id = selected_contact.usr;
+                          quote.contact = selected_contact;
+
+                          this.setState({new_quote: quote});
+                        }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="pageItem col-md-6">
+              <label className="itemLabel">Sitename</label>
+              <input
+                ref={(txt_sitename)=>this.txt_sitename = txt_sitename}
+                name="sitename"
+                type="text"
+                    // value={this.state.new_quote.sitename}
+                onChange={(new_val)=>{
+                      const quote = this.state.new_quote;
+                      quote.sitename = new_val.currentTarget.value;
+                      this.setState({new_quote: quote});
+                    }}
+                style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+              />
+            </div>
+
+            <div className="pageItem col-md-6">
+              <label className="itemLabel">Description</label>
+              <input
+                name="request"
+                type="text"
+                ref={(txt_request)=>this.txt_request = txt_request}
+                onChange={(new_val)=>{
+                      const quote = this.state.new_quote;
+                      quote.request = new_val.currentTarget.value;
+                      this.setState({new_quote: quote});
+                    }}
+                style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+              />
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="pageItem col-md-6">
+              <label className="itemLabel">VAT [{this.state.new_quote.vat} %]</label>
+              <label className="switch">
+                <input
+                  name="vat"
+                  type="checkbox"
+                  checked={this.state.new_quote.vat>0}
+                  onChange={() =>
+                        {
+                          const quote = this.state.new_quote;
+                          quote.vat = quote.vat > 0 ? 0 : GlobalConstants.VAT;
+                          this.setState(
+                          {
+                            new_quote: quote
+                          });
+                        }}
+                />
+                <span className="slider round" />
+              </label>
+            </div>
+
+            <div className="pageItem col-md-6">
+              <label className="itemLabel">Notes</label>
+              <textarea
+                name="notes"
+                value={this.state.new_quote.other}
+                onChange={this.handleInputChange}
+                style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+              />
+            </div>
+          </div>
+
+          <Button
+            onClick={this.closeModal}
+            style={{width: '120px', height: '50px', float: 'right'}}
+            danger
+          >Dismiss
+          </Button>
+
+          <Button
+            onClick={()=>
+            {
+                  const quote = this.state.new_quote;
+
+                  if(!quote.client)
+                  {
+                    return this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload:
+                      {
+                        type: 'danger',
+                        message: 'Invalid client selected'
+                      }
+                    });
+                  }
+
+                  if(!quote.contact)
+                  {
+                    return this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload:
+                      {
+                        type: 'danger',
+                        message: 'Invalid contact person selected'
+                      }
+                    });
+                  }
+
+                  if(!quote.sitename)
+                  {
+                    return this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload:
+                      {
+                        type: 'danger',
+                        message: 'Invalid sitename'
+                      }
+                    });
+                  }
+                  
+                  if(!quote.request)
+                  {
+                    return this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload:
+                      {
+                        type: 'danger',
+                        message: 'Error: Invalid quote description',
+                      },
+                    });
+                  }
+
+                  // Prepare Quote
+                  const client_name = quote.client.client_name.toString();
+                  quote.object_number = this.props.quotes.length;
+                  quote.client_name = client_name;
+                  quote.client_id = quote.client._id;
+                  quote.contact_person = quote.contact.name;
+                  quote.contact_person_id = quote.contact.usr;
+                  quote.status = quote_statuses[0].status;
+                  quote.status_description = quote_statuses[0].status_description;
+                  quote.revision = 1;
+                  quote.account_name = client_name.toLowerCase().replace(' ', '-');
+                  quote.creator_name = SessionManager.session_usr.name;
+                  quote.creator = SessionManager.session_usr.usr;
+                  quote.creator_employee = SessionManager.session_usr;
+                  quote.date_logged = new Date().getTime();// current date in epoch millis
+                  quote.logged_date = formatDate(new Date()); // current date
+
+                  // this.props.quotes.push(quote);
+                  // mapStateToProps(this.state);
+
+                  const context = this;
+                  // dispatch action to create quote on local & remote stores
+                  this.props.dispatch(
+                  {
+                    type: ACTION_TYPES.QUOTE_NEW,
+                    payload: quote,
+                    // after the quote has been added to local & remote store, push it to the table
+                    callback(new_quote)// w/ _id
+                    {
+                      context.props.quotes.push(new_quote);
+                      context.setState({new_quote: context.newQuote(), is_new_quote_modal_open: false});
+                    }
+                  });
+                }}
+            style={{width: '120px', height: '50px', float: 'left'}}
+            success
+          >Create
+          </Button>
+        </div>
+      </Modal>
+    );
+
+    const material_extra_costs_modal =
+    (
+      <div
+        style={{
               position: 'fixed',
               top: this.state.extra_cost_modal_props.y,
               left: this.state.extra_cost_modal_props.x,
@@ -1311,87 +1563,87 @@ export class Quotes extends React.Component
               boxShadow: '0px 0px 20px #343434',
               zIndex: '200'
             }}
-            hidden={!this.state.extra_cost_modal_props.visible}
-          >
-            <div style={{paddingTop: '1px', width: '100%'}} >
-              <div style={{width: '10px', height: '10px', float: 'right', marginRight: '-30px'}}>
-                <CloseButton
-                  className="ion-close-circled"
-                  onClick={()=>
+        hidden={!this.state.extra_cost_modal_props.visible}
+      >
+        <div style={{paddingTop: '1px', width: '100%'}} >
+          <div style={{width: '10px', height: '10px', float: 'right', marginRight: '-30px'}}>
+            <CloseButton
+              className="ion-close-circled"
+              onClick={()=>
                     this.setState(
                       {
                         extra_cost_modal_props: Object.assign(this.state.extra_cost_modal_props,
                                                 {visible: false, edit_mode: false})
                       })}
-                />
-              </div>
-            </div>
-            <div className="row">
-              <div className="pageItem" style={{paddingTop: '5px'}}>
-                <label className="itemLabel" style={{color: '#fff'}}>Cost&nbsp;Title</label>
-                <input
-                  ref={(txt_title)=>this.txt_title = txt_title}
-                  name="title"
-                  type="text"
-                  value={this.state.selected_extra_cost.title}
-                  onChange={(new_val)=>
+            />
+          </div>
+        </div>
+        <div className="row">
+          <div className="pageItem" style={{paddingTop: '5px'}}>
+            <label className="itemLabel" style={{color: '#fff'}}>Cost&nbsp;Title</label>
+            <input
+              ref={(txt_title)=>this.txt_title = txt_title}
+              name="title"
+              type="text"
+              value={this.state.selected_extra_cost.title}
+              onChange={(new_val)=>
                   {
                     const extra_cost = this.state.selected_extra_cost;
                     extra_cost.title = new_val.currentTarget.value;
                     this.setState({selected_extra_cost: extra_cost});
                   }}
-                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-                />
-              </div>
-              <div className="pageItem" style={{paddingTop: '5px', paddingLeft: '5px'}}>
-                <label className="itemLabel" style={{color: '#fff'}}>Cost&nbsp;Value</label>
-                <input
-                  ref={(txt_cost)=>this.txt_cost = txt_cost}
-                  name="cost"
-                  type="text"
-                  // defaultValue="0"
-                  value={this.state.selected_extra_cost.cost}
-                  onChange={(new_val)=>
-                  {
-                    const extra_cost = this.state.selected_extra_cost;
-                    extra_cost.cost = new_val.currentTarget.value;
-                    this.setState({selected_extra_cost: extra_cost});
-                  }}
-                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-                />
-              </div>
-            </div>
+              style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+            />
+          </div>
+          <div className="pageItem" style={{paddingTop: '5px', paddingLeft: '5px'}}>
+            <label className="itemLabel" style={{color: '#fff'}}>Cost&nbsp;Value</label>
+            <input
+              ref={(txt_cost)=>this.txt_cost = txt_cost}
+              name="cost"
+              type="text"
+              // defaultValue="0"
+              value={this.state.selected_extra_cost.cost}
+              style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+              onChange={(new_val)=>
+              {
+                const extra_cost = this.state.selected_extra_cost;
+                extra_cost.cost = new_val.currentTarget.value;
+                this.setState({selected_extra_cost: extra_cost});
+              }}
+            />
+          </div>
+        </div>
 
-            <div className="row" style={{paddingTop: '5px'}}>
-              <div className="pageItem">
-                <label className="itemLabel" style={{color: '#fff'}}>Markup</label>
-                <input
-                  ref={(txt_markup)=>this.txt_markup = txt_markup}
-                  name="markup"
-                  type="text"
+        <div className="row" style={{paddingTop: '5px'}}>
+          <div className="pageItem">
+            <label className="itemLabel" style={{color: '#fff'}}>Markup</label>
+            <input
+              ref={(txt_markup)=>this.txt_markup = txt_markup}
+              name="markup"
+              type="text"
                   // defaultValue="0"
-                  value={this.state.selected_extra_cost.markup}
-                  onChange={(new_val)=>
+              value={this.state.selected_extra_cost.markup}
+              onChange={(new_val)=>
                   {
                     const extra_cost = this.state.selected_extra_cost;
                     extra_cost.markup = new_val.currentTarget.value;
                     this.setState({selected_extra_cost: extra_cost});
                   }}
-                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-                />
-              </div>
-              <div className="pageItem" />
-              <div className="pageItem">
-                <Button
-                  success
-                  style={
+              style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+            />
+          </div>
+          <div className="pageItem" />
+          <div className="pageItem">
+            <Button
+              success
+              style={
                   {
                     width: '130px',
                     height: '45px',
                     marginTop: '30px',
                     marginLeft: '20px'
                   }}
-                  onClick={()=>
+              onClick={()=>
                   {
                     if(this.txt_title.value && this.txt_cost.value)
                     {
@@ -1425,7 +1677,7 @@ export class Quotes extends React.Component
                       // prepare new extra cost
                       const extra_cost =
                       {
-                        _id: this.state.selected_extra_cost._id,
+                        // _id: this.state.selected_extra_cost._id,
                         // assign new object number if creating new cost, else use current object number if in edit mode
                         object_number: this.state.extra_cost_modal_props.edit_mode ? this.state.selected_extra_cost.object_number : this.state.selected_quote_item.extra_costs.length,
                         quote_item_id: this.state.selected_quote_item._id,
@@ -1438,18 +1690,16 @@ export class Quotes extends React.Component
                         creator: SessionManager.session_usr.usr,
                         creator_employee: SessionManager.session_usr
                       };
-                      
-                      // push new cost to selected_quote_item's list of costs if not in edit mode
-                      if(!this.state.extra_cost_modal_props.edit_mode)
-                        this.state.selected_quote_item.extra_costs.push(extra_cost);
 
                       // get quote item's extra costs total
-                      let new_extra_costs_total = 0;
+                      let new_extra_costs_total = Number(extra_cost.cost) + Number(extra_cost.cost) * Number(extra_cost.markup)/100;
                       this.state.selected_quote_item.extra_costs.map((cost) => new_extra_costs_total += Number(cost.cost) + (Number(cost.cost) * Number(cost.markup)/100));
                       console.log('new extra costs total: %s', new_extra_costs_total);
+
                       // rate = marked up unit cost + extra_cost_total
-                      const quote_item_rate = Number(this.state.selected_quote_item.unit_cost) + (Number(this.state.selected_quote_item.unit_cost) * Number(this.state.selected_quote_item.markup)/100) + new_extra_costs_total;
+                      const quote_item_rate = Number(this.state.selected_quote_item.unit_cost) + (Number(this.state.selected_quote_item.unit_cost) * Number(this.state.selected_quote_item.markup)/100) + Number(new_extra_costs_total);
                       console.log('new quote item rate: %s', quote_item_rate);
+
                       // total = rate * quantity
                       const quote_item_total = Number(quote_item_rate) * Number(this.state.selected_quote_item.quantity);
                       console.log('new quote item total: %s', quote_item_total);
@@ -1462,7 +1712,8 @@ export class Quotes extends React.Component
                                               {
                                                 // all these updates below are purely to update local fs state, remote values are computed/derived
                                                 extra_costs_total: new_extra_costs_total > 0 ? GlobalConstants.CURRENCY_SYMBOL + ' ' + new_extra_costs_total : 'No extra costs',
-                                                total: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_total
+                                                total: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_total,
+                                                rate: quote_item_rate
                                               }),
                         extra_cost_modal_props: this.state.extra_cost_modal_props.edit_mode ? this.state.extra_cost_modal_props :
                                                 Object.assign(this.state.extra_cost_modal_props, {visible: false}),
@@ -1485,27 +1736,40 @@ export class Quotes extends React.Component
                       console.log('selected quote_item: ', this.state.selected_quote_item);
                       console.log('selected quote_item extra_cost: ', extra_cost);
 
+                      const context = this;
 
                       // signal quote item add (if in edit mode) to save new extra cost to remote storage
                       if(!this.state.extra_cost_modal_props.edit_mode)
+                      {
                         this.props.dispatch(
                         {
                           type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_ADD,
-                          payload: extra_cost
+                          payload: extra_cost,
+
+                          callback(new_extra_cost_from_server)
+                          {
+                            console.log('complete new extra cost: ', new_extra_cost_from_server);
+
+                            // push new cost to selected_quote_item's list of costs if not in edit mode
+                            if(!context.state.extra_cost_modal_props.edit_mode)
+                              context.state.selected_quote_item.extra_costs.push(new_extra_cost_from_server);
+
+                            context.setState(context.state.selected_quote_item);
+
+                            // signal update quote - so it saves new extra costs to local storage
+                            context.props.dispatch(
+                            {
+                              type: ACTION_TYPES.LOCAL_QUOTE_UPDATE,
+                              payload: context.state.selected_quote
+                            });
+                          }
                         });
-                      else // else signal quote item update to update extra cost on remote storage
+                      } else // else signal quote item update to update extra cost on remote storage
                         this.props.dispatch(
                         {
                           type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_UPDATE,
                           payload: extra_cost
                         });
-
-                      // signal update quote - so it saves new extra costs to local storage
-                      this.props.dispatch(
-                      {
-                        type: ACTION_TYPES.QUOTE_UPDATE,
-                        payload: this.state.selected_quote
-                      });
                     } else
                       this.props.dispatch(
                       {
@@ -1513,235 +1777,343 @@ export class Quotes extends React.Component
                         payload: { type: 'danger', message: 'Please make sure that the cost and title fields have been filled in correctly.'}
                       });
                   }}
-                >
-                  { this.state.extra_cost_modal_props.edit_mode ? 'Update' : 'Add' }
+            >
+              { this.state.extra_cost_modal_props.edit_mode ? 'Update' : 'Add' }
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+
+    const new_material_modal =
+    (
+      <div>
+        {/* New Material Modal */}
+        <Modal
+          isOpen={this.state.is_new_material_modal_open}
+            // onAfterOpen={this.afterOpenModal}
+            // onRequestClose={this.closeModal}
+          style={modalStyle}
+          contentLabel="New Material"
+        >
+          <h2 ref={quote_material_subtitle => this.quote_material_subtitle = quote_material_subtitle} style={{color: 'black'}}>Create New Quote Material</h2>
+          <div>
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Material Description*</label>
+                <textarea
+                  ref={(txt_material_name)=>this.txt_material_name = txt_material_name}
+                  name="material_description"
+                  value={this.state.new_material.resource_description}
+                  onChange={(new_val)=>
+                  {
+                    const material = this.state.new_material;
+                    material.resource_description = new_val.currentTarget.value;
+                    this.setState({new_material: material});
+                  }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px', width: '100%'}}
+                />
+              </div>
+
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Material Cost (in {GlobalConstants.CURRENCY})*</label>
+                <input
+                  name="material_cost"
+                  type="text"
+                  ref={(txt_material_cost)=>this.txt_material_cost = txt_material_cost}
+                  value={this.state.new_material.resource_value}
+                  onChange={(new_val)=>
+                  {
+                    const material = this.state.new_material;
+                    material.resource_value = new_val.currentTarget.value;
+                    this.setState({new_material: material});
+                  }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Category*</label>
+                <input
+                  name="material_category"
+                  type='text'
+                  ref={(txt_material_category)=>this.txt_material_category = txt_material_category}
+                  value={this.state.new_material.resource_type}
+                  onChange={(new_val)=>
+                  {
+                    const material = this.state.new_material;
+                    material.resource_type = new_val.currentTarget.value;
+                    this.setState({new_material: material});
+                  }}
+                  style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Unit of measurement</label>
+                <input
+                  name="unit"
+                  type='text'
+                  ref={(txt_unit)=>this.txt_unit = txt_unit}
+                  value={this.state.new_material.unit}
+                  onChange={(new_val)=>
+                  {
+                    const material = this.state.new_material;
+                    material.unit = new_val.currentTarget.value;
+                    this.setState({new_material: material});
+                  }}
+                  style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Quantity</label>
+                <input
+                  type='number'
+                  name="quantity"
+                  ref={(txt_quantity)=>this.txt_quantity = txt_quantity}
+                  value={this.state.new_material.quantity}
+                  onChange={(new_val)=>
+                  {
+                    const material = this.state.new_material;
+                    material.quantity = new_val.currentTarget.value;
+                    this.setState({new_material: material});
+                  }}
+                  style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Date Acquired*</label>
+                <input
+                  type='date'
+                  id="date_acquired"
+                  name="date_acquired"
+                  ref={(date_acquired)=>this.date_acquired=date_acquired}
+                  defaultValue={this.state.new_material.acquired_date}
+                  onChange={(new_val)=>
+                  {
+                    const date = new Date(new_val.currentTarget.value);
+                    console.log('new material date_partnered in epoch millis: ', date.getTime());
+
+                    const material = this.state.new_material;
+                    material.date_acquired = date.getTime(); // current date in epoch milliseconds
+                    material.acquired_date = date; // current date
+                    this.setState({new_material: material});
+                  }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+
+            </div>
+
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <Button
+                  onClick={(event)=>
+                  {
+                    if(!this.state.new_material.resource_description) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid material description'
+                        }
+                      });
+                    }
+
+                    if(this.state.new_material.resource_value <= 0) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid material cost'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_material.resource_type) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid material category'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_material.unit) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid material unit of measurement.'
+                        }
+                      });
+                    }
+
+                    if(this.state.new_material.quantity <= 0) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid material quantity'
+                        }
+                      });
+                    }
+
+                    if(this.state.new_material.date_acquired <= 0) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid acquisition date.'
+                        }
+                      });
+                    }
+
+                    const { dispatch } = this.props;
+
+                    // Prepare material object
+                    const material = Object.assign(this.state.new_material);
+                    material.object_number = this.props.materials.length;
+                    material.creator_name = SessionManager.session_usr.name;
+                    material.creator = SessionManager.session_usr.usr;
+                    material.creator_employee = SessionManager.session_usr;
+                    material.date_logged = new Date().getTime();// current date in epoch millis
+                    material.logged_date = formatDate(new Date()); // current date
+
+                    this.props.materials.push(material);
+
+                    this.setState(
+                    {
+                      // reset selected material
+                      new_material: Material(),
+                      is_new_material_modal_open: false
+                    });
+                    
+                    mapStateToProps(this.state);
+
+                    // prepare quote material
+                    const quote_item = 
+                    {
+                      object_number: this.state.selected_quote.resources ? this.state.selected_quote.resources.length : 0,
+                      item_number: this.state.selected_quote.resources ? this.state.selected_quote.resources.length : 0,
+                      // resource_id: null, // currently unknown, will be set by quotes middleware after resource has been created.
+                      resource: material,
+                      unit: material.unit,
+                      item_description: material.resource_description,
+                      category: material.resource_type,
+                      markup: material.markup ? material.markup : 0,
+                      unit_cost: Number(material.resource_value),
+                      quantity: Number(material.quantity),
+                      quote_id: this.state.selected_quote._id,
+                      // quote: this.state.selected_quote,
+                      extra_costs: [],
+                      extra_costs_total: 'No extra costs',
+                      creator_name: SessionManager.session_usr.name,
+                      creator: SessionManager.session_usr.usr,
+                      creator_employee: SessionManager.session_usr,
+                      date_logged: new Date().getTime(), // current date in epoch millis
+                      logged_date: formatDate(new Date()) // current date
+                    }
+                    const total = getQuoteItemTotal(quote_item);
+                    quote_item.total = GlobalConstants.CURRENCY_SYMBOL + ' ' + total;
+                    quote_item.rate = total/Number(quote_item.quantity);
+
+                    const selected_quote = this.state.selected_quote;
+                    const context = this;
+
+                    // dispatch action to create quote material on local & remote stores
+                    dispatch(
+                    {
+                      type: ACTION_TYPES.QUOTE_MATERIAL_NEW,
+                      payload: quote_item,
+
+                      callback(new_quote_item) // new quote item with the proper resource id of the newly created resource
+                      {
+                        console.log('created mat, creating quote item: ', new_quote_item);
+
+                        // dispatch action to create quote item
+                        dispatch(
+                        {
+                          type: ACTION_TYPES.QUOTE_ITEM_ADD,
+                          payload: Object.assign({}, new_quote_item, {quote: null, resource: null}),
+                          callback(new_quote_item_from_server)
+                          {
+                            // add item to quote's list of resources ( remove reference to original quote to avoid infinite, recursive updates) 
+                            selected_quote.resources.push(Object.assign({}, new_quote_item_from_server, {quote: null, resource: new_quote_item.resource}));
+                            context.setState(
+                            {
+                              // reset selected material
+                              new_material: Material(),
+                              selected_quote_item: new_quote_item_from_server
+                            });
+                            
+                            // signal update quote - so it saves to local storage
+                            dispatch(
+                            {
+                              type: ACTION_TYPES.LOCAL_QUOTE_UPDATE,
+                              // payload: Object.assign({}, new_quote_item, {quote: null})
+                              payload: selected_quote// new_quote_item.quote
+                            });
+                            console.log('dispatched quote update action.');
+                          }
+                        });
+                        console.log('dispatched new quote item action.');
+                      }
+                    });
+                  }}
+                  style={{width: '120px', height: '50px', float: 'right'}}
+                  success
+                >Create
+                </Button>
+              </div>
+
+              <div className="pageItem col-md-6">
+                <Button
+                  danger
+                  style={{width: '120px', height: '50px', float: 'left'}}
+                  onClick={()=>this.setState({is_new_material_modal_open: false})}
+                >Cancel
                 </Button>
               </div>
             </div>
           </div>
-          {/* Quote Creation Modal */}
-          <Modal
-            isOpen={this.state.is_new_quote_modal_open}
-            onAfterOpen={this.afterOpenModal}
-            onRequestClose={this.closeModal}
-            style={modalStyle}
-            contentLabel="New Quote Modal"
-          >
-            <h2 ref={subtitle => this.subtitle = subtitle} style={{color: 'black'}}>Create New Quote</h2>
-            <div>
-              <div className="pageItem">
-                {/* <label className="itemLabel">{t('settings:fields:logo:name')}</label>
-                  <Logo
-                    logo={this.state.logo}
-                    handleLogoChange={this.handleLogoChange}
-                  /> */}
-              </div>
-              <div className="row">
-                <div className="pageItem col-md-6">
-                  <label className="itemLabel">{t('common:fields:company')}</label>
-                  <div>
-                    <ComboBox
-                      ref={(cbx_clients)=>this.cbx_clients = cbx_clients}
-                      items={this.props.clients}
-                        // selected_item={this.state.new_quote.client}
-                      label='client_name'
-                      onUpdate={(new_val)=>{
-                          const selected_client = JSON.parse(new_val);
-                          
-                          const quote = this.state.new_quote;
-                          quote.client_id = selected_client._id;
-                          quote.client = selected_client;
-
-                          this.setState({new_quote: quote});
-                          this.sitename = selected_client.physical_address;
-                        }}
-                    />
-                  </div>
-                </div>
-                <div className="pageItem col-md-6">
-                  <label className="itemLabel"> Contact </label>
-                  {/* TODO: common:fields:email? */}
-                  <div>
-                    <ComboBox 
-                      ref={(cbx_contacts)=>this.cbx_contacts = cbx_contacts}
-                      items={this.props.employees}
-                        // selected_item={this.state.new_quote.contact}
-                      label='name'
-                      onUpdate={(new_val)=>{
-                          const selected_contact = JSON.parse(new_val);
-                          const quote = this.state.new_quote;
-                          quote.contact_id = selected_contact.usr;
-                          quote.contact = selected_contact;
-
-                          this.setState({new_quote: quote});
-                        }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="row">
-                <div className="pageItem col-md-6">
-                  <label className="itemLabel">Sitename</label>
-                  <input
-                    ref={(txt_sitename)=>this.txt_sitename = txt_sitename}
-                    name="sitename"
-                    type="text"
-                    // value={this.state.new_quote.sitename}
-                    onChange={(new_val)=>{
-                      const quote = this.state.new_quote;
-                      quote.sitename = new_val.currentTarget.value;
-                      this.setState({new_quote: quote});
-                    }}
-                    style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-                  />
-                </div>
-
-                <div className="pageItem col-md-6">
-                  <label className="itemLabel">Request</label>
-                  <input
-                    name="request"
-                    type="text"
-                    ref={(txt_request)=>this.txt_request = txt_request}
-                    onChange={(new_val)=>{
-                      const quote = this.state.new_quote;
-                      quote.request = new_val.currentTarget.value;
-                      this.setState({new_quote: quote});
-                    }}
-                    style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-                  />
-                </div>
-              </div>
-
-              <div className="row">
-                <div className="pageItem col-md-6">
-                  <label className="itemLabel">VAT [{this.state.new_quote.vat} %]</label>
-                  <label className="switch">
-                    <input
-                      name="vat"
-                      type="checkbox"
-                      checked={this.state.new_quote.vat>0}
-                      onChange={() =>
-                        {
-                          const quote = this.state.new_quote;
-                          quote.vat = quote.vat > 0 ? 0 : GlobalConstants.VAT;
-                          this.setState(
-                          {
-                            new_quote: quote
-                          });
-                        }}
-                    />
-                    <span className="slider round" />
-                  </label>
-                </div>
-
-                <div className="pageItem col-md-6">
-                  <label className="itemLabel">Notes</label>
-                  <textarea
-                    name="notes"
-                    value={this.state.new_quote.other}
-                    onChange={this.handleInputChange}
-                    style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
-                  />
-                </div>
-              </div>
-
-              <Button
-                onClick={this.closeModal}
-                style={{width: '120px', height: '50px', float: 'right'}}
-                danger
-              >Dismiss
-              </Button>
-
-              <Button
-                onClick={()=>{
-                  const quote = this.state.new_quote;
-
-                  if(!quote.client)
-                  {
-                    return this.props.dispatch({
-                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                      payload: {
-                        type: 'danger',
-                        message: 'Invalid client selected',
-                      },
-                    });
-                  }
-
-                  if(!quote.contact)
-                  {
-                    return this.props.dispatch({
-                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                      payload: {
-                        type: 'danger',
-                        message: 'Invalid contact person selected',
-                      },
-                    });
-                  }
-
-                  if(!quote.sitename)
-                  {
-                    return this.props.dispatch({
-                            type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                            payload: {
-                              type: 'danger',
-                              message: 'Invalid sitename',
-                            },
-                          });
-                  }
-                  
-                  if(!quote.request)
-                  {
-                    return this.props.dispatch({
-                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                      payload: {
-                        type: 'danger',
-                        message: 'Error: Invalid request',
-                      },
-                    });
-                  }
-
-                  // Prepare Quote
-                  const client_name = quote.client.client_name.toString();
-
-                  quote.object_number = this.props.quotes.length;
-                  quote.client_name = client_name;
-                  quote.client_id = quote.client._id;
-                  quote.contact_person = quote.contact.name;
-                  quote.contact_person_id = quote.contact.usr;
-                  quote.account_name = client_name.toLowerCase().replace(' ', '-');
-                  quote.creator_name = SessionManager.session_usr.name;
-                  quote.creator = SessionManager.session_usr.usr;
-                  quote.creator_employee = SessionManager.session_usr;
-                  quote.date_logged = new Date().getTime();// current date in epoch millis
-                  quote.logged_date = formatDate(new Date()); // current date
-
-                  this.setState({new_quote: quote, is_new_quote_modal_open: false});
-
-                  this.props.quotes.push(this.state.new_quote);
-                  mapStateToProps(this.state);
-
-                  // this.props.dispatch({
-                  //   type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                  //   payload: {
-                  //     type: 'success',
-                  //     message: 'Successfully created new quote',
-                  //   },
-                  // });
-
-                  // dispatch action to create quote on local & remote stores
-                  this.props.dispatch({
-                    type: ACTION_TYPES.QUOTE_NEW,
-                    payload: this.state.new_quote
-                  });
-                  
-                }}
-                style={{width: '120px', height: '50px', float: 'left'}}
-                success
-              >Create
-              </Button>
-            </div>
-          </Modal>
+        </Modal>
+      </div>
+    );
+    
+    return (
+      <PageContent bare>
+        <div style={{maxHeight: 'auto'}}>
+          {info_modal}
+          {new_quote_modal}
+          {new_material_modal}
+          {material_extra_costs_modal}
+          {email_modal}
           {/* Quotes table & Column toggles */}
           <div style={{ paddingTop: '0px' }}>
             
@@ -2028,7 +2400,7 @@ export class Quotes extends React.Component
             { quotes.length === 0 ? (
               <Message danger text='No quotes were found in the system' style={{ marginTop: '145px'}} />
             ) : (
-              <div style={{maxHeight: 'auto', marginTop: '10px', backgroundColor: '#2BE8A2'}}>
+              <div style={{maxHeight: 'auto', marginTop: '10px', backgroundColor: '#eeeeee'}}>
                 {/* { getQuotesTable(quotes, this.state, this.props, this.getCaret, this.isExpandableRow, this.expandComponent, this.expandColumnComponent, cellEditProp, clientFormatter, options) } */}
                 <BootstrapTable
                   id='tblQuotes'
@@ -2038,10 +2410,10 @@ export class Quotes extends React.Component
                   hover
                   insertRow={false}
                   // selectRow={(row)=>alert(row)}
-                  selectRow={{bgColor: 'red'}}
+                  selectRow={{bgColor: '#ff7400'}}
                   expandableRow={this.isExpandableRow}
                   expandComponent={this.expandComponent}
-                  trStyle={(row) => ({background: 'lightblue'})}
+                  trStyle={(row) => ({background: 'rgba(255, 128, 23, .6)'})}
                   expandColumnOptions={{
                     expandColumnVisible: true,
                     expandColumnComponent: this.expandColumnComponent,
@@ -2069,8 +2441,8 @@ export class Quotes extends React.Component
                     dataField='object_number'
                     dataSort
                     caretRender={this.getCaret}
-                    // thStyle={() => {this.state.col_id_visible?({position: 'fixed', background: 'red' }):({background: 'lime'})}}
-                    // thStyle={this.state.col_id_visible?{position: 'fixed', left: '400px',background: 'lime'}:{position: 'fixed', background: 'red'}}
+                    // thStyle={() => {this.state.col_id_visible?({position: 'fixed', background: '#ff7400' }):({background: 'lime'})}}
+                    // thStyle={this.state.col_id_visible?{position: 'fixed', left: '400px',background: 'lime'}:{position: 'fixed', background: '#ff7400'}}
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 'px', background: 'lime'}}
                     tdStyle={() => {({'fontWeight': 'lighter'})}}
                     hidden={!this.state.col_object_number_visible}
@@ -2084,7 +2456,42 @@ export class Quotes extends React.Component
                     // editable={{type: 'select'}}
                     customEditor={{
                       getElement: (func, props) =>
-                        <ComboBox items={this.props.clients} selected_item={props.row.client} label='client_name' />
+                        (<ComboBox
+                          items={this.props.clients}
+                          selected_item={props.row.client}
+                          label='client_name'
+                          onChange={(evt)=>
+                          {
+                            if(SessionManager.session_usr.access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                            {
+                              // revert combo box selection
+                              // this.cbx_status.state.selected_item = props.row.client;
+
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                payload: {type: 'danger', message: 'You are not authorised to update the state of this quote.'}
+                              });
+
+                              // this.cbx_status.blur();
+                              return;
+                            }
+                            const selected_client = JSON.parse(evt.currentTarget.value);
+                            console.log('selected_client: ', selected_client);
+                            const selected_quote = props.row;
+                            selected_quote.client_id = selected_client._id;
+                            selected_quote.client = selected_client;
+                            selected_quote.client_name = selected_client.client_name;
+
+                            // send signal to update quote on local & remote storage
+                            this.props.dispatch(
+                            {
+                              type: ACTION_TYPES.QUOTE_UPDATE,
+                              payload: selected_quote
+                            });
+                            console.log('dispatched quote update');
+                          }}
+                        />)
                     }}
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 240 + 'px', background: 'lime'}}
                     tdStyle={{'fontWeight': 'lighter'}}
@@ -2101,7 +2508,42 @@ export class Quotes extends React.Component
                     hidden={!this.state.col_contact_person_id_visible}
                     customEditor={{
                       getElement: (func, props) =>
-                        <ComboBox items={this.props.users} selected_item={props.row.contact} label='name' />
+                        (<ComboBox
+                          items={this.props.employees}
+                          selected_item={props.row.contact}
+                          label='name'
+                          onChange={(evt)=>
+                          {
+                            if(SessionManager.session_usr.access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                            {
+                              // revert combo box selection
+                              // this.cbx_status.state.selected_item = props.row.client;
+
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                payload: {type: 'danger', message: 'You are not authorised to update the state of this quote.'}
+                              });
+
+                              // this.cbx_status.blur();
+                              return;
+                            }
+                            const selected_contact = JSON.parse(evt.currentTarget.value);
+                            console.log('selected contact person: ', selected_contact);
+                            const selected_quote = props.row;
+                            selected_quote.contact_person_id = selected_contact.usr;
+                            selected_quote.contact = selected_contact;
+                            selected_quote.contact_person = selected_contact.name;
+
+                            // send signal to update quote on local & remote storage
+                            this.props.dispatch(
+                            {
+                              type: ACTION_TYPES.QUOTE_UPDATE,
+                              payload: selected_quote
+                            });
+                            console.log('dispatched quote update');
+                          }}
+                        />)
                     }}
                   >Contact&nbsp;Person
                   </TableHeaderColumn>
@@ -2117,6 +2559,7 @@ export class Quotes extends React.Component
                         <input
                           type='text'
                           defaultValue={props.row.sitename}
+                          style={{border: '1px solid lime', borderRadius: '2px'}}
                           onChange={(val) => {
                             const sel_quo = props.row;
                             sel_quo.sitename = val.currentTarget.value;
@@ -2140,6 +2583,7 @@ export class Quotes extends React.Component
                         <input
                           type='text'
                           defaultValue={props.row.request}
+                          style={{border: '1px solid lime', borderRadius: '2px'}}
                           onChange={(val) => {
                             const sel_quo = props.row;
                             sel_quo.request = val.currentTarget.value;
@@ -2155,6 +2599,7 @@ export class Quotes extends React.Component
                   <TableHeaderColumn
                     dataField='vat'
                     dataSort
+                    editable={false}
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
@@ -2166,6 +2611,7 @@ export class Quotes extends React.Component
                     dataField='revision'
                     dataSort
                     caretRender={this.getCaret}
+                    editable={false}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_revision_visible}
@@ -2231,6 +2677,7 @@ export class Quotes extends React.Component
                     dataSort
                     ref={this.creator_ref}
                     caretRender={this.getCaret}
+                    editable={false}
                     // thStyle={{position: 'fixed', right: this.width, border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_creator_visible}
@@ -2241,6 +2688,7 @@ export class Quotes extends React.Component
                     dataField='logged_date'
                     dataSort
                     caretRender={this.getCaret}
+                    editable={false}
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_date_logged_visible}

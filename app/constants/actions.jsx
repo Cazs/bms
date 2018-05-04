@@ -66,7 +66,10 @@ export const MATERIAL_DUPLICATE = 'MATERIAL_DUPLICATE';
 // ===========================================================
 
 export const QUOTE_NEW = 'QUOTE_NEW';
+export const QUOTE_MATERIAL_NEW = 'QUOTE_MATERIAL_NEW';
 export const QUOTE_UPDATE = 'QUOTE_UPDATE';
+export const LOCAL_QUOTE_UPDATE = 'LOCAL_QUOTE_UPDATE';
+
 export const QUOTE_ITEM_ADD = 'QUOTE_ITEM_ADD';
 export const QUOTE_ITEM_UPDATE = 'QUOTE_ITEM_UPDATE';
 export const QUOTE_ITEM_EXTRA_COST_ADD = 'QUOTE_ITEM_EXTRA_COST_ADD';

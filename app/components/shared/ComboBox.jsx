@@ -28,7 +28,7 @@ class ComboBox extends React.Component
     updateData(value)
     {
       // this.props.onUpdate({ selected_item: this.state.selected_item });
-      this.props.onUpdate(value);
+      this.props.onChange(value);
     }
     render() {
       return (
@@ -37,11 +37,11 @@ class ComboBox extends React.Component
             // defaultValue={this.state.selected}
             ref={(r)=>this.combobox = r}
             onKeyDown={this.props.onKeyDown}
-            onChange={(ev) =>
+            onChange={(new_item) =>
                       {
-                        this.setState({ selected_item: ev.currentTarget.value });
+                        this.setState({ selected_item: new_item });
                         // console.log(ev.currentTarget);
-                        this.updateData(ev.currentTarget.value);
+                        this.updateData(new_item); // ev.currentTarget.value
                       }}
           >
             {

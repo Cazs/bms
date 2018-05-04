@@ -760,7 +760,7 @@ export class LeaveApplications extends React.Component
             {leaveApplications.length === 0 ? (
               <Message danger text='No leave applications were found in the system' style={{marginTop: '145px'}} />
             ) : (
-              <div style={{maxHeight: 'auto', marginTop: '20px', marginLeft: '-40px', backgroundColor: '#2BE8A2'}}>
+              <div style={{maxHeight: 'auto', marginTop: '20px', marginLeft: '-40px', backgroundColor: '#eeeeee'}}>
                 <BootstrapTable
                   id='tblLeaveApplications'
                   key='tblLeaveApplications'
@@ -772,7 +772,7 @@ export class LeaveApplications extends React.Component
                   selectRow={{bgColor: 'red'}}
                   expandableRow={this.isExpandableRow}
                   expandComponent={this.expandComponent}
-                  trStyle={(row) => ({background: 'lightblue'})}
+                  trStyle={(row) => ({background: '#ff7400'})}
                   expandColumnOptions={{
                     expandColumnVisible: true,
                     expandColumnComponent: this.expandColumnComponent,

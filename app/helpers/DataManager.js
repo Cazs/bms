@@ -90,6 +90,42 @@ const getLocalResource = (db, callback) =>
     db.find({}, (err, docs) => callback(err, docs));
 }
 
+export const updateLocalResource = (dispatch, db, resource, collection_name) =>  new Promise((resolve, reject) =>
+{
+    // TODO: return array from server then just resolve that
+    console.log
+    // update local store
+    if(db)
+    {
+      db.update({_id: resource._id} ,resource, (error) =>
+      {
+        if(error)
+        {
+          Log('error', error);
+          return reject(error);
+        }
+        dispatch(UIActions.newNotification('success', 'Successfully updated local '+collection_name));
+        resolve(resource);
+        Log('info', 'successfully updated record on local collection [' + collection_name + '].');
+      });
+      // TODO: return updated document or all documents?
+      // return updated local documents
+      // getLocalResource(db, (err, docs) =>
+      // {
+      //   if(err)
+      //   {
+      //     Log('error', err);
+      //     return reject(err);
+      //   }
+      //   resolve(docs);
+      // });
+    } else
+    {
+      Log('warning', 'no db collection specified.');
+      reject(new Error('invalid database collection'));
+    }
+});
+
 const getRemoteResource = (dispatch, endpoint, collection_name, callback) => 
 {
     const { HttpClient } = require('../helpers/HttpClient');
@@ -144,18 +180,19 @@ export const putRemoteResource = (dispatch, db, resource, endpoint, collection_n
     const { HttpClient } = require('../helpers/HttpClient');
     return HttpClient.put(endpoint, resource)
                       .then(response =>
-                      { 
+                      {
                         if(response)
                         {
                           if(response.status == 200) // Success, successfully created record
                           {
                             resolve(response.data);
-                            dispatch(UIActions.newNotification('success', 'Successfully added a new record to collection ['+collection_name+']'));
+                            dispatch(UIActions.newNotification('success', 'Successfully added a new record to '+collection_name+' collection.'));
                             // save to local store, if db is defined
                             if(db)
                             {
-                              const new_quote_id = response.data;
-                              db.insert(Object.assign(resource, {_id: new_quote_id}), (error) =>
+                              console.log('new ' + collection_name + ' object _id: ' + response.data);
+                              const new_obj_id = response.data;
+                              db.insert(Object.assign(resource, {_id: new_obj_id}), (error) =>
                               {
                                 if(error)
                                 {
