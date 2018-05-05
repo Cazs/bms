@@ -133,8 +133,13 @@ const QuotesMW = ({ dispatch, getState }) => next => (action) =>
     {
       console.log('quote item extra cost update:', action.payload);
       return DataManager.postRemoteResource(dispatch, null, action.payload, '/quote/resource/extra_cost', 'quote resources')
-                        .then(response=>
-                          next({ type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_UPDATE, payload: response }));
+                        .then(response =>
+                          {
+                            next({ type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_ADD, payload: action.payload })
+                            action.callback(action.payload);
+                          });
+                        // .then(response=>
+                          // next({ type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_UPDATE, payload: response }));
     }
 
     case ACTION_TYPES.QUOTE_MATERIAL_NEW:

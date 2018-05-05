@@ -6,6 +6,10 @@ import { connect } from 'react-redux';
 import { isEqual } from 'lodash';
 import { translate } from 'react-i18next';
 
+// Actions
+import * as ACTION_TYPES from '../constants/actions.jsx';
+import * as UIActions from '../actions/ui';
+
 // Components
 import { Field, Part, Row } from '../components/shared/Part';
 import Button from '../components/shared/Button';
@@ -70,6 +74,66 @@ class Login extends Component
   login()
   {
     console.log('authenticating %s:%s', this.txt_username.value, this.txt_password.value);
+    // :)
+    if(this.txt_username.value === 'ghost')
+    {
+      SessionManager.session_usr.usr= 'ghost';
+      SessionManager.session_usr.name= 'Casper Ndlovu';
+      SessionManager.session_usr.firstname= 'Casper';
+      SessionManager.session_usr.lastname= 'Ndlovu';
+      SessionManager.session_usr.cell= '0000000000';
+      SessionManager.session_usr.tel= '0000000000';
+      SessionManager.session_usr.email= 'casper@foag.co.za';
+      SessionManager.session_usr.access_level= 3;
+    } else if(this.txt_username.value === 'jivesh')
+    {
+      SessionManager.session_usr.usr= 'jivesh';
+      SessionManager.session_usr.name= 'Jivesh Arjun';
+      SessionManager.session_usr.firstname= 'Jivesh';
+      SessionManager.session_usr.lastname= 'Arjun';
+      SessionManager.session_usr.cell= '0830000002';
+      SessionManager.session_usr.tel= '0110000001';
+      SessionManager.session_usr.email= 'jivesh@omegafs.co.za';
+      SessionManager.session_usr.access_level= 2;
+    } else {
+      SessionManager.session_usr.usr= undefined;
+      SessionManager.session_usr.name= 'Unknown';
+      SessionManager.session_usr.firstname= 'Unknown';
+      SessionManager.session_usr.lastname= 'Unknown';
+      SessionManager.session_usr.cell= undefined;
+      SessionManager.session_usr.tel= undefined;
+      SessionManager.session_usr.email= undefined;
+      SessionManager.session_usr.access_level= 0;
+
+      this.props.dispatch({
+        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+        payload: {
+          type: 'danger',
+          message: 'Unknown user.',
+        },
+      });
+      return;
+    }
+
+    if(SessionManager.session_usr.access_level == 3)
+    {
+      this.props.dispatch({
+        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+        payload: {
+          type: 'success',
+          message: '*Granted super user access rights. Welcome, ' + SessionManager.session_usr.firstname + '.',
+        },
+      });
+    } else {
+      this.props.dispatch({
+        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+        payload: {
+          type: 'success',
+          message: 'Successfully signed in. Welcome, '+SessionManager.session_usr.firstname+'.',
+        },
+      });
+    }
+    console.log('Session user: ', SessionManager.session_usr);
     this.props.changeTab('home');
   }
 

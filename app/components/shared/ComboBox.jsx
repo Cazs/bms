@@ -27,7 +27,7 @@ class ComboBox extends React.Component
     
     updateData(value)
     {
-      // this.props.onUpdate({ selected_item: this.state.selected_item });
+      // this.setState({ selected_item: this.state.selected_item });
       this.props.onChange(value);
     }
     render() {

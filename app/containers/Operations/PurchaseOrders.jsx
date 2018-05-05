@@ -331,7 +331,7 @@ export class PurchaseOrders extends React.Component
                   items={this.props.materials}
                   label='resource_description'
                     // defaultValue={this.props.materials[0]}
-                  onUpdate={(newValue) =>
+                  onChange={(newValue) =>
                     {
                       // get selected value
                       const selected_mat = JSON.parse(newValue);
@@ -666,7 +666,7 @@ export class PurchaseOrders extends React.Component
                       items={this.props.employees}
                       // selected_item={this.state.new_purchase_order.contact}
                       label='name'
-                      onUpdate={(new_val)=>{
+                      onChange={(new_val)=>{
                         const selected_contact = JSON.parse(new_val);
                         const purchaseOrder = this.state.new_purchase_order;
                         purchaseOrder.contact_id = selected_contact.usr;
@@ -686,7 +686,7 @@ export class PurchaseOrders extends React.Component
                       items={this.props.suppliers}
                       // selected_item={this.state.new_purchase_order.supplier}
                       label='supplier_name'
-                      onUpdate={(new_val)=>{
+                      onChange={(new_val)=>{
                         const selected_supplier = JSON.parse(new_val);
                         
                         const purchaseOrder = this.state.new_purchase_order;

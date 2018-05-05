@@ -383,7 +383,7 @@ export class Quotes extends React.Component
             onClick={() => this.setState({is_new_material_modal_open: true, selected_quote: row})}
             style={{marginRight: '20px'}}
           >
-          New Material
+          New&nbsp;Material
           </Button>
           <Button primary onClick={() => this.showQuotePreview(row)}>PDF Preview</Button>
           <Button
@@ -398,16 +398,27 @@ export class Quotes extends React.Component
             style={{marginLeft: '15px'}}
             onClick={(evt) =>
             {
-              // if(!row.status == 0)
-              // {
-              //   return this.props.dispatch({
-              //     type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-              //     payload: {
-              //       type: 'danger',
-              //       message: 'Error: Quote has not yet been approved',
-              //     },
-              //   });
-              // }
+              if(SessionManager.session_usr.access_level <= GlobalConstants.ACCESS_LEVELS[2].level)
+              {
+                this.props.dispatch(
+                {
+                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                  payload: {type: 'danger', message: 'You are not authorised to create job cards.'}
+                });
+                return;
+              }
+
+              // check if quote has been approved yet
+              if(row.status !== 1)
+              {
+                return this.props.dispatch({
+                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                  payload: {
+                    type: 'danger',
+                    message: 'Error: Quote has not yet been authorised.',
+                  },
+                });
+              }
 
               // Prepare Job
               const new_job =
@@ -424,6 +435,7 @@ export class Quotes extends React.Component
                 vat: row.vat,
                 creator_name: SessionManager.session_usr.name,
                 status: 0,
+                status_description: 'pending',
                 quote_revisions: row.revision,
                 tasks: [],
                 creator: SessionManager.session_usr.usr,
@@ -464,10 +476,10 @@ export class Quotes extends React.Component
                   label='resource_description'
                   selected_index='0'
                   // defaultValue={this.props.materials ? this.props.materials[0]: undefined}
-                  onUpdate={(newValue) =>
+                  onChange={(newValue) =>
                     {
                       // get selected value
-                      const selected_mat = JSON.parse(newValue);
+                      const selected_mat = JSON.parse(newValue.currentTarget.value);
 
                       this.unit_cost.value = selected_mat.resource_value;
 
@@ -630,10 +642,10 @@ export class Quotes extends React.Component
               dataField='item_number'
               dataSort
               caretRender={this.getCaret}
-              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
-              thStyle={{ whiteSpace: 'normal' }}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '80px'}}
+              thStyle={{ whiteSpace: 'normal', width: '80px' }}
               // hidden={!this.state.col_object_number_visible}
-            >Item&nbsp;No.
+            >Item
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -641,8 +653,8 @@ export class Quotes extends React.Component
               dataField='item_description'
               dataSort
               caretRender={this.getCaret}
-              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
-              thStyle={{ whiteSpace: 'normal' }}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '180px'}}
+              thStyle={{ whiteSpace: 'normal', width: '180px' }}
               // hidden={!this.state.col_object_number_visible}
             >Description
             </TableHeaderColumn>
@@ -689,6 +701,7 @@ export class Quotes extends React.Component
                                               {
                                                 // all these updates below are purely to update local fs state, remote values are computed/derived
                                                 unit_cost: new_unit_cost,
+                                                rate: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_rate,
                                                 total: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_total
                                               })
                       });
@@ -704,6 +717,13 @@ export class Quotes extends React.Component
                           payload: Object.assign(this.state.selected_quote_item,
                             { lastUpdated: new Date().getTime() })
                         });
+
+                        Log('verbose_info', 'updating local quote state');
+                        this.props.dispatch(
+                        {
+                          type: ACTION_TYPES.LOCAL_QUOTE_UPDATE,
+                          payload: row
+                        });
                       }
                     }}
                   />)
@@ -713,11 +733,84 @@ export class Quotes extends React.Component
             </TableHeaderColumn>
 
             <TableHeaderColumn
-              dataField='quantity'
+              dataField='markup'
               dataSort
               caretRender={this.getCaret}
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
+              customEditor={{
+                getElement: (func, props) =>
+                (
+                  <input
+                    type='text'
+                    defaultValue={props.row.markup}
+                    style={{border: '1px solid lime', borderRadius: '2px'}}
+                    onChange={(val) =>
+                    {
+                      const sel_quote_item = props.row;
+                      // get quote item's extra costs total
+                      let extra_costs_total = 0;
+                      props.row.extra_costs.map((cost) => extra_costs_total += Number(cost.cost) + (Number(cost.cost) * Number(cost.markup)/100));
+                      Log('verbose_info', 'selected quote item\'s extra costs total: ' + extra_costs_total);
+                      
+                      const new_markup = val.currentTarget.value ? Number(val.currentTarget.value) : 0;
+                      const unit_cost_markup = Number(Number(props.row.unit_cost) * Number(new_markup)/100);
+                      const markedup_unit_cost = Number(Number(props.row.unit_cost) + unit_cost_markup);
+
+                      // rate = marked up unit cost + extra cost total
+                      const quote_item_rate = Number(markedup_unit_cost + extra_costs_total);
+                      
+                      Log('verbose_info', 'selected quote item\'s new rate: ' + quote_item_rate);
+                      
+                      // total = rate * quantity
+                      const quote_item_total = getQuoteItemTotal(Object.assign(props.row, {markup: new_markup}));// = Number(quote_item_rate * Number(props.row.quantity));
+                      Log('verbose_info', 'new quote item total: ' + quote_item_total);
+
+                      // update state
+                      this.setState(
+                      {
+                        // TODO: currency format below
+                        selected_quote_item: Object.assign(props.row,
+                                              {
+                                                // all these updates below are purely to update local fs state, remote values are computed/derived
+                                                markup: new_markup,
+                                                rate: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_rate,
+                                                total: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_total
+                                              })
+                      });
+                    }}
+                    onKeyPress={(evt) => 
+                    {
+                      if(evt.key === 'Enter')
+                      {
+                        Log('verbose_info', 'updating quote item: ' +  this.state.selected_quote_item);
+                        this.props.dispatch(
+                        {
+                          type: ACTION_TYPES.QUOTE_ITEM_UPDATE,
+                          payload: Object.assign(this.state.selected_quote_item,
+                            { lastUpdated: new Date().getTime() })
+                        });
+
+                        Log('verbose_info', 'updating local quote state');
+                        this.props.dispatch(
+                        {
+                          type: ACTION_TYPES.LOCAL_QUOTE_UPDATE,
+                          payload: row
+                        });
+                      }
+                    }}
+                  />)
+              }}
+              // hidden={!this.state.col_contact_person_id_visible}
+            >Markup
+            </TableHeaderColumn>
+
+            <TableHeaderColumn
+              dataField='quantity'
+              dataSort
+              caretRender={this.getCaret}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '80px'}}
+              thStyle={{ whiteSpace: 'normal', width: '80px' }}
               customEditor={{
                 getElement: (func, props) =>
                 (
@@ -754,6 +847,7 @@ export class Quotes extends React.Component
                                               {
                                                 // all these updates below are purely to update local fs state, remote values are computed/derived
                                                 quantity: new_quantity,
+                                                rate: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_rate,
                                                 total: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_total
                                               })
                       });
@@ -769,6 +863,13 @@ export class Quotes extends React.Component
                           payload: Object.assign(this.state.selected_quote_item,
                             { lastUpdated: new Date().getTime() })
                         });
+
+                        Log('verbose_info', 'updating local quote state');
+                        this.props.dispatch(
+                        {
+                          type: ACTION_TYPES.LOCAL_QUOTE_UPDATE,
+                          payload: row
+                        });
                       }
                     }}
                   />)
@@ -781,8 +882,9 @@ export class Quotes extends React.Component
               dataField='unit'
               dataSort
               caretRender={this.getCaret}
-              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
-              thStyle={{ whiteSpace: 'normal' }}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '80px'}}
+              thStyle={{ whiteSpace: 'normal', width: '80px' }}
+              editable={false}
               // hidden={!this.state.col_sitename_visible}
             >Unit
             </TableHeaderColumn>
@@ -810,12 +912,12 @@ export class Quotes extends React.Component
                         label='name'
                         value={this.props.employees.length > 0 ? this.props.employees[0]: null}
                         selected_item={this.props.employees.length > 0 ? this.props.employees[0]: null}
-                        onUpdate={(new_val)=>
+                        onChange={(new_val)=>
                         {
                           const assignee_names = props.row.assignee_names;
                           const assignees = props.row.assignees;
 
-                          const selected_user = JSON.parse(new_val);
+                          const selected_user = JSON.parse(new_val.currentTarget.value);
 
                           assignee_names.push(selected_user.name);
                           assignees.push(selected_user);
@@ -923,7 +1025,68 @@ export class Quotes extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               hidden={false}
+              customEditor={{
+                getElement: (func, props) =>
+                (
+                  <input
+                    type='text'
+                    defaultValue={props.row.category}
+                    style={{border: '1px solid lime', borderRadius: '2px'}}
+                    onChange={(val) =>
+                    {
+                      const sel_quote_item = props.row;
+                      // get quote item's extra costs total
+                      let extra_costs_total = 0;
+                      props.row.extra_costs.map((cost) => extra_costs_total += Number(cost.cost) + (Number(cost.cost) * Number(cost.markup)/100));
+                      Log('verbose_info', 'selected quote item\'s extra costs total: ' + extra_costs_total);
+                      
+                      const new_category = val.currentTarget.value;
+
+                      // update state
+                      this.setState(
+                      {
+                        // TODO: currency format below
+                        selected_quote_item: Object.assign(props.row,
+                                              {
+                                                // all these updates below are purely to update local fs state, remote values are computed/derived
+                                                category: new_category
+                                              })
+                      });
+                    }}
+                    onKeyPress={(evt) => 
+                    {
+                      if(evt.key === 'Enter')
+                      {
+                        Log('verbose_info', 'updating quote item: ' +  this.state.selected_quote_item);
+                        this.props.dispatch(
+                        {
+                          type: ACTION_TYPES.QUOTE_ITEM_UPDATE,
+                          payload: Object.assign(this.state.selected_quote_item,
+                            { lastUpdated: new Date().getTime() })
+                        });
+
+                        Log('verbose_info', 'updating local quote state');
+                        this.props.dispatch(
+                        {
+                          type: ACTION_TYPES.LOCAL_QUOTE_UPDATE,
+                          payload: row
+                        });
+                      }
+                    }}
+                  />)
+              }}
             >Category
+            </TableHeaderColumn>
+
+            <TableHeaderColumn
+              dataField='rate'
+              dataSort
+              caretRender={this.getCaret}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
+              thStyle={{ whiteSpace: 'normal' }}
+              hidden={false}
+              editable={false}
+            >Rate
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -1002,13 +1165,22 @@ export class Quotes extends React.Component
 
   handleQuoteUpdate(evt, quote)
   {
-    if(evt.key === 'Enter')
+    if(!evt || evt.key === 'Enter')
     {
-      Log('verbose_info', 'updating quote: ' +  quote);
-      this.props.dispatch({
-        type: ACTION_TYPES.QUOTE_UPDATE,
-        payload: Object.assign(quote, { creator: SessionManager.session_usr.usr })
-      });
+      if(SessionManager.session_usr.access_level > GlobalConstants.ACCESS_LEVELS[1].level)
+      {
+        Log('verbose_info', 'updating quote: ' +  quote);
+        this.props.dispatch({
+          type: ACTION_TYPES.QUOTE_UPDATE,
+          payload: Object.assign(quote, { last_updated_by_employee: SessionManager.session_usr.name, last_updated_by: SessionManager.session_usr.usr })
+        });
+      } else {
+        this.props.dispatch(
+          {
+            type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+            payload: {type: 'danger', message: 'You are not authorised to update the state of this quote.'}
+          });
+      }
     }
   }
 
@@ -1342,8 +1514,8 @@ export class Quotes extends React.Component
                   items={this.props.clients}
                         // selected_item={this.state.new_quote.client}
                   label='client_name'
-                  onUpdate={(new_val)=>{
-                          const selected_client = JSON.parse(new_val);
+                  onChange={(new_val)=>{
+                          const selected_client = JSON.parse(new_val.currentTarget.value);
                           
                           const quote = this.state.new_quote;
                           quote.client_id = selected_client._id;
@@ -1364,14 +1536,15 @@ export class Quotes extends React.Component
                   items={this.props.employees}
                         // selected_item={this.state.new_quote.contact}
                   label='name'
-                  onUpdate={(new_val)=>{
-                          const selected_contact = JSON.parse(new_val);
-                          const quote = this.state.new_quote;
-                          quote.contact_id = selected_contact.usr;
-                          quote.contact = selected_contact;
+                  onChange={(new_val)=>
+                  {
+                    const selected_contact = JSON.parse(new_val.currentTarget.value);
+                    const quote = this.state.new_quote;
+                    quote.contact_id = selected_contact.usr;
+                    quote.contact = selected_contact;
 
-                          this.setState({new_quote: quote});
-                        }}
+                    this.setState({new_quote: quote});
+                  }}
                 />
               </div>
             </div>
@@ -1437,7 +1610,7 @@ export class Quotes extends React.Component
               <textarea
                 name="notes"
                 value={this.state.new_quote.other}
-                onChange={this.handleInputChange}
+                // onChange={this.handleInputChange}
                 style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
               />
             </div>
@@ -1685,19 +1858,46 @@ export class Quotes extends React.Component
                         title: this.txt_title.value,
                         markup: this.txt_markup.value,
                         cost: this.txt_cost.value,
+                        // admin stuffs
                         date_logged: new Date().getTime(),
                         logged_date: formatDate(new Date()),// current date
                         creator: SessionManager.session_usr.usr,
-                        creator_employee: SessionManager.session_usr
+                        creator_employee: SessionManager.session_usr,
+                        date_last_updated: new Date().getTime(),
+                        last_update_date: formatDate(new Date()), // current date
+                        last_updated_by: SessionManager.session_usr.usr,
+                        last_updated_by_employee: SessionManager.session_usr
                       };
 
-                      // get quote item's extra costs total
-                      let new_extra_costs_total = Number(extra_cost.cost) + Number(extra_cost.cost) * Number(extra_cost.markup)/100;
-                      this.state.selected_quote_item.extra_costs.map((cost) => new_extra_costs_total += Number(cost.cost) + (Number(cost.cost) * Number(cost.markup)/100));
+                      let new_extra_costs_total = 0;
+
+                      if(this.state.extra_cost_modal_props.edit_mode)
+                      {
+                        console.log('edit mode is enabled, updating selected extra cost.')
+                        // set existing _id for selected extra cost
+                        extra_cost._id = this.state.selected_extra_cost._id;
+                        // admin stuffs
+                        extra_cost.date_logged = this.state.selected_extra_cost.date_logged;
+                        extra_cost.logged_date = this.state.selected_extra_cost.logged_date;
+                        extra_cost.creator = this.state.selected_extra_cost.creator;
+                        extra_cost.creator_employee = this.state.selected_extra_cost.creator_employee;
+                        extra_cost.date_last_updated = new Date().getTime();
+                        extra_cost.last_update_date = formatDate(new Date()); // current date
+                        extra_cost.last_updated_by = SessionManager.session_usr.usr;
+                        extra_cost.last_updated_by_employee = SessionManager.session_usr;
+                      } else 
+                      {
+                        console.log('not in edit mode, is creating new extra cost');
+                        // if creating new cost, set quote item's default total as new extra cost's total
+                        new_extra_costs_total = Number(Number(extra_cost.cost) + (Number(extra_cost.cost) * Number(extra_cost.markup)/100));
+                      }
+                      // add remaining quote item's extra costs to total
+                      this.state.selected_quote_item.extra_costs.map((cost) => new_extra_costs_total += Number(Number(cost.cost) + Number((Number(cost.cost) * Number(cost.markup)/100))));
+
                       console.log('new extra costs total: %s', new_extra_costs_total);
 
                       // rate = marked up unit cost + extra_cost_total
-                      const quote_item_rate = Number(this.state.selected_quote_item.unit_cost) + (Number(this.state.selected_quote_item.unit_cost) * Number(this.state.selected_quote_item.markup)/100) + Number(new_extra_costs_total);
+                      const quote_item_rate = Number(Number(this.state.selected_quote_item.unit_cost) + ((Number(this.state.selected_quote_item.unit_cost) * Number(this.state.selected_quote_item.markup)/100) + Number(new_extra_costs_total)));
                       console.log('new quote item rate: %s', quote_item_rate);
 
                       // total = rate * quantity
@@ -1715,8 +1915,9 @@ export class Quotes extends React.Component
                                                 total: GlobalConstants.CURRENCY_SYMBOL + ' ' + quote_item_total,
                                                 rate: quote_item_rate
                                               }),
-                        extra_cost_modal_props: this.state.extra_cost_modal_props.edit_mode ? this.state.extra_cost_modal_props :
-                                                Object.assign(this.state.extra_cost_modal_props, {visible: false}),
+                        // extra_cost_modal_props: this.state.extra_cost_modal_props.edit_mode ? this.state.extra_cost_modal_props :
+                        //                         Object.assign(this.state.extra_cost_modal_props, {visible: false}),
+                        // extra_cost_modal_props: Object.assign(this.state.extra_cost_modal_props, {visible: false}),
                         // if is editing leave current as selected, else if adding reset selected_extra_cost
                         selected_extra_cost: this.state.extra_cost_modal_props.edit_mode ? extra_cost :
                                               {
@@ -1750,11 +1951,10 @@ export class Quotes extends React.Component
                           {
                             console.log('complete new extra cost: ', new_extra_cost_from_server);
 
-                            // push new cost to selected_quote_item's list of costs if not in edit mode
-                            if(!context.state.extra_cost_modal_props.edit_mode)
-                              context.state.selected_quote_item.extra_costs.push(new_extra_cost_from_server);
+                            // push new cost w/ _id to selected_quote_item's list of extra costs
+                            context.state.selected_quote_item.extra_costs.push(new_extra_cost_from_server);
 
-                            context.setState(context.state.selected_quote_item);
+                            context.setState({ selected_quote_item: context.state.selected_quote_item, extra_cost_modal_props: Object.assign(context.state.extra_cost_modal_props, {visible: false, edit_mode: false})});
 
                             // signal update quote - so it saves new extra costs to local storage
                             context.props.dispatch(
@@ -1768,7 +1968,19 @@ export class Quotes extends React.Component
                         this.props.dispatch(
                         {
                           type: ACTION_TYPES.QUOTE_ITEM_EXTRA_COST_UPDATE,
-                          payload: extra_cost
+                          payload: extra_cost,
+                          callback(new_extra_cost)
+                          {
+                            // hide modal & disable edit mode after update
+                            context.setState({extra_cost_modal_props: Object.assign(context.state.extra_cost_modal_props, {visible: false, edit_mode: false})});
+
+                            // signal update quote - so it saves new extra cost to local storage
+                            context.props.dispatch(
+                            {
+                              type: ACTION_TYPES.LOCAL_QUOTE_UPDATE,
+                              payload: context.state.selected_quote
+                            });
+                          }
                         });
                     } else
                       this.props.dispatch(
@@ -2484,11 +2696,12 @@ export class Quotes extends React.Component
                             selected_quote.client_name = selected_client.client_name;
 
                             // send signal to update quote on local & remote storage
-                            this.props.dispatch(
-                            {
-                              type: ACTION_TYPES.QUOTE_UPDATE,
-                              payload: selected_quote
-                            });
+                            // this.props.dispatch(
+                            // {
+                            //   type: ACTION_TYPES.QUOTE_UPDATE,
+                            //   payload: selected_quote
+                            // });
+                            this.handleQuoteUpdate(undefined, selected_quote);
                             console.log('dispatched quote update');
                           }}
                         />)
@@ -2536,11 +2749,12 @@ export class Quotes extends React.Component
                             selected_quote.contact_person = selected_contact.name;
 
                             // send signal to update quote on local & remote storage
-                            this.props.dispatch(
-                            {
-                              type: ACTION_TYPES.QUOTE_UPDATE,
-                              payload: selected_quote
-                            });
+                            // this.props.dispatch(
+                            // {
+                            //   type: ACTION_TYPES.QUOTE_UPDATE,
+                            //   payload: selected_quote
+                            // });
+                            this.handleQuoteUpdate(undefined, selected_quote);
                             console.log('dispatched quote update');
                           }}
                         />)
@@ -2636,9 +2850,9 @@ export class Quotes extends React.Component
                           // value={GlobalConstants.ACCESS_LEVELS[selected_quote.status]}
                           selected_index={selected_quote.status} // {GlobalConstants.ACCESS_LEVELS[1]}
                           label='status_description'
-                          onUpdate={(new_val)=>
+                          onChange={(new_val)=>
                           {
-                              const selected_status = JSON.parse(new_val);
+                              const selected_status = JSON.parse(new_val.currentTarget.value);
                               console.log(selected_status);
                               console.log(props.row);
 
@@ -2657,14 +2871,18 @@ export class Quotes extends React.Component
                                 return;
                               }
 
+                              console.log('selected status: ', selected_status);
                               selected_quote.status = selected_status.status;
-                              // TODO: update on server
-                              // const quote = this.state.new_quote;
-                              // quote.client_id = selected_client._id;
-                              // quote.client = selected_client;
+                              selected_quote.status_description = selected_status.status_description;
 
-                              // this.setState({new_quote: quote});
-                              // this.sitename = selected_client.physical_address;
+                              // send signal to update quote on local & remote storage
+                              // this.props.dispatch(
+                              // {
+                              //   type: ACTION_TYPES.QUOTE_UPDATE,
+                              //   payload: selected_quote
+                              // });
+                              this.handleQuoteUpdate(undefined, selected_quote);
+                              console.log('dispatched quote update');
                           }}
                         />)
                       }

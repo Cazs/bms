@@ -104,6 +104,7 @@ class Home extends Component
                   <Profile
                     style={{marginTop: '0px'}}
                     // onClick={()=>this.setState({profile_menu_visible: !this.state.profile_menu_visible})}
+                    onClick={()=>this.props.changeTab('login')}
                   />
                   <label style={{fontSize: '26pt', marginLeft: '30px', marginTop: '15px', float: 'left', color: '#fff'}}>{SessionManager.session_usr.name}</label>
                 </div>

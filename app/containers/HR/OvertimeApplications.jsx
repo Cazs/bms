@@ -326,7 +326,7 @@ export class OvertimeApplications extends React.Component
                       items={this.props.jobs}
                         // selected_item={this.state.new_overtime_application.client}
                       label='object_number'
-                      onUpdate={(new_val)=>{
+                      onChange={(new_val)=>{
                           const selected_job = JSON.parse(new_val);
                           
                           const overtime_application = this.state.new_overtime_application;
@@ -834,7 +834,7 @@ export class OvertimeApplications extends React.Component
                           items={this.props.jobs}
                             // selected_item={this.state.new_overtime_application.client}
                           label='object_number'
-                          onUpdate={(new_val)=>{
+                          onChange={(new_val)=>{
                               const selected_job = JSON.parse(new_val);
                               
                               const overtime_application = this.state.new_overtime_application;

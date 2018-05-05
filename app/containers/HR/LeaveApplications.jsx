@@ -374,7 +374,7 @@ export class LeaveApplications extends React.Component
                         ]}
                         // selected_item={this.state.new_leave_application.client}
                       label='option_name'
-                      onUpdate={(new_val)=>{
+                      onChange={(new_val)=>{
                           const selected_type = JSON.parse(new_val);
                           
                           const leave_application = this.state.new_leave_application;
@@ -838,7 +838,7 @@ export class LeaveApplications extends React.Component
                               {option_name: 'UNPAID'},
                               {option_name: 'FAMILY RESPONSIBILITY - See BCEA for definition'}
                             ]}
-                          onUpdate={(new_val)=>
+                          onChange={(new_val)=>
                           {
                               const selected_type = JSON.parse(new_val);
                               

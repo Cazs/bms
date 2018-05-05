@@ -677,7 +677,7 @@ export class Jobs extends React.Component
                         label='name'
                         value={this.props.employees.length > 0 ? this.props.employees[0]: null}
                         selected_item={this.props.employees.length > 0 ? this.props.employees[0]: null}
-                        onUpdate={(new_val)=>
+                        onChange={(new_val)=>
                         {
                           const assignee_names = props.row.assignee_names;
                           const assignees = props.row.assignees;
@@ -867,7 +867,7 @@ export class Jobs extends React.Component
                       items={this.props.employees}
                       // selected_item={this.state.new_job.contact}
                       label='name'
-                      onUpdate={(new_val)=>{
+                      onChange={(new_val)=>{
                         const selected_contact = JSON.parse(new_val);
                         const job = this.state.new_job;
                         job.contact_id = selected_contact.usr;
@@ -886,7 +886,7 @@ export class Jobs extends React.Component
                       items={this.props.clients}
                       // selected_item={this.state.new_job.client}
                       label='client_name'
-                      onUpdate={(new_val)=>{
+                      onChange={(new_val)=>{
                         const selected_client = JSON.parse(new_val);
                         const job = this.state.new_job;
                         job.client_id = selected_client._id;
