@@ -186,10 +186,13 @@ function setInitialValues() {
       logo: logoBase64String,
       fullname: 'Omega Fire & Security',
       company: 'Omega Fire & Security',
-      address: '2 Jermyn street, Robertsham, 2191, Johannesburg, South Africa',
+      address: '2 Jermyn street, Robertsham, Johannesburg, South Africa, 2191',
+      postal_address: 'PO BOX 7764, WELTEVREDEN PARK, Johannesburg, South Africa, 1715',
       email: 'info@omegafs.co.za',
       phone: '+27 (011) 680 0640',
       website: 'http://www.omegafs.co.za/',
+      reg_number: 'N/A',
+      vat_number: '4420219109'
     },
     general: {
       language: 'en',

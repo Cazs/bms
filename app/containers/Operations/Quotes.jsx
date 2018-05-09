@@ -48,9 +48,10 @@ import Modal from 'react-modal';
 import styled from 'styled-components';
 
 // Helpers
-import * as SessionManager from '../../helpers/SessionManager';
+import sessionManager from '../../helpers/SessionManager';
 import Log, { formatDate } from '../../helpers/Logger';
 import Material from '../../helpers/Material';
+import statuses from '../../helpers/statuses';
 
 import
   {
@@ -81,7 +82,10 @@ const ExtraCost = styled.div`
   background: rgba(255,255,255,.3);
   border-radius: 6px;
   border: 1px solid #fff;
-  height: 25px;
+  padding: 5px;
+  word-wrap: break-word;
+  overflow-wrap: normal;
+  height: auto;
   // Hover
   &:hover {
     cursor: pointer;
@@ -139,8 +143,8 @@ export class Quotes extends React.Component
                       title: '',
                       cost: 0,
                       markup: 0,
-                      creator: SessionManager.session_usr.usr,
-                      creator_employee: SessionManager.session_usr,
+                      creator: sessionManager.getSessionUser().usr,
+                      creator_employee: sessionManager.getSessionUser(),
                       date_logged: new Date().getTime(), // current date in epoch millis
                       logged_date: formatDate(new Date())// current date
                     },
@@ -398,7 +402,7 @@ export class Quotes extends React.Component
             style={{marginLeft: '15px'}}
             onClick={(evt) =>
             {
-              if(SessionManager.session_usr.access_level <= GlobalConstants.ACCESS_LEVELS[2].level)
+              if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[2].level)
               {
                 this.props.dispatch(
                 {
@@ -433,13 +437,13 @@ export class Quotes extends React.Component
                 request: row.request,
                 sitename: row.sitename,
                 vat: row.vat,
-                creator_name: SessionManager.session_usr.name,
+                creator_name: sessionManager.getSessionUser().name,
                 status: 0,
                 status_description: 'pending',
                 quote_revisions: row.revision,
                 tasks: [],
-                creator: SessionManager.session_usr.usr,
-                creator_employee: SessionManager.session_usr,
+                creator: sessionManager.getSessionUser().usr,
+                creator_employee: sessionManager.getSessionUser(),
                 date_logged: new Date().getTime(), // current date in epoch millis
                 logged_date: formatDate(new Date())// current date
               }
@@ -474,36 +478,36 @@ export class Quotes extends React.Component
                 <ComboBox
                   items={this.props.materials}
                   label='resource_description'
-                  selected_index='0'
+                  // selected_index='0'
                   // defaultValue={this.props.materials ? this.props.materials[0]: undefined}
                   onChange={(newValue) =>
+                  {
+                    // get selected value
+                    const selected_mat = JSON.parse(newValue.currentTarget.value);
+
+                    this.unit_cost.value = selected_mat.resource_value;
+
+                    // create quote_item obj
+                    const quote_item =
                     {
-                      // get selected value
-                      const selected_mat = JSON.parse(newValue.currentTarget.value);
+                      item_number: row.resources.length,
+                      quote_id: row._id,
+                      resource_id: selected_mat._id,
+                      resource: selected_mat,
+                      unit_cost: selected_mat.resource_value,
+                      quantity: 1,
+                      unit: selected_mat.unit,
+                      markup: 0,
+                      item_description: selected_mat.resource_description,
+                      category: selected_mat.resource_type,
+                      total: GlobalConstants.CURRENCY_SYMBOL + ' ' + selected_mat.resource_value,
+                      extra_costs_total: 'No extra costs.',
+                      extra_costs: []
+                    };
 
-                      this.unit_cost.value = selected_mat.resource_value;
-
-                      // create quote_item obj
-                      const quote_item =
-                      {
-                        item_number: row.resources.length,
-                        quote_id: row._id,
-                        resource_id: selected_mat._id,
-                        resource: selected_mat,
-                        unit_cost: selected_mat.resource_value,
-                        quantity: 1,
-                        unit: selected_mat.unit,
-                        markup: 0,
-                        item_description: selected_mat.resource_description,
-                        category: selected_mat.resource_type,
-                        total: GlobalConstants.CURRENCY_SYMBOL + ' ' + selected_mat.resource_value,
-                        extra_costs_total: 'No extra costs.',
-                        extra_costs: []
-                      };
-
-                      // update state
-                      this.setState({new_quote_item: quote_item});
-                    }}
+                    // update state
+                    this.setState({new_quote_item: quote_item});
+                  }}
                 />
               </div>
             </div>
@@ -516,7 +520,18 @@ export class Quotes extends React.Component
                 name="unit_cost"
                 type="text"
                 value={this.state.new_quote_item.unit_cost}
-                onChange={(new_val)=> {
+                onChange={(new_val)=>
+                  {
+                    if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+                    {
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {type: 'danger', message: 'You are not authorised to make changes to this quote.'}
+                      });
+                      return;
+                    }
+
                     const quote_item = this.state.new_quote_item;
                     
                     quote_item.unit_cost = new_val.currentTarget.value;
@@ -534,7 +549,18 @@ export class Quotes extends React.Component
                 name="quantity"
                 type="number"
                 value={this.state.new_quote_item.quantity}
-                onChange={(new_val)=> {
+                onChange={(new_val)=>
+                  {
+                    if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+                    {
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {type: 'danger', message: 'You are not authorised to make changes to this quote.'}
+                      });
+                      return;
+                    }
+
                     const quote_item = this.state.new_quote_item;
                     
                     quote_item.quantity = new_val.currentTarget.value;
@@ -545,26 +571,28 @@ export class Quotes extends React.Component
             </div>
 
             <div className="pageItem col-md-6">
-              {/* <label className="itemLabel">Unit</label>
-              <input
-                name="unit"
-                type="text"
-                disabled
-                value={this.state.new_quote_item.unit}
-                style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-              /> */}
               <div style={{width: '300px', marginLeft: 'auto', marginRight: 'auto', marginTop: '25px'}}>
                 <Button
                   success
                   style={{width: '120px', height: '50px', float: 'left'}}
                   onClick={() =>
                   {
+                    if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+                    {
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {type: 'danger', message: 'You are not authorised to make changes to this quote.'}
+                      });
+                      return;
+                    }
+
                     if(this.state.new_quote_item.resource_id && this.state.new_quote_item.quote_id)
                     {
                       const quote_item = this.state.new_quote_item;
                       quote_item.date_logged = new Date().getTime(); // current date in epoch millis
                       quote_item.logged_date = formatDate(new Date());// current date
-                      quote_item.creator = SessionManager.session_usr.usr;
+                      quote_item.creator = sessionManager.getSessionUser().usr;
                       quote_item.total = GlobalConstants.CURRENCY_SYMBOL + ' ' + getQuoteItemTotal(quote_item);
                       quote_item.extras = 'No extra costs.';
                       console.log('creating new quote item: ', quote_item);
@@ -604,7 +632,22 @@ export class Quotes extends React.Component
                   }}
                 >Add
                 </Button>
-                <Button style={{width: '120px', height: '50px', float: 'left', marginLeft: '15px'}} danger>Reset Fields</Button>
+                <Button
+                  danger
+                  style={{width: '120px', height: '50px', float: 'left', marginLeft: '15px'}}
+                  onClick={(evt)=>
+                  {
+                    if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+                    {
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {type: 'danger', message: 'You are not authorised to make changes to this quote.'}
+                      });
+                    }
+                  }}
+                >Reset&nbsp;Fields
+                </Button>
               </div>
             </div>
           </div>
@@ -644,6 +687,7 @@ export class Quotes extends React.Component
               caretRender={this.getCaret}
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '80px'}}
               thStyle={{ whiteSpace: 'normal', width: '80px' }}
+              editable={false}
               // hidden={!this.state.col_object_number_visible}
             >Item
             </TableHeaderColumn>
@@ -893,8 +937,8 @@ export class Quotes extends React.Component
               dataField='extra_costs_total'
               dataSort
               caretRender={this.getCaret}
-              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
-              thStyle={{ whiteSpace: 'normal' }}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '140px'}}
+              thStyle={{ whiteSpace: 'normal', width: '140px'}}
               // hidden={!this.state.col_request_visible}
               customEditor={{
                 getElement: (func, props) =>
@@ -907,34 +951,6 @@ export class Quotes extends React.Component
                   //   this.state.selected_quote.extra_costs = [];
                   return (
                     <div style={{backgroundColor: 'rgba(0,0,0,.3)', borderRadius: '4px', border: '2px solid #5BA5E8'}}>
-                      {/* <ComboBox
-                        items={this.props.employees}
-                        label='name'
-                        value={this.props.employees.length > 0 ? this.props.employees[0]: null}
-                        selected_item={this.props.employees.length > 0 ? this.props.employees[0]: null}
-                        onChange={(new_val)=>
-                        {
-                          const assignee_names = props.row.assignee_names;
-                          const assignees = props.row.assignees;
-
-                          const selected_user = JSON.parse(new_val.currentTarget.value);
-
-                          assignee_names.push(selected_user.name);
-                          assignees.push(selected_user);
-
-                          const assignee_html = 
-                            '<p style="background-color: rgba(255,255,255,.2);line-height: 45px; border-radius: 15px; border: 1px solid #fff; margin-top: 5px;">'
-                              + selected_user.name
-                              + '<span class="ion-close-circled" onmouseover="this.style.color=\'#ff7400\';this.style.cursor=\'pointer\'" onmouseout="this.style.color=\'#fff\'" style="float:right;width: 20px;height: 20px;color: #fff;"></span>'
-                            + '</p>';
-                          if(assignees.length>1)
-                            this.assignee_container.innerHTML += assignee_html;// existing items, append
-                          else this.assignee_container.innerHTML = assignee_html; // no items, add first item
-
-                          Object.assign(props.row.assignee_names, assignee_names);
-                          Object.assign(props.row.assignees, assignees);
-                        }}
-                      /> */}
                       <Button
                         success
                         style={{marginLeft: '5%'}}
@@ -956,8 +972,8 @@ export class Quotes extends React.Component
                                                       title: '',
                                                       cost: 0,
                                                       markup: 0,
-                                                      creator: SessionManager.session_usr.usr,
-                                                      creator_employee: SessionManager.session_usr,
+                                                      creator: sessionManager.getSessionUser().usr,
+                                                      creator_employee: sessionManager.getSessionUser(),
                                                       date_logged: new Date().getTime(), // current date in epoch ms
                                                       logged_date: formatDate(new Date())// current date
                                                     },
@@ -1003,8 +1019,8 @@ export class Quotes extends React.Component
                                       });
                                     }}
                                 >
-                                  <p style={{marginTop: '2px', marginLeft: '2px'}}>
-                                    <i style={{fontWeight: 'lighter', textAlign: 'left', float: 'left'}}>{extra_cost.title}</i>
+                                  <p style={{marginTop: '2px', marginLeft: '2px', wordWrap: 'break-word', overflowWrap: 'normal'}}>
+                                    <i style={{fontWeight: 'lighter', textAlign: 'left', float: 'left', wordWrap: 'break-word', overflowWrap: 'normal'}}>{extra_cost.title}</i>
                                     <em style={{ textAlign: 'right', float: 'right'}}>{GlobalConstants.CURRENCY_SYMBOL} {markedup_cost}</em>
                                   </p>
                                 </ExtraCost>)
@@ -1167,12 +1183,21 @@ export class Quotes extends React.Component
   {
     if(!evt || evt.key === 'Enter')
     {
-      if(SessionManager.session_usr.access_level > GlobalConstants.ACCESS_LEVELS[1].level)
+      if(sessionManager.getSessionUser().access_level > GlobalConstants.ACCESS_LEVELS[1].level)
       {
         Log('verbose_info', 'updating quote: ' +  quote);
+        if(quote.status == 1)
+        {
+          this.props.dispatch(
+          {
+            type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+            payload: {type: 'danger', message: 'This quote has already been authorised and can no longer be changed.'}
+          });
+          return;
+        }
         this.props.dispatch({
           type: ACTION_TYPES.QUOTE_UPDATE,
-          payload: Object.assign(quote, { last_updated_by_employee: SessionManager.session_usr.name, last_updated_by: SessionManager.session_usr.usr })
+          payload: Object.assign(quote, { last_updated_by_employee: sessionManager.getSessionUser().name, last_updated_by: sessionManager.getSessionUser().usr })
         });
       } else {
         this.props.dispatch(
@@ -1360,7 +1385,7 @@ export class Quotes extends React.Component
                     //   message: this.txt_message.value,
                     //   metafile: null, // to be generated by mailer
                     //   quote_id: this.state.selected_quote._id,
-                    //   session_id: SessionManager.session_id,
+                    //   session_id: sessionManager.session_id,
                     //   quote: this.state.selected_quote
                     // }
 
@@ -1392,7 +1417,7 @@ export class Quotes extends React.Component
                           destination: this.state.new_email.destination,
                           subject: this.state.new_email.subject,
                           message : this.state.new_email.message,
-                          session_id : SessionManager.session_id,
+                          session_id : sessionManager.session_id,
                           'Content-Type': 'application/json'
                         }
                     });
@@ -1471,22 +1496,6 @@ export class Quotes extends React.Component
         </Modal>
       </div>
     );
-
-    const quote_statuses = 
-    [
-      {
-        status: 0,
-        status_description: 'pending'
-      },
-      {
-        status: 1,
-        status_description: 'authorised'
-      },
-      {
-        status: 2,
-        status_description: 'rejected'
-      }
-    ];
 
     const new_quote_modal = (
       <Modal
@@ -1626,6 +1635,16 @@ export class Quotes extends React.Component
           <Button
             onClick={()=>
             {
+                  if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'You are not authorised to create quotes.'}
+                    });
+                    return;
+                  }
+
                   const quote = this.state.new_quote;
 
                   if(!quote.client)
@@ -1687,13 +1706,13 @@ export class Quotes extends React.Component
                   quote.client_id = quote.client._id;
                   quote.contact_person = quote.contact.name;
                   quote.contact_person_id = quote.contact.usr;
-                  quote.status = quote_statuses[0].status;
-                  quote.status_description = quote_statuses[0].status_description;
+                  quote.status = statuses[0].status;
+                  quote.status_description = statuses[0].status_description;
                   quote.revision = 1;
                   quote.account_name = client_name.toLowerCase().replace(' ', '-');
-                  quote.creator_name = SessionManager.session_usr.name;
-                  quote.creator = SessionManager.session_usr.usr;
-                  quote.creator_employee = SessionManager.session_usr;
+                  quote.creator_name = sessionManager.getSessionUser().name;
+                  quote.creator = sessionManager.getSessionUser().usr;
+                  quote.creator_employee = sessionManager.getSessionUser();
                   quote.date_logged = new Date().getTime();// current date in epoch millis
                   quote.logged_date = formatDate(new Date()); // current date
 
@@ -1798,6 +1817,16 @@ export class Quotes extends React.Component
               value={this.state.selected_extra_cost.markup}
               onChange={(new_val)=>
                   {
+                    if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+                    {
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {type: 'danger', message: 'You are not authorised to make changes to this quote.'}
+                      });
+                      return;
+                    }
+
                     const extra_cost = this.state.selected_extra_cost;
                     extra_cost.markup = new_val.currentTarget.value;
                     this.setState({selected_extra_cost: extra_cost});
@@ -1818,6 +1847,16 @@ export class Quotes extends React.Component
                   }}
               onClick={()=>
                   {
+                    if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+                    {
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {type: 'danger', message: 'You are not authorised to make changes to this quote.'}
+                      });
+                      return;
+                    }
+
                     if(this.txt_title.value && this.txt_cost.value)
                     {
                       if(this.txt_cost.value.match('^[0-9]+$') == null)
@@ -1861,12 +1900,12 @@ export class Quotes extends React.Component
                         // admin stuffs
                         date_logged: new Date().getTime(),
                         logged_date: formatDate(new Date()),// current date
-                        creator: SessionManager.session_usr.usr,
-                        creator_employee: SessionManager.session_usr,
+                        creator: sessionManager.getSessionUser().usr,
+                        creator_employee: sessionManager.getSessionUser(),
                         date_last_updated: new Date().getTime(),
                         last_update_date: formatDate(new Date()), // current date
-                        last_updated_by: SessionManager.session_usr.usr,
-                        last_updated_by_employee: SessionManager.session_usr
+                        last_updated_by: sessionManager.getSessionUser().usr,
+                        last_updated_by_employee: sessionManager.getSessionUser()
                       };
 
                       let new_extra_costs_total = 0;
@@ -1883,8 +1922,8 @@ export class Quotes extends React.Component
                         extra_cost.creator_employee = this.state.selected_extra_cost.creator_employee;
                         extra_cost.date_last_updated = new Date().getTime();
                         extra_cost.last_update_date = formatDate(new Date()); // current date
-                        extra_cost.last_updated_by = SessionManager.session_usr.usr;
-                        extra_cost.last_updated_by_employee = SessionManager.session_usr;
+                        extra_cost.last_updated_by = sessionManager.getSessionUser().usr;
+                        extra_cost.last_updated_by_employee = sessionManager.getSessionUser();
                       } else 
                       {
                         console.log('not in edit mode, is creating new extra cost');
@@ -1926,8 +1965,8 @@ export class Quotes extends React.Component
                                                 title: '',
                                                 cost: 0,
                                                 markup: 0,
-                                                creator: SessionManager.session_usr.usr,
-                                                creator_employee: SessionManager.session_usr,
+                                                creator: sessionManager.getSessionUser().usr,
+                                                creator_employee: sessionManager.getSessionUser(),
                                                 date_logged: new Date().getTime(), // current date in epoch millis
                                                 logged_date: formatDate(new Date())// current date
                                               }
@@ -2128,6 +2167,16 @@ export class Quotes extends React.Component
                 <Button
                   onClick={(event)=>
                   {
+                    if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+                    {
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: {type: 'danger', message: 'You are not authorised to make changes to quotes.'}
+                      });
+                      return;
+                    }
+
                     if(!this.state.new_material.resource_description) // TODO: stricter validation
                     {
                       return this.props.dispatch(
@@ -2211,9 +2260,9 @@ export class Quotes extends React.Component
                     // Prepare material object
                     const material = Object.assign(this.state.new_material);
                     material.object_number = this.props.materials.length;
-                    material.creator_name = SessionManager.session_usr.name;
-                    material.creator = SessionManager.session_usr.usr;
-                    material.creator_employee = SessionManager.session_usr;
+                    material.creator_name = sessionManager.getSessionUser().name;
+                    material.creator = sessionManager.getSessionUser().usr;
+                    material.creator_employee = sessionManager.getSessionUser();
                     material.date_logged = new Date().getTime();// current date in epoch millis
                     material.logged_date = formatDate(new Date()); // current date
 
@@ -2245,9 +2294,9 @@ export class Quotes extends React.Component
                       // quote: this.state.selected_quote,
                       extra_costs: [],
                       extra_costs_total: 'No extra costs',
-                      creator_name: SessionManager.session_usr.name,
-                      creator: SessionManager.session_usr.usr,
-                      creator_employee: SessionManager.session_usr,
+                      creator_name: sessionManager.getSessionUser().name,
+                      creator: sessionManager.getSessionUser().usr,
+                      creator_employee: sessionManager.getSessionUser(),
                       date_logged: new Date().getTime(), // current date in epoch millis
                       logged_date: formatDate(new Date()) // current date
                     }
@@ -2674,7 +2723,7 @@ export class Quotes extends React.Component
                           label='client_name'
                           onChange={(evt)=>
                           {
-                            if(SessionManager.session_usr.access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                            if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
                             {
                               // revert combo box selection
                               // this.cbx_status.state.selected_item = props.row.client;
@@ -2727,7 +2776,7 @@ export class Quotes extends React.Component
                           label='name'
                           onChange={(evt)=>
                           {
-                            if(SessionManager.session_usr.access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                            if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
                             {
                               // revert combo box selection
                               // this.cbx_status.state.selected_item = props.row.client;
@@ -2846,7 +2895,7 @@ export class Quotes extends React.Component
                         
                         return (<ComboBox
                           ref={(cbx_status)=>this.cbx_status = cbx_status}
-                          items={quote_statuses}
+                          items={statuses}
                           // value={GlobalConstants.ACCESS_LEVELS[selected_quote.status]}
                           selected_index={selected_quote.status} // {GlobalConstants.ACCESS_LEVELS[1]}
                           label='status_description'
@@ -2856,7 +2905,7 @@ export class Quotes extends React.Component
                               console.log(selected_status);
                               console.log(props.row);
 
-                              if(SessionManager.session_usr.access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                              if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access and less are not allowed
                               {
                                 // revert combo box selection
                                 // this.cbx_status.state.selected_item = GlobalConstants.ACCESS_LEVELS[0];

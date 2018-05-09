@@ -21,7 +21,7 @@ import { getSuppliers } from '../reducers/Operations/SuppliersReducer';
 import styled from 'styled-components';
 
 // Helpers
-import * as SessionManager from '../helpers/SessionManager';
+import sessionManager from '../helpers/SessionManager';
 import Log, { formatDate } from '../helpers/Logger';
 import * as GlobalConstants from '../constants/globals';
 import Material from '../helpers/Material';
@@ -103,9 +103,9 @@ class Operations extends Component
       account_name: '',
       partnered_date: '1970-01-01', // new Date(),
       date_partnered: 0, // new Date().getTime(),
-      creator_name: SessionManager.session_usr.name,
-      creator: SessionManager.session_usr.usr,
-      creator_employee: SessionManager.session_usr,
+      creator_name: sessionManager.getSessionUser().name,
+      creator: sessionManager.getSessionUser().usr,
+      creator_employee: sessionManager.getSessionUser(),
       logged_date: formatDate(new Date()),
       date_logged: new Date().getTime()
     }
@@ -126,9 +126,9 @@ class Operations extends Component
       account_name: '',
       partnered_date: '1970-01-01', // new Date(),
       date_partnered: 0, // new Date().getTime(),
-      creator_name: SessionManager.session_usr.name,
-      creator: SessionManager.session_usr.usr,
-      creator_employee: SessionManager.session_usr,
+      creator_name: sessionManager.getSessionUser().name,
+      creator: sessionManager.getSessionUser().usr,
+      creator_employee: sessionManager.getSessionUser(),
       logged_date: formatDate(new Date()),
       date_logged: new Date().getTime()
     }
@@ -444,9 +444,9 @@ class Operations extends Component
                     const client = this.state.new_client;
                     client.object_number = this.props.clients.length;
                     client.account_name = client.client_name.toLowerCase().replace(' ', '-');
-                    client.creator_name = SessionManager.session_usr.name;
-                    client.creator = SessionManager.session_usr.usr;
-                    client.creator_employee = SessionManager.session_usr;
+                    client.creator_name = sessionManager.getSessionUser().name;
+                    client.creator = sessionManager.getSessionUser().usr;
+                    client.creator_employee = sessionManager.getSessionUser();
                     client.date_logged = new Date().getTime();// current date in epoch millis
                     client.logged_date = formatDate(new Date()); // current date
 
@@ -747,9 +747,9 @@ class Operations extends Component
                     const supplier = this.state.new_supplier;
                     supplier.object_number = this.props.suppliers.length;
                     supplier.account_name = supplier.supplier_name.toLowerCase().replace(' ', '-');
-                    supplier.creator_name = SessionManager.session_usr.name;
-                    supplier.creator = SessionManager.session_usr.usr;
-                    supplier.creator_employee = SessionManager.session_usr;
+                    supplier.creator_name = sessionManager.getSessionUser().name;
+                    supplier.creator = sessionManager.getSessionUser().usr;
+                    supplier.creator_employee = sessionManager.getSessionUser();
                     supplier.date_logged = new Date().getTime();// current date in epoch millis
                     supplier.logged_date = formatDate(new Date()); // current date
 
@@ -1006,9 +1006,9 @@ class Operations extends Component
                     // Prepare material object
                     const material = Object.assign(this.state.new_material);
                     material.object_number = this.props.materials.length;
-                    material.creator_name = SessionManager.session_usr.name;
-                    material.creator = SessionManager.session_usr.usr;
-                    material.creator_employee = SessionManager.session_usr;
+                    material.creator_name = sessionManager.getSessionUser().name;
+                    material.creator = sessionManager.getSessionUser().usr;
+                    material.creator_employee = sessionManager.getSessionUser();
                     material.date_logged = new Date().getTime();// current date in epoch millis
                     material.logged_date = formatDate(new Date()); // current date
 

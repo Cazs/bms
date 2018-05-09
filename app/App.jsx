@@ -7,24 +7,6 @@ const ipc = require('electron').ipcRenderer;
 /* Actions */
 import * as UIActions from './actions/ui';
 import * as SettingsActions from './actions/settings';
-// Ops
-// import * as UserActions from './actions/hr/users';
-import * as EmployeeActions from './actions/hr/employees';
-import * as ClientActions from './actions/operations/clients';
-import * as SupplierActions from './actions/operations/suppliers';
-import * as MaterialActions from './actions/operations/materials';
-import * as QuoteActions from './actions/operations/quotes';
-import * as JobActions from './actions/operations/jobs';
-import * as InvoiceActions from './actions/operations/invoices';
-import * as PurchaseOrderActions from './actions/operations/purchase_orders';
-import * as RequisitionActions from './actions/operations/requisitions';
-
-// HR
-import * as LeaveApplicationActions from './actions/hr/leave_applications';
-import * as OvertimeApplicationActions from './actions/hr/overtime_applications';
-
-// Compliance
-import * as ComplianceActions from './actions/compliance/safety';
 
 // Components
 import AppNav from './components/layout/AppNav';
@@ -51,24 +33,6 @@ class App extends PureComponent
   {
     const { dispatch } = this.props;
     dispatch(SettingsActions.getInitalSettings());
-    
-    // Get HR data
-    dispatch(EmployeeActions.getEmployees());
-    dispatch(LeaveApplicationActions.getLeaveApplications());
-    dispatch(OvertimeApplicationActions.getOvertimeApplications());
-
-    // // Get Operational data
-    dispatch(ClientActions.getClients());
-    dispatch(SupplierActions.getSuppliers());
-    dispatch(MaterialActions.getMaterials());
-    dispatch(QuoteActions.getQuotes());
-    dispatch(JobActions.getJobs());
-    dispatch(InvoiceActions.getInvoices());
-    dispatch(PurchaseOrderActions.getPurchaseOrders());
-    dispatch(RequisitionActions.getRequisitions());
-    
-    // // Get compliance document index
-    dispatch(ComplianceActions.getSafetyDocuments());
 
     this.changeTab('login');
     // Add Event Listener
@@ -113,11 +77,11 @@ class App extends PureComponent
     const { activeTab, notifications, checkUpdatesMessage } = this.props.ui;
     return (
       <AppWrapper>
-        {activeTab !== 'home' && activeTab !== 'login' ? 
+        {activeTab !== 'home' && activeTab !== 'login' && activeTab !== 'signup' ? 
           <AppNav activeTab={activeTab} changeTab={this.changeTab} />
           : '' }
         <AppNotification notifications={notifications} removeNotification={this.removeNotification} />
-        <AppMain activeTab={activeTab} changeTab={this.changeTab}/>
+        <AppMain activeTab={activeTab} changeTab={this.changeTab} />
       </AppWrapper>
     );
   }

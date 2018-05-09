@@ -1,4 +1,59 @@
-export const session_id = '0';
-export const session_usr = { usr: 'jivesh', name: 'Jivesh Arjun', firstname: 'Jivesh', lastname: 'Arjun', cell: '0830000002', tel: '0110000001', email: 'jivesh@foag.co.za', access_level: 2};
-export const session_date = 0;
-export const session_ttl = 0;
+let sessionId = null;
+let sessionUsr = null;
+let sessionDate = 0;
+let sessionTtl = 0;
+
+class SessionManager
+{
+    constructor()
+    {
+        sessionId = null;
+        sessionUsr = { usr: 'N/A', name: 'N/A', firstname: 'N/A', lastname: 'N/A', cell: 'N/A', tel: 'N/A', email: 'N/A', access_level: 0};
+        sessionDate = 0;
+        sessionTtl = 0;
+    }
+
+    setSessionId(sess_id)
+    {
+        sessionId = sess_id;
+    }
+
+    getSessionId()
+    {
+        return sessionId;
+    }
+
+    getSessionUser()
+    {
+        return sessionUsr;
+    }
+
+    setSessionUser(user)
+    {
+        sessionUsr = user;
+    }
+    
+    session_date()
+    {
+        sessionDate;
+    }
+
+    setSessionDate(date)
+    {
+        sessionDate = date;
+    }
+
+    session_ttl()
+    {
+        return sessionTtl;
+    }
+
+    setSessionTtl(ttl)
+    {
+        sessionTtl = ttl;
+    }
+}
+
+const sessionManager = new SessionManager();
+
+export default sessionManager;

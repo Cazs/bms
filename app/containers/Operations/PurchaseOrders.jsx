@@ -13,8 +13,9 @@ import {BootstrapTable, TableHeaderColumn} from 'react-bootstrap-table';
 // Actions
 import * as ACTION_TYPES from '../../constants/actions.jsx';
 import * as UIActions from '../../actions/ui';
+
 // Helpers
-import * as SessionManager from '../../helpers/SessionManager';
+import sessionManager from '../../helpers/SessionManager';
 import * as PurchaseOrderActions from '../../actions/operations/purchase_orders';
 import Log, { formatDate } from '../../helpers/Logger';
 
@@ -30,6 +31,7 @@ import { getEmployees } from '../../reducers/HR/EmployeesReducer';
 import { getMaterials } from '../../reducers/Operations/MaterialsReducer';
 import { getPurchaseOrders } from '../../reducers/Operations/PurchaseOrdersReducer';
 import { getSuppliers } from '../../reducers/Operations/SuppliersReducer';
+import { getCurrentSettings } from '../../../app/reducers/SettingsReducer';
 
 // Components
 import ComboBox from '../../components/shared/ComboBox';
@@ -78,6 +80,8 @@ export class PurchaseOrders extends React.Component
     this.setPurchaseOrderStatus = this.setPurchaseOrderStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
     this.getCaret = this.getCaret.bind(this);
+    this.showPOPreview = this.showPOPreview.bind(this);
+    this.newPO = this.newPO.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -106,31 +110,43 @@ export class PurchaseOrders extends React.Component
                     col_status_visible: true,
                     col_creator_visible: false,
                     col_date_logged_visible: false,
+
                     // PurchaseOrder to be created
-                    new_purchase_order:
-                    {
-                      supplier_id: null,
-                      supplier: null,
-                      contact_id: null,
-                      contact: null,
-                      request: null,
-                      sitename: null,
-                      notes: null,
-                      vat: GlobalConstants.VAT,
-                      status: 0,
-                      resources: []
-                    },
+                    new_purchase_order: this.newPO(),
                     // PurchaseOrder Item to be added
                     new_po_item:
                     {
                       purchase_order_id: null,
                       item_id: null,
-                      unit_cost: 0,
+                      cost: 0,
                       quantity: 1,
                       discount: 0,
                       additional_costs: ''
                     }
     };
+  }
+
+  newPO()
+  {
+    return {
+      supplier_name: null,
+      supplier_id: null,
+      contact: {},
+      contact_person: null,
+      contact_person_id: null,
+      account_name: null,
+      reference: null,
+      status: 0,
+      vat: GlobalConstants.VAT,
+      status_description: 'pending',
+      resources: [],
+      creator_name: sessionManager.getSessionUser().name,
+      creator: sessionManager.getSessionUser().usr,
+      creator_employee: sessionManager.getSessionUser(),
+      date_logged: new Date().getTime(), // current date in epoch ms
+      logged_date: formatDate(new Date()), // current date
+      other: null
+    }
   }
 
   // Load PurchaseOrders & add event listeners
@@ -166,7 +182,7 @@ export class PurchaseOrders extends React.Component
   showPOPreview(po)
   {
     // Preview Window
-    ipc.send('preview-po', po);
+    ipc.send('preview-po', Object.assign({profile: this.props.settings.profile}, po));
   }
 
   // Open Confirm Dialog
@@ -330,29 +346,28 @@ export class PurchaseOrders extends React.Component
                 <ComboBox
                   items={this.props.materials}
                   label='resource_description'
-                    // defaultValue={this.props.materials[0]}
                   onChange={(newValue) =>
+                  {
+                    // get selected value
+                    const selected_mat = JSON.parse(newValue.currentTarget.value);
+
+                    // create po_item obj
+                    const po_item =
                     {
-                      // get selected value
-                      const selected_mat = JSON.parse(newValue);
+                      item_number: row.resources ? row.resources.length : 0,
+                      purchase_order_id: row._id,
+                      item_id: selected_mat._id,
+                      item: selected_mat,
+                      item_description: selected_mat.resource_description,
+                      unit: selected_mat.unit,
+                      cost: selected_mat.resource_value,
+                      discount: 0,
+                      quantity: 1
+                    };
 
-                      this.unit_cost.value = selected_mat.resource_value;
-
-                      // create po_item obj
-                      const po_item =
-                      {
-                        item_number: row.resources ? row.resources.length : 0,
-                        purchase_order_id: row._id,
-                        item_id: selected_mat._id,
-                        unit_cost: selected_mat.resource_value,
-                        quantity: 1,
-                        unit: selected_mat.unit,
-                        item_description: selected_mat.resource_description
-                      };
-
-                      // update state
-                      this.setState({new_po_item: po_item});
-                    }}
+                    // update state
+                    this.setState({new_po_item: po_item});
+                  }}
                 />
               </div>
             </div>
@@ -360,15 +375,15 @@ export class PurchaseOrders extends React.Component
             <div className="pageItem col-md-6">
               <label className="itemLabel">Unit Cost</label>
               <input
-                id="unit_cost"
-                ref={(unit_cost)=>this.unit_cost=unit_cost}
-                name="unit_cost"
+                id="cost"
+                ref={(cost)=>this.cost=cost}
+                name="cost"
                 type="text"
-                value={this.state.new_po_item.unit_cost}
+                value={this.state.new_po_item.cost}
                 onChange={(new_val)=> {
                     const po_item = this.state.new_po_item;
                     
-                    po_item.unit_cost = new_val.currentTarget.value;
+                    po_item.cost = new_val.currentTarget.value;
                     this.setState({new_po_item: po_item});
                   }}
                 style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
@@ -416,14 +431,17 @@ export class PurchaseOrders extends React.Component
 
                   po_item.date_logged = new Date().getTime(); // current date in epoch msec
                   po_item.logged_date = formatDate(new Date()); // current date
-                  po_item.creator = SessionManager.session_usr.usr;
+                  po_item.creator = sessionManager.getSessionUser().usr;
+                  po_item.rate = Number(Number(po_item.cost) - (Number(po_item.cost) * Number(po_item.discount)/100));
+                  po_item.total = GlobalConstants.CURRENCY_SYMBOL + ' ' + Number(Number(po_item.rate) * Number(po_item.quantity));
                   console.log('creating new po item: ', po_item);
 
                   row.resources.push(po_item);
                   // update state
                   this.setState({new_po_item: po_item});
                   // signal add po item
-                  this.props.dispatch({
+                  this.props.dispatch(
+                  {
                     type: ACTION_TYPES.PURCHASE_ORDER_ITEM_ADD,
                     payload: po_item
                   });
@@ -487,7 +505,7 @@ export class PurchaseOrders extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_object_number_visible}
-            > Item Number
+            > Item No.
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -497,17 +515,17 @@ export class PurchaseOrders extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_object_number_visible}
-            > Item Description
+            > Description
             </TableHeaderColumn>
 
             <TableHeaderColumn
-              dataField='unit_cost'
+              dataField='cost'
               dataSort
               caretRender={this.getCaret}
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_supplier_id_visible}
-            > Unit Cost
+            > Cost
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -527,17 +545,27 @@ export class PurchaseOrders extends React.Component
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
               // hidden={!this.state.col_sitename_visible}
-            >  Measurement/Unit
+            >  Unit
             </TableHeaderColumn>
 
             <TableHeaderColumn
-              dataField='additional_costs'
+              dataField='rate'
               dataSort
               caretRender={this.getCaret}
               tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
               thStyle={{ whiteSpace: 'normal' }}
-              // hidden={!this.state.col_request_visible}
-            > Extra Costs
+              // hidden={!this.state.col_contact_person_id_visible}
+            > Rate
+            </TableHeaderColumn>
+
+            <TableHeaderColumn
+              dataField='total'
+              dataSort
+              caretRender={this.getCaret}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
+              thStyle={{ whiteSpace: 'normal' }}
+              // hidden={!this.state.col_contact_person_id_visible}
+            > Total
             </TableHeaderColumn>
 
             <TableHeaderColumn
@@ -667,7 +695,7 @@ export class PurchaseOrders extends React.Component
                       // selected_item={this.state.new_purchase_order.contact}
                       label='name'
                       onChange={(new_val)=>{
-                        const selected_contact = JSON.parse(new_val);
+                        const selected_contact = JSON.parse(new_val.currentTarget.value);
                         const purchaseOrder = this.state.new_purchase_order;
                         purchaseOrder.contact_id = selected_contact.usr;
                         purchaseOrder.contact = selected_contact;
@@ -687,7 +715,7 @@ export class PurchaseOrders extends React.Component
                       // selected_item={this.state.new_purchase_order.supplier}
                       label='supplier_name'
                       onChange={(new_val)=>{
-                        const selected_supplier = JSON.parse(new_val);
+                        const selected_supplier = JSON.parse(new_val.currentTarget.value);
                         
                         const purchaseOrder = this.state.new_purchase_order;
                         purchaseOrder.supplier_id = selected_supplier._id;
@@ -770,23 +798,26 @@ export class PurchaseOrders extends React.Component
                   // Prepare PO
                   const supplier_name = purchase_order.supplier.supplier_name.toString();
 
-                  // purchase_order.object_number = this.props.purchase_orders.length;
                   purchase_order.supplier_name = supplier_name;
+                  purchase_order.object_number = this.props.purchaseOrders.length;
                   purchase_order.supplier_id = purchase_order.supplier._id;
                   purchase_order.contact_person = purchase_order.contact.name;
                   purchase_order.contact_person_id = purchase_order.contact.usr;
                   purchase_order.account_name = supplier_name.toLowerCase().replace(' ', '-');
-                  purchase_order.creator_name = SessionManager.session_usr.name;
-                  purchase_order.creator = SessionManager.session_usr.usr;
-                  purchase_order.creator_employee = SessionManager.session_usr;
+                  purchase_order.reference = 'PO' + supplier_name.toUpperCase().replace(' ', '-');
+                  purchase_order.status = 0;
+                  purchase_order.status_description = 'pending';
+                  purchase_order.creator_name = sessionManager.getSessionUser().name;
+                  purchase_order.creator = sessionManager.getSessionUser().usr;
+                  purchase_order.creator_employee = sessionManager.getSessionUser();
                   purchase_order.date_logged = new Date().getTime();// current date in epoch ms
                   purchase_order.logged_date = formatDate(new Date()); // current date
 
-                  this.setState({new_purchase_order: purchase_order, is_new_purchase_order_modal_open: false});
+                  this.setState({new_purchase_order: this.newPO(), is_new_purchase_order_modal_open: false});
 
                   this.props.purchaseOrders.push(this.state.new_purchase_order);
 
-                  mapStateToProps(this.state);
+                  // mapStateToProps(this.state);
 
                   // this.props.dispatch({
                   //   type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -797,7 +828,8 @@ export class PurchaseOrders extends React.Component
                   // });
 
                   // dispatch action to create purchase_order on local & remote stores
-                  this.props.dispatch({
+                  this.props.dispatch(
+                  {
                     type: ACTION_TYPES.PURCHASE_ORDER_NEW,
                     payload: this.state.new_purchase_order
                   });
@@ -1170,7 +1202,8 @@ const mapStateToProps = state => (
   employees: getEmployees(state),
   purchaseOrders: getPurchaseOrders(state),
   suppliers: getSuppliers(state),
-  materials: getMaterials(state)
+  materials: getMaterials(state),
+  settings: getCurrentSettings(state)
 });
 
 export default compose(

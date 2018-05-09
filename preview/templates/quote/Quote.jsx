@@ -5,7 +5,7 @@ import { padStart } from 'lodash';
 import currencies from '../../../libs/currencies.json';
 
 // Helpers
-import * as SessionManager from '../../../app/helpers/SessionManager';
+// import sessionManager from '../../../app/helpers/SessionManager';
 import Log, { formatDate } from '../../../app/helpers/Logger';
 import * as GlobalConstants from '../../../app/constants/globals';
 import { getQuoteItemTotal } from '../../../helpers/quote';
@@ -47,7 +47,7 @@ const Table = styled.table`
       padding: 5px;
       // border-bottom: 1px solid ${props.accentColor};
       // border-top: 1px solid ${props.accentColor};
-      border: 1px solid #000 !important;
+      border: 1px solid #5C5C5C !important;
       padding-bottom: 10px;
     }
   `};
@@ -59,7 +59,7 @@ const Table = styled.table`
     font-weight: 300;
     line-height: 2.75;
     font-size: 0.7em;
-    border-bottom: 1px solid #000;
+    border-bottom: 1px solid #5C5C5C;
     &:first-child {
       color: #c4c8cc;
     }
@@ -168,11 +168,13 @@ function Quote({ pdf_data, configs, t })
   const vat = Number(sub_total * pdf_data.vat / 100).toFixed(2);
   const total = Number(Number(sub_total) + Number(vat)).toFixed(2);
 
+  // const sessionManager  = require('../../../app/helpers/SessionManager').default;
+
   // Render Items
   return (
     <QuoteContent alignItems={setAlignItems(configs)}>
       <div style={{marginTop: '-72px'}}>
-        <table style={{width: '100%', border: '1px solid #000'}} border='1px solid #000'>
+        <table style={{width: '100%', border: '1px solid #5C5C5C'}} border='1px solid #5C5C5C'>
           <thead style={{fontSize: heading_font_size, fontFamily: font_family}}>
             <tr>
               <td colSpan='2'>
@@ -181,10 +183,12 @@ function Quote({ pdf_data, configs, t })
               <td>
                 <p style={{fontSize: '12pt', textAlign: 'center', fontWeight: 'bold'}}>Quote No.
                   <i style={{marginLeft: '15px', fontSize: '11pt'}}>
-                    {SessionManager.session_usr.firstname}-
-                    {SessionManager.session_usr.firstname.charAt(0) + SessionManager.session_usr.lastname.charAt(0)}-00
+                    {pdf_data.creator_employee.firstname}-
+                    {pdf_data.creator_employee.firstname.charAt(0)}
+                    {pdf_data.creator_employee.lastname.charAt(0)}-00
                     {pdf_data.object_number}
-                    &nbsp;REV&nbsp;{pdf_data.revision}
+                    &nbsp;REV&nbsp;
+                    {pdf_data.revision}
                   </i>
                 </p>
               </td>
@@ -205,7 +209,7 @@ function Quote({ pdf_data, configs, t })
                 <p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Company: {pdf_data.client.client_name}</p>
               </td>
               <td>
-                <p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Sale Consultant: {SessionManager.session_usr.name} </p>
+                <p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Sale Consultant: {pdf_data.creator_employee.name} </p>
               </td>
             </tr>
 
@@ -214,8 +218,8 @@ function Quote({ pdf_data, configs, t })
                 <p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Cell: {pdf_data.contact.cell}</p>
               </td>
               <td>
-                <p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Consultant Cell: {SessionManager.session_usr.cell} </p>
-                <p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Consultant eMail: {SessionManager.session_usr.email} </p>
+                <p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Consultant Cell: {pdf_data.creator_employee.cell} </p>
+                <p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Consultant eMail: {pdf_data.creator_employee.email} </p>
               </td>
             </tr>
 
@@ -257,15 +261,15 @@ function Quote({ pdf_data, configs, t })
           </tbody>
         </table>
 
-        <table style={{width: '100%', border: '1px solid #000'}} border='1px solid #000'>
+        <table style={{width: '100%', border: '1px solid #5C5C5C'}} border='1px solid #5C5C5C'>
           <thead style={{fontSize: heading_font_size, fontFamily: font_family, fontWeight: 'bold'}}>
             <tr>
-              <th style={{borderLeft: '1px solid #000', borderRight: '1px solid #000', textAlign: 'center'}}>Item</th>
-              <th style={{borderRight: '1px solid #000', textAlign: 'center', width: '320px'}}>Description</th>
-              <th style={{borderRight: '1px solid #000', textAlign: 'center'}}>Unit</th>
-              <th style={{borderRight: '1px solid #000', textAlign: 'center'}}>Qty</th>
-              <th style={{borderRight: '1px solid #000', textAlign: 'center'}}>Rate</th>
-              <th style={{borderRight: '1px solid #000', textAlign: 'center'}}>Total&nbsp;Cost</th>
+              <th style={{borderLeft: '1px solid #5C5C5C', borderRight: '1px solid #5C5C5C', textAlign: 'center'}}>Item</th>
+              <th style={{borderRight: '1px solid #5C5C5C', textAlign: 'center', width: '320px'}}>Description</th>
+              <th style={{borderRight: '1px solid #5C5C5C', textAlign: 'center'}}>Unit</th>
+              <th style={{borderRight: '1px solid #5C5C5C', textAlign: 'center'}}>Qty</th>
+              <th style={{borderRight: '1px solid #5C5C5C', textAlign: 'center'}}>Rate</th>
+              <th style={{borderRight: '1px solid #5C5C5C', textAlign: 'center'}}>Total&nbsp;Cost</th>
             </tr>
           </thead>
           <tbody style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>
@@ -295,8 +299,8 @@ function Quote({ pdf_data, configs, t })
                     <td>{ row.item_description }</td>
                     <td>{ row.unit }</td>
                     <td>{ row.quantity }</td>
-                    <td>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ item_rate.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</td>
-                    <td>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ (item_total).toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</td>
+                    <td><p style={{float: 'right', textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ item_rate.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</p></td>
+                    <td><p style={{float: 'right', textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ (item_total).toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</p></td>
                   </tr> )
               })
             }
@@ -306,29 +310,29 @@ function Quote({ pdf_data, configs, t })
             {/* Print totals */}
             <tr style={{height: '30px'}}>
               <td>{ }</td>
-              <td style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Sub-total excluding VAT:</td>
+              <td><p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Sub-total excluding VAT:</p></td>
               <td>{ }</td>
               <td>{ }</td>
               <td>{ }</td>
-              <td style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ sub_total.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</td>
+              <td><p style={{float: 'right', textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ sub_total.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</p></td>
             </tr>
 
             <tr style={{height: '30px'}}>
               <td>{ }</td>
-              <td style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>VAT:</td>
+              <td><p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>VAT:</p></td>
               <td>{ }</td>
               <td>{ }</td>
               <td>{ }</td>
-              <td style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ vat.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</td>
+              <td><p style={{float: 'right', textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ vat.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</p></td>
             </tr>
 
             <tr style={{height: '30px'}}>
               <td>{ }</td>
-              <td style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Total including VAT:</td>
+              <td><p style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Total including VAT:</p></td>
               <td>{ }</td>
               <td>{ }</td>
               <td>{ }</td>
-              <td style={{fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ total.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</td>
+              <td><p style={{float: 'right', textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ total.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1 ") }</p></td>
             </tr>
           </tbody>
         </table>

@@ -20,7 +20,30 @@ const RequisitionsMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all Requisitions
       return DataManager.getAll(dispatch, action, '/requisitions', DataManager.db_requisitions, 'requisitions')
-                        .then(docs => next(Object.assign({}, action, { payload: docs || []  })));
+                        .then(docs =>
+                          next(Object.assign({}, action, { payload: docs || []  })));
+    }
+
+    case ACTION_TYPES.REQUISITION_NEW:
+    {
+      const new_requisition = Object.assign(action.payload, {object_number: getState().requisitions.length});
+      // Save to remote store then local store
+      return DataManager.putRemoteResource(dispatch, DataManager.db_requisitions, new_requisition, '/requisition', 'requisitions')
+      .then(response =>
+      {
+        const complete_requisition = Object.assign(action.payload, {_id: response});
+        next({ type: ACTION_TYPES.REQUISITION_NEW, payload: complete_requisition });
+        
+        if(action.callback)
+          action.callback(complete_requisition);
+      });
+    }
+    
+    case ACTION_TYPES.REQUISITION_UPDATE:
+    {
+      console.log('requisition update:', action.payload);
+      return DataManager.postRemoteResource(dispatch, DataManager.db_requisitions, action.payload, '/requisition', 'requisitions')
+                        .then(response => next({ type: ACTION_TYPES.REQUISITION_UPDATE, payload: response }));
     }
 
     case ACTION_TYPES.REQUISITION_SAVE:
@@ -127,33 +150,6 @@ const RequisitionsMW = ({ dispatch, getState }) => next => action =>
         type: ACTION_TYPES.REQUISITION_SAVE,
         payload: duplicateRequisition,
       });
-    }
-
-    case ACTION_TYPES.REQUISITION_UPDATE:
-    {
-      // return updateDoc('requisitions', action.payload)
-      //   .then(docs => {
-      //     next({
-      //       type: ACTION_TYPES.REQUISITION_UPDATE,
-      //       payload: docs,
-      //     });
-      //     dispatch({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'success',
-      //         message: i18n.t('messages:requisition:updated'),
-      //       },
-      //     });
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
     }
 
     case ACTION_TYPES.REQUISITION_CONFIGS_SAVE:

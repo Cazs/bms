@@ -16,7 +16,7 @@ const Wrapper = styled.div`
 
 // Helpers
 import Log from '../app/helpers/Logger';
-import * as SessionManager from '../app/helpers/SessionManager';
+import sessionManager from '../app/helpers/SessionManager';
 const openDialog = require('../app/renderers/dialog.js');
 
 // Components

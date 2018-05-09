@@ -4,9 +4,6 @@ import PropTypes from 'prop-types';
 import { padStart } from 'lodash';
 import currencies from '../../../libs/currencies.json';
 
-// Helpers
-import * as SessionManager from '../../../app/helpers/SessionManager';
-
 // Styles
 import styled from 'styled-components';
 
@@ -27,8 +24,8 @@ const Table = styled.table`
   border-collapse: collapse;
   margin-top: 20px;
   th {
-    border-bottom: 2px solid #efefd1;
-    border-top: 2px solid #efefd1;
+    border-bottom: 2px solid #5C5C5C;
+    border-top: 2px solid #5C5C5C;
     padding-bottom: 0.8em;
     &:last-child {
       text-align: right;
@@ -44,7 +41,7 @@ const Table = styled.table`
       padding: 5px;
       // border-bottom: 1px solid ${props.accentColor};
       // border-top: 1px solid ${props.accentColor};
-      border: 1px solid #000 !important;
+      border: 1px solid #5C5C5C !important;
       padding-bottom: 10px;
     }
   `};
@@ -56,7 +53,7 @@ const Table = styled.table`
     font-weight: 300;
     line-height: 2.75;
     font-size: 0.7em;
-    border-bottom: 2px solid #ecf1f1;
+    border-bottom: 2px solid #5C5C5C;
     &:first-child {
       color: #c4c8cc;
     }
@@ -77,7 +74,7 @@ const QuoteTotal = styled.tr`
     border-bottom: none;
     line-height: 2;
     border-top: 4px solid #efefd1;
-    color: #6bbb69;
+    color: #000;
     &:first-child {
       border: none;
     }
@@ -99,10 +96,10 @@ const MessageStyle = styled.div`
   background: white;
   border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  ${props => props.info && `border-left: 5px solid #469FE5; border-right: 5px solid #469FE5;`} ${props =>
-      props.success && `border-left: 5px solid #6BBB69; border-right: 5px solid #6BBB69;`} ${props =>
-      props.danger && `border-left: 5px solid #EC476E; border-right: 5px solid #EC476E;`} ${props =>
-      props.warning && `border-left: 5px solid #F9D548; border-right: 5px solid #F9D548;`};
+  ${props => props.info && `border-left: 5px solid #5C5C5C; border-right: 5px solid #5C5C5C;`} ${props =>
+      props.success && `border-left: 5px solid #5C5C5C; border-right: 5px solid #5C5C5C;`} ${props =>
+      props.danger && `border-left: 5px solid #5C5C5C; border-right: 5px solid #5C5C5C;`} ${props =>
+      props.warning && `border-left: 5px solid #5C5C5C; border-right: 5px solid #5C5C5C;`};
 `;
 
 // Component
@@ -168,7 +165,7 @@ function Quote({ pdf_data, configs, t })
               <td>
                 <p>Job&nbsp;No.: #{pdf_data.object_number}</p>
               </td>
-              <td><p>Date&nbsp;Logged: { new Date(pdf_data.date_logged * 1000).toString() }</p></td>
+              <td><p>Date&nbsp;Logged: { new Date(pdf_data.date_logged).toString() }</p></td>
             </tr>
             <tr>
               <td>
@@ -344,7 +341,7 @@ function Quote({ pdf_data, configs, t })
             </tbody>
           </table>
         </div>
-        <table style={{width: '100%', border:' 1px solid #000', marginTop: '5px', fontSize: '10pt'}}>
+        <table style={{width: '100%', border:' 1px solid #5C5C5C', marginTop: '5px', fontSize: '10pt'}}>
           <tbody>
             <tr>
               <td>Omega&nbsp;Fire&nbsp;&amp;&nbsp;Security</td>

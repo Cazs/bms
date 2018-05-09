@@ -51,8 +51,9 @@ import {
 } from '../../components/shared/Layout';
 
 // Helpers
-import * as SessionManager from '../../helpers/SessionManager';
+import sessionManager from '../../helpers/SessionManager';
 import Log, { formatDate } from '../../helpers/Logger';
+import statuses from '../../helpers/statuses';
 
 const modalStyle =
 {
@@ -107,6 +108,7 @@ export class Jobs extends React.Component
                     col_status_visible: true,
                     col_creator_visible: false,
                     col_date_logged_visible: false,
+                    
                     // Job to be created
                     new_job:
                     {
@@ -114,6 +116,8 @@ export class Jobs extends React.Component
                       contact_id: null,
                       request: null,
                       sitename: null,
+                      status: 0,
+                      status_description: 'pending',
                       notes: null,
                       vat: GlobalConstants.VAT
                     },
@@ -125,11 +129,14 @@ export class Jobs extends React.Component
                       description: '',
                       assignees: [],
                       assignee_names: [],
+                      status: 0,
+                      status_description: 'pending',
                       date_scheduled: new Date().getTime(),
                       scheduled_date: formatDate(new Date())
                     },
                     // TODO: Job Task Item to be added
-                    new_task_item: {
+                    new_task_item:
+                    {
                       task_id: null,
                       resource_id: null,
                       unit_cost: 0,
@@ -311,7 +318,8 @@ export class Jobs extends React.Component
       defaultSortOrder: 'asc'
     };
 
-    const taskCellEditProp = {
+    const taskCellEditProp =
+    {
       mode: 'click',
         // if product id less than 3, will cause the whole row noneditable
         // this function should return an array of row keys
@@ -322,7 +330,8 @@ export class Jobs extends React.Component
       afterSaveCell: this.onAfterSaveCell  // a hook for after saving cell
     };
 
-    const new_job_task_form = (
+    const new_job_task_form =
+    (
       <div>
         {/* form for adding a new Task to Job */}
         <div style={{backgroundColor: 'rgba(255,255,255,.6)', borderRadius: '4px', marginTop: '20px'}}>
@@ -410,8 +419,8 @@ export class Jobs extends React.Component
                       this.state.new_job_task.object_number = row.tasks.length;
                       this.state.new_job_task.date_logged = new Date().getTime(); // epoch sec
                       this.state.new_job_task.logged_date = formatDate(new Date());// current date
-                      this.state.new_job_task.creator = SessionManager.session_usr.usr;
-                      this.state.new_job_task.creator_name = SessionManager.session_usr.name;
+                      this.state.new_job_task.creator = sessionManager.getSessionUser().usr;
+                      this.state.new_job_task.creator_name = sessionManager.getSessionUser().name;
                       // update state
                       this.setState(this.state.new_job_task);
                       console.log('new task to be created: ', this.state.new_job_task);
@@ -451,7 +460,8 @@ export class Jobs extends React.Component
       </div>
     );
 
-    const job_options_form = (
+    const job_options_form =
+    (
       <div>
         <CustomButton primary onClick={() => this.showJobcardPreview(row)}>PDF Preview</CustomButton>
         {/* onClick={() => this.showQuotePreview(row)} */}
@@ -484,10 +494,11 @@ export class Jobs extends React.Component
               request: row.request,
               sitename: row.sitename,
               vat: row.vat,
-              creator_name: SessionManager.session_usr.name,
+              creator_name: sessionManager.getSessionUser().name,
               status: 0,
-              creator: SessionManager.session_usr.usr,
-              creator_employee: SessionManager.session_usr,
+              status_description: 'pending',
+              creator: sessionManager.getSessionUser().usr,
+              creator_employee: sessionManager.getSessionUser(),
               date_logged: new Date().getTime(), // current date in epoch SECONDS
               logged_date: formatDate(new Date()) // current date
             }
@@ -521,17 +532,51 @@ export class Jobs extends React.Component
                 defaultValue={row.start_date}
                 onChange={(new_val)=>
                 {
-                  this.props.dispatch({
+                  if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access and less are not allowed to update job dates
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'You are not authorised to update the state of this job.'}
+                    });
+                    return;
+                  }
+
+                  if(row.status == 1)
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'This job has already been authorised and can no longer be changed.'}
+                    });
+                    return;
+                  }
+
+                  if(new Date(new_val.currentTarget.value).getTime() > new Date().getTime())
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'The start date cannot be in the future.'}
+                    });
+                    return;
+                  }
+
+                  if((row.date_completed>0) && (new Date(new_val.currentTarget.value).getTime() > (new Date(row.date_completed).getTime())))
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'The start date cannot be greater than the date completed.'}
+                    });
+                    return;
+                  }
+
+                  this.props.dispatch(
+                  {
                     type: ACTION_TYPES.JOB_UPDATE,
                     payload: Object.assign(row, {date_started: new Date(new_val.currentTarget.value).getTime(), start_date : formatDate(new Date(new_val.currentTarget.value))})
                   });
-                  // row.date_started = new Date(new_val.currentTarget.value).getTime();
-                  // console.log(new_val.currentTarget.value);
-
-                //     const job_task = this.state.new_job_task;
-                    
-                //     job_task.unit_cost = new_val.currentTarget.value;
-                //     this.setState({new_job_task: job_task});
                 }}
                 style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
               />
@@ -547,6 +592,46 @@ export class Jobs extends React.Component
                 defaultValue={row.end_date}
                 onChange={(new_val)=>
                 {
+                  if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access and less are not allowed to update job dates
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'You are not authorised to update the state of this job.'}
+                    });
+                    return;
+                  }
+
+                  if(row.status == 1)
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'This job has already been authorised and can no longer be changed.'}
+                    });
+                    return;
+                  }
+
+                  if(new Date(new_val.currentTarget.value).getTime() < new Date(row.date_started).getTime())
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'The completion date cannot be before the start date.'}
+                    });
+                    return;
+                  }
+
+                  // if(new Date(new_val.currentTarget.value).getTime() > new Date().getTime())
+                  // {
+                  //   this.props.dispatch(
+                  //   {
+                  //     type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                  //     payload: {type: 'danger', message: 'The completion date cannot be in the future.'}
+                  //   });
+                  //   return;
+                  // }
+
                   this.props.dispatch(
                   {
                     type: ACTION_TYPES.JOB_UPDATE,
@@ -558,7 +643,7 @@ export class Jobs extends React.Component
             </div>
           </div>
 
-          <div className="row">
+          {/* <div className="row">
             <div className="pageItem col-md-6">
               <label className="itemLabel">Scheduled&nbsp;Date</label>
               <input
@@ -569,6 +654,36 @@ export class Jobs extends React.Component
                 defaultValue={row.scheduled_date}
                 onChange={(new_val)=>
                 {
+                  if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access and less are not allowed to update job dates
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'You are not authorised to update the state of this job.'}
+                    });
+                    return;
+                  }
+
+                  if(new Date(new_val.currentTarget.value).getTime() > new Date().getTime())
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'The scheduled date cannot be in the future.'}
+                    });
+                    return;
+                  }
+
+                  // if(new Date(new_val.currentTarget.value).getTime() > new Date().getTime())
+                  // {
+                  //   this.props.dispatch(
+                  //   {
+                  //     type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                  //     payload: {type: 'danger', message: 'The scheduled date cannot be in the future.'}
+                  //   });
+                  //   return;
+                  // }
+
                   this.props.dispatch(
                   {
                     type: ACTION_TYPES.JOB_UPDATE,
@@ -578,18 +693,7 @@ export class Jobs extends React.Component
                 style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
               />
             </div>
-
-            <div className="pageItem col-md-6">
-              {/* <label className="itemLabel">Job Status</label>
-              <input
-                name="status"
-                type="text"
-                // disabled
-                // value={this.state.new_job_task.unit}
-                style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-              /> */}
-            </div>
-          </div>
+          </div> */}
         </div> 
       </div>
     );
@@ -682,7 +786,7 @@ export class Jobs extends React.Component
                           const assignee_names = props.row.assignee_names;
                           const assignees = props.row.assignees;
 
-                          const selected_user = JSON.parse(new_val);
+                          const selected_user = JSON.parse(new_val.currentTarget.value);
 
                           assignee_names.push(selected_user.name);
                           assignees.push(selected_user);
@@ -868,7 +972,7 @@ export class Jobs extends React.Component
                       // selected_item={this.state.new_job.contact}
                       label='name'
                       onChange={(new_val)=>{
-                        const selected_contact = JSON.parse(new_val);
+                        const selected_contact = JSON.parse(new_val.currentTarget.value);
                         const job = this.state.new_job;
                         job.contact_id = selected_contact.usr;
 
@@ -887,7 +991,7 @@ export class Jobs extends React.Component
                       // selected_item={this.state.new_job.client}
                       label='client_name'
                       onChange={(new_val)=>{
-                        const selected_client = JSON.parse(new_val);
+                        const selected_client = JSON.parse(new_val.currentTarget.value);
                         const job = this.state.new_job;
                         job.client_id = selected_client._id;
                         this.setState({new_job: job});
@@ -1381,9 +1485,55 @@ export class Jobs extends React.Component
                       dataField='status_description'
                       dataSort
                       caretRender={this.getCaret}
-                      editable={false}
+                      editable
                       tdStyle={{'fontWeight': 'lighter'}}
                       hidden={!this.state.col_status_visible}
+                      customEditor={{
+                        getElement: (func, props) =>
+                        {
+                          const selected_job = props.row;
+                          
+                          return (<ComboBox
+                            ref={(cbx_status)=>this.cbx_status = cbx_status}
+                            items={statuses}
+                            selected_index={selected_job.status}
+                            label='status_description'
+                            onChange={(new_val)=>
+                            {
+                                const selected_status = JSON.parse(new_val.currentTarget.value);
+                                console.log(selected_status);
+                                console.log(props.row);
+  
+                                if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                                {
+                                  // revert combo box selection
+                                  // this.cbx_status.state.selected_item = GlobalConstants.ACCESS_LEVELS[0];
+  
+                                  this.props.dispatch(
+                                  {
+                                    type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                    payload: {type: 'danger', message: 'You are not authorised to update the state of this job.'}
+                                  });
+  
+                                  // this.cbx_status.blur();
+                                  return;
+                                }
+  
+                                console.log('selected status: ', selected_status);
+                                selected_job.status = selected_status.status;
+                                selected_job.status_description = selected_status.status_description;
+  
+                                // send signal to update quote on local & remote storage
+                                this.props.dispatch(
+                                {
+                                  type: ACTION_TYPES.JOB_UPDATE,
+                                  payload: selected_job
+                                });
+                                console.log('dispatched job update');
+                            }}
+                          />)
+                        }
+                      }}
                     > Status
                     </TableHeaderColumn>
 

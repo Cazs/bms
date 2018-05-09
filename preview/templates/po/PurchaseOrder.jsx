@@ -4,11 +4,13 @@ import PropTypes from 'prop-types';
 import { padStart } from 'lodash';
 import currencies from '../../../libs/currencies.json';
 
-// Helpers
-import * as SessionManager from '../../../app/helpers/SessionManager';
-
 // Styles
 import styled from 'styled-components';
+
+// Actions
+import * as Actions from '../../../app/actions/settings';
+
+import * as GlobalConstants from '../../../app/constants/globals';
 
 const PurchaseOrderContent = styled.div`
   flex: 1;
@@ -27,46 +29,12 @@ const Table = styled.table`
   border-collapse: collapse;
   margin-top: 20px;
   th {
-    border-bottom: 2px solid #efefd1;
-    border-top: 2px solid #efefd1;
+    border-bottom: 2px solid #eeeeee;
+    border-top: 3px solid #eeeeee;
+    padding-top: 0.8em;
     padding-bottom: 0.8em;
     &:last-child {
       text-align: right;
-    }
-  }
-
-  thead {margin-top: 15px;}
-  ${props =>
-    props.customAccentColor &&
-    `
-    th
-    {
-      padding: 5px;
-      // border-bottom: 1px solid ${props.accentColor};
-      // border-top: 1px solid ${props.accentColor};
-      border: 1px solid #000 !important;
-      padding-bottom: 10px;
-    }
-  `};
-  tr > td:last-child {
-    text-align: right;
-  }
-  td {
-    color: #2c323a;
-    font-weight: 300;
-    line-height: 2.75;
-    font-size: 0.7em;
-    border-bottom: 2px solid #ecf1f1;
-    &:first-child {
-      color: #c4c8cc;
-    }
-  }
-  tfoot {
-    td {
-      font-weight: 400;
-      &:first-child {
-        border: none;
-      }
     }
   }
 `;
@@ -143,98 +111,184 @@ function PurchaseOrder({ pdf_data, configs, t })
   // Set Currency Sign
   // const currency = configs.useSymbol ? currencies[code].symbol : code;
   
+  const blank_table_row =
+  (
+    <tr style={{ height: '2px', backgroundColor: '#eeeeee' }}>
+      <td>{ }</td>
+      <td>{ }</td>
+      <td>{ }</td>
+      <td>{ }</td>
+      <td>{ }</td>
+      <td>{ }</td>
+      <td>{ }</td>
+    </tr>
+  );
+
+  const font_family = 'inherit';
+  const font_weight = 'light';
+  const font_size= '11pt';
+  const heading_font_size = '13pt';
+
   let sub_total = 0;
-  pdf_data.resources.map(item => sub_total += item.unit_cost * item.quantity); // TODO: account for additional costs
+  pdf_data.resources.map(item => sub_total += item.cost * item.quantity);
   const vat = sub_total * pdf_data.vat / 100;
   const total = sub_total + vat;
 
+  // console.log(pdf_data.profile);
+
   // Render Items
   return (
-    <PurchaseOrderContent alignItems={setAlignItems(configs)}>
-      <div style={{marginTop: '-72px'}}>
-        <table style={{width: '100%', fontSize: '16pt'}} border='1px solid red'>
-          <thead>
-            <tr>
-              <td><strong>Supplier Details</strong></td>
-              <td>
-                <strong>PurchaseOrder No.</strong>
-                <i style={{marginLeft: '15px'}}>
-                  {SessionManager.session_usr.firstname}-
-                  {SessionManager.session_usr.firstname.charAt(0) + SessionManager.session_usr.lastname.charAt(0)}-00
-                  {pdf_data.object_number}
-                  {/* &nbsp;REV&nbsp;{pdf_data.revision} */}
-                </i>
-              </td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><p>Contact Person: {pdf_data.contact_person}</p></td>
-              <td><p>Date: {pdf_data.date_logged}</p></td>
-            </tr>
+    <PurchaseOrderContent alignItems={setAlignItems(configs)} style={{width: '100%', backgroundColor: '#fff', marginTop: '-50px'}}>
+      <div style={{marginTop: '0px', width: '100%'}}>
+        <div className='row' style={{width: '100%'}}>
+          <div className='col-lg-6'>
+            <div style={{width: '300px', height: '160px', float: 'left', background: 'url(../static/images/logo.svg)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat'}} />
+          </div>
+          <div className='col-lg-6'>
+            <h3 style={{float: 'right', textAlign: 'right', marginTop: '30px', fontSize: '16pt', fontFamily: font_family, fontWeight: 'bold'}}>Purchase Order</h3>
+          </div>
+        </div>
 
-            <tr>
-              <td><p>Company: {pdf_data.supplier.supplier_name}</p></td>
-              <td>
-                <p>Sale Consultant: {SessionManager.session_usr.name} </p>
-              </td>
-            </tr>
+        <div className='row' style={{width: '100%'}}>
+          <div className='col-lg-6' />
+          <div className='col-lg-6'>
+            <p style={{float: 'right', textAlign: 'right', marginTop: '30px', fontSize: '14pt', fontFamily: font_family, fontWeight: 'bold'}}>{pdf_data.profile.company}</p>
+          </div>
+        </div>
 
-            <tr>
-              <td><p>Cell: {pdf_data.contact.cell}</p></td>
-              <td>
-                <p>Consultant Cell: {SessionManager.session_usr.cell} </p>
-                <p>Consultant eMail: {SessionManager.session_usr.email} </p>
-              </td>
-            </tr>
+        <div className='row' style={{width: '100%'}}>
+          <div className='pageItem col-lg-4 col-md-4 col-sm-4 col-xs-12'>
+            <table  style={{marginTop: '-37px'}}>
+              <tbody>
+                <tr>
+                  <td><p style={{float: 'left', fontWeight: 'bolder', textAlign: 'left', marginTop: '30px', fontSize: font_size, fontFamily: font_family}}>VAT No.: {pdf_data.profile.vat_number}</p></td>
+                </tr>
+                <tr>
+                  <td>{pdf_data.profile.postal_address.split(',').map((line)=>(<p>{line}</p>))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className='pageItem col-lg-4 col-md-4 col-sm-4 col-xs-12'>
+            {pdf_data.profile.address.split(',').map((line)=>(<p>{line}</p>))}
+          </div>
+          <div className='pageItem col-lg-4 col-md-4 col-sm-4 col-xs-12'>
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <p style={{float: 'left', fontWeight: 'bolder', textAlign: 'left', fontSize: font_size, fontFamily: font_family}}>
+                      Number: PO{pdf_data.object_number}
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td><p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Date: {pdf_data.logged_date}</p></td>
+                </tr>
+                <tr>
+                  <td><p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Reference:</p></td>
+                </tr>
+                <tr>
+                  <td><p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Delivery Date:</p></td>
+                </tr>
+                <tr>
+                  <td><p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Overall Discount %: 0.00%</p></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-            <tr>
-              <td><p>Tel: {pdf_data.contact.tel ? pdf_data.contact.tel : ''} {pdf_data.supplier.tel ? ' / ' : ''} {pdf_data.supplier.tel ? pdf_data.supplier.tel : '' }</p></td>
-              <td><p>Fax: {pdf_data.supplier.fax}</p></td>
-            </tr>
-          </tbody>
-        </table>
+        <div style={{height: '3px', backgroundColor: '#eeeeee'}} />
+
+        <div className='row'>
+          <div className='pageItem col-lg-4'>
+            <p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{pdf_data.supplier.supplier_name}</p>
+          </div>
+        </div>
+
+        <div className='row'>
+          <div className='pageItem col-lg-4'>
+            <p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Supplier VAT No.: {pdf_data.supplier.vat_number}</p>
+          </div>
+        </div>
+
+        <div className='row'>
+          <div className='pageItem col-lg-4'>
+            {
+              pdf_data.supplier.physical_address.split(',').map((line)=>
+              (
+                <p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>
+                  {line}
+                </p>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* <div style={{height: '3px', backgroundColor: '#eeeeee'}} /> */}
         
         <Table
           accentColor='#A183E8'
           customAccentColor='lime'
         >
-          <thead>
+          <thead style={{fontFamily: font_family, fontSize: heading_font_size, fontWeight: 'bold'}}>
             <tr>
-              <th style={{borderLeft: '1px solid #A183E8', borderRight: '1px solid #A183E8'}}>Item&nbsp;Number</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Item&nbsp;Description</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Unit</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Qty</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Rate</th>
-              <th style={{borderRight: '1px solid #A183E8'}}>Total&nbsp;Cost</th>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Excl.&nbsp;Price</th>
+              <th>Disc&nbsp;%</th>
+              <th>VAT&nbsp;%</th>
+              <th>Exclusive&nbsp;Total</th>
+              <th>Inclusive&nbsp;Total</th>
             </tr>
           </thead>
           <tbody>
-            { pdf_data.resources.map((row, index) => (
+            { pdf_data.resources.map((row, index) =>
+            (
               <tr key={index}>
-                <td>{padStart(index + 1, 2, 0)}.</td>
+                {/* <td>{padStart(index + 1, 2, 0)}.</td> */}
                 <td>{ row.item_description }</td>
-                <td>{ row.unit }</td>
                 <td>{ row.quantity }</td>
-                <td>R&nbsp;{ row.unit_cost }</td>
-                <td>R&nbsp;{ row.unit_cost * row.quantity }</td>
-              </tr> ))
-            }
+                <td>{ row.cost }</td>
+                <td>{ row.discount }</td>
+                <td>{ pdf_data.vat }</td>
+                <td><p style={{textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ Number(row.rate) * Number(row.quantity)}</p></td>
+                <td><p style={{textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ (Number(row.rate) * Number(row.quantity)) + ((Number(row.rate) * Number(row.quantity)) * Number(pdf_data.vat)/100)}</p></td>
+              </tr>
+            ))}
           </tbody>
-          <tfoot style={{marginTop: '40px'}}>
+          <tfoot style={{marginTop: '40px', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>
+            {blank_table_row}
+
             <tr>
               <td>Sub-Total: </td>
-              <td colSpan="5">R&nbsp;{ sub_total }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td><p style={{textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ sub_total }</p></td>
             </tr>
 
             <tr>
-              <td>VAT: </td>
-              <td colSpan="5">R&nbsp;{ vat }</td>
+              <td>VAT:</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td><p style={{textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ vat }</p></td>
             </tr>
 
             <tr>
-              <td>Total: </td>
-              <td colSpan="5">R&nbsp;{ total }</td>
+              <td>Total:</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td>{ }</td>
+              <td><p style={{textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ total }</p></td>
             </tr>
 
             {/* <tr className="quote__subtotal">
@@ -259,13 +313,13 @@ function PurchaseOrder({ pdf_data, configs, t })
             </PurchaseOrderTotal> */}
           </tfoot>
         </Table>
-        <div style={{width: '100%', backgroundColor: '#eeeeee', marginLeft: 'auto', marginRight: 'auto', marginTop: '20px', fontSize: '18pt'}}>
+        {/* <div style={{width: '100%', backgroundColor: '#eeeeee', marginLeft: 'auto', marginRight: 'auto', marginTop: '20px', fontSize: '18pt'}}>
           <table style={{marginTop: '20px'}}>
             <tbody>
               <tr>
-                <td style={{paddingRight: '200px'}}><p>Acceptance: (Full Name)</p></td>
+                <td style={{paddingRight: '200px', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}><p>Acceptance: (Full Name)</p></td>
                 <td><p>&nbsp;</p></td>
-                <td><p>Signature:</p></td>
+                <td><p style={{fontFamily: font_family, fontSize: font_size, fontWeight: font_weight}}>Signature:</p></td>
               </tr>
               <tr>
                 <td><p> _________________________</p></td>
@@ -274,9 +328,9 @@ function PurchaseOrder({ pdf_data, configs, t })
               </tr>
 
               <tr>
-                <td><p>Order / Reference No.:</p></td>
+                <td><p style={{fontFamily: font_family, fontSize: font_size, fontWeight: font_weight}}>Order / Reference No.:</p></td>
                 <td><p>&nbsp;</p></td>
-                <td colSpan='4'><p>Date:</p></td>
+                <td colSpan='4'><p style={{fontFamily: font_family, fontSize: font_size, fontWeight: font_weight}}>Date:</p></td>
               </tr>
 
               <tr>
@@ -286,7 +340,7 @@ function PurchaseOrder({ pdf_data, configs, t })
               </tr>
             </tbody>
           </table>
-        </div>
+        </div> */}
       </div>
     </PurchaseOrderContent>
   );
@@ -296,7 +350,6 @@ PurchaseOrder.propTypes =
 {
   configs: PropTypes.object.isRequired,
   pdf_data: PropTypes.object.isRequired,
-  t: PropTypes.func.isRequired,
 };
 
 export default PurchaseOrder;

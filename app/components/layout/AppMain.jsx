@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 
 // Custom Components
 import Login from '../../containers/Login';
+import Signup from '../../containers/Signup';
 import Home from '../../containers/Home';
 import Operations from '../../containers/Operations';
 import HR from '../../containers/HR';
@@ -25,6 +26,7 @@ class AppMain extends Component
     const { activeTab } = this.props;    
     return (
       <AppMainContent>
+        {activeTab === 'signup' && <Signup changeTab={this.props.changeTab} />}
         {activeTab === 'login' && <Login changeTab={this.props.changeTab} />}
         {activeTab === 'home' && <Home changeTab={this.props.changeTab} />}
         {activeTab === 'operations' && <Operations />}

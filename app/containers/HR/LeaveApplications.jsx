@@ -14,7 +14,7 @@ import * as ACTION_TYPES from '../../constants/actions.jsx';
 import * as UIActions from '../../actions/ui';
 
 // Helpers
-import * as SessionManager from '../../helpers/SessionManager';
+import sessionManager from '../../helpers/SessionManager';
 import Log, { formatDate } from '../../helpers/Logger';
 
 // import Select from 'react-select';
@@ -375,7 +375,7 @@ export class LeaveApplications extends React.Component
                         // selected_item={this.state.new_leave_application.client}
                       label='option_name'
                       onChange={(new_val)=>{
-                          const selected_type = JSON.parse(new_val);
+                          const selected_type = JSON.parse(new_val.currentTarget.value);
                           
                           const leave_application = this.state.new_leave_application;
                           leave_application.type = selected_type.option_name;
@@ -459,10 +459,10 @@ export class LeaveApplications extends React.Component
                   }
 
                   // Prepare Leave Application
-                  leave_application.usr = SessionManager.session_usr.usr;
-                  leave_application.creator_name = SessionManager.session_usr.name;
-                  leave_application.creator = SessionManager.session_usr.usr;
-                  leave_application.creator_employee = SessionManager.session_usr;
+                  leave_application.usr = sessionManager.getSessionUser().usr;
+                  leave_application.creator_name = sessionManager.getSessionUser().name;
+                  leave_application.creator = sessionManager.getSessionUser().usr;
+                  leave_application.creator_employee = sessionManager.getSessionUser();
                   leave_application.date_logged = new Date().getTime();// current date in epoch ms
                   leave_application.logged_date = formatDate(new Date()); // current date
 
@@ -840,7 +840,7 @@ export class LeaveApplications extends React.Component
                             ]}
                           onChange={(new_val)=>
                           {
-                              const selected_type = JSON.parse(new_val);
+                              const selected_type = JSON.parse(new_val.currentTarget.value);
                               
                               const leave_application = this.state.new_leave_application;
                               leave_application.type = selected_type.option_name;

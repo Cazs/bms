@@ -15,8 +15,28 @@ import { Field, Part, Row } from '../components/shared/Part';
 import Button from '../components/shared/Button';
 
 // Helpers
-import * as SessionManager from '../helpers/SessionManager';
+import  * as DataManager from '../helpers/DataManager';
+import sessionManager from '../helpers/SessionManager';
 import Log from '../helpers/Logger';
+
+// Ops
+// import * as UserActions from './actions/hr/users';
+import * as EmployeeActions from '../actions/hr/employees';
+import * as ClientActions from '../actions/operations/clients';
+import * as SupplierActions from '../actions/operations/suppliers';
+import * as MaterialActions from '../actions/operations/materials';
+import * as QuoteActions from '../actions/operations/quotes';
+import * as JobActions from '../actions/operations/jobs';
+import * as InvoiceActions from '../actions/operations/invoices';
+import * as PurchaseOrderActions from '../actions/operations/purchase_orders';
+import * as RequisitionActions from '../actions/operations/requisitions';
+
+// HR
+import * as LeaveApplicationActions from '../actions/hr/leave_applications';
+import * as OvertimeApplicationActions from '../actions/hr/overtime_applications';
+
+// Compliance
+import * as ComplianceActions from '../actions/compliance/safety';
 
 import
 {
@@ -49,6 +69,21 @@ const LoginButton = styled.button`
   width: 150px;
   height: 50px;
   font-size: 18pt;
+  background-color: rgba(0,255,0,.4);
+  border: 1px solid #fff;
+  border-radius: 3px;
+  color: #fff;
+  &:hover
+  {
+    background-color: rgba(0,200,0,1);
+    color: #000;
+  }
+`;
+
+const SignupButton = styled.button`
+  width: 150px;
+  height: 50px;
+  font-size: 18pt;
   background-color: #46729C;
   border: 1px solid #fff;
   border-radius: 3px;
@@ -67,74 +102,85 @@ class Login extends Component
   {
     super(props);
     this.login = this.login.bind(this);
+    this.showSignup = this.showSignup.bind(this);
+    this.initDataset = this.initDataset.bind(this);
 
     this.state = { };
+  }
+
+  showSignup()
+  {
+    this.props.changeTab('signup');
   }
 
   login()
   {
     console.log('authenticating %s:%s', this.txt_username.value, this.txt_password.value);
-    // :)
-    if(this.txt_username.value === 'ghost')
-    {
-      SessionManager.session_usr.usr= 'ghost';
-      SessionManager.session_usr.name= 'Casper Ndlovu';
-      SessionManager.session_usr.firstname= 'Casper';
-      SessionManager.session_usr.lastname= 'Ndlovu';
-      SessionManager.session_usr.cell= '0000000000';
-      SessionManager.session_usr.tel= '0000000000';
-      SessionManager.session_usr.email= 'casper@foag.co.za';
-      SessionManager.session_usr.access_level= 3;
-    } else if(this.txt_username.value === 'jivesh')
-    {
-      SessionManager.session_usr.usr= 'jivesh';
-      SessionManager.session_usr.name= 'Jivesh Arjun';
-      SessionManager.session_usr.firstname= 'Jivesh';
-      SessionManager.session_usr.lastname= 'Arjun';
-      SessionManager.session_usr.cell= '0830000002';
-      SessionManager.session_usr.tel= '0110000001';
-      SessionManager.session_usr.email= 'jivesh@omegafs.co.za';
-      SessionManager.session_usr.access_level= 2;
-    } else {
-      SessionManager.session_usr.usr= undefined;
-      SessionManager.session_usr.name= 'Unknown';
-      SessionManager.session_usr.firstname= 'Unknown';
-      SessionManager.session_usr.lastname= 'Unknown';
-      SessionManager.session_usr.cell= undefined;
-      SessionManager.session_usr.tel= undefined;
-      SessionManager.session_usr.email= undefined;
-      SessionManager.session_usr.access_level= 0;
 
-      this.props.dispatch({
+    // TODO: bcrypt
+    // Send auth request
+    DataManager.authenticate(this.props.dispatch, {username: this.txt_username.value, password: this.txt_password.value})
+    .then(session_data =>
+    {
+      console.log('success, session data: ', session_data);
+
+      sessionManager.setSessionId(session_data.session_id);
+      sessionManager.setSessionDate(session_data.date);
+      sessionManager.setSessionTtl(session_data.ttl);
+      sessionManager.setSessionUser(session_data.employee);
+
+      console.log('Session id: ', sessionManager.getSessionId());
+      console.log('Session user: ', sessionManager.getSessionUser());
+
+      this.props.dispatch(
+      {
         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-        payload: {
+        payload:
+        {
+          type: 'success',
+          message: session_data.employee.access_level > 2 ? '*Granted super user access rights. Welcome, ' + sessionManager.getSessionUser().firstname + '.'
+                    :'Successfully signed in. Welcome, ' + sessionManager.getSessionUser().firstname + '.'
+        }
+      });
+      this.initDataset();
+      this.props.changeTab('home');
+    })
+    .catch(err =>
+    {
+      console.log('error: ', err);
+      this.props.dispatch(
+      {
+        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+        payload:
+        {
           type: 'danger',
-          message: 'Unknown user.',
-        },
+          message: err.message
+        }
       });
-      return;
-    }
+    });
+  }
 
-    if(SessionManager.session_usr.access_level == 3)
-    {
-      this.props.dispatch({
-        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-        payload: {
-          type: 'success',
-          message: '*Granted super user access rights. Welcome, ' + SessionManager.session_usr.firstname + '.',
-        },
-      });
-    } else {
-      this.props.dispatch({
-        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-        payload: {
-          type: 'success',
-          message: 'Successfully signed in. Welcome, '+SessionManager.session_usr.firstname+'.',
-        },
-      });
-    }
-    console.log('Session user: ', SessionManager.session_usr);
-    this.props.changeTab('home');
+  initDataset()
+  {
+    const { dispatch } = this.props;
+
+    // Get HR data
+    dispatch(EmployeeActions.getEmployees());
+    dispatch(LeaveApplicationActions.getLeaveApplications());
+    dispatch(OvertimeApplicationActions.getOvertimeApplications());
+
+    // // Get Operational data
+    dispatch(ClientActions.getClients());
+    dispatch(SupplierActions.getSuppliers());
+    dispatch(MaterialActions.getMaterials());
+    dispatch(QuoteActions.getQuotes());
+    dispatch(JobActions.getJobs());
+    dispatch(InvoiceActions.getInvoices());
+    dispatch(PurchaseOrderActions.getPurchaseOrders());
+    dispatch(RequisitionActions.getRequisitions());
+    
+    // // Get compliance document index
+    dispatch(ComplianceActions.getSafetyDocuments());
   }
 
   // Render Main Content
@@ -182,13 +228,13 @@ class Login extends Component
               }}
             >
               <div className='row'>
-                <div className="pageItem col-md-6">
+                <div className="pageItem col-md-12">
                   <label className="itemLabel" style={{color: '#fff'}}>Username</label>
                   <input
                     ref={(txt_username)=>this.txt_username = txt_username}
                     name="username"
                     type="text"
-                    defaultValue={SessionManager.session_usr.usr}
+                    // defaultValue={SessionManager.getSessionUser().usr}
                     // value={this.state.new_safety_document.document.filename}
                     // onChange={(new_val)=>
                     // {
@@ -196,13 +242,13 @@ class Login extends Component
                     //   safety_document.document.filename = new_val.currentTarget.value;
                     //   this.setState({new_safety_document: safety_document});
                     // }}
-                    style={{width: '250px', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                    style={{width: '100%', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
                   />
                 </div>
               </div>
 
               <div className='row'>
-                <div className="pageItem col-md-6">
+                <div className="pageItem col-md-12">
                   <label className="itemLabel" style={{color: '#fff'}}>Password</label>
                   <input
                     ref={(txt_password)=>this.txt_password = txt_password}
@@ -215,7 +261,7 @@ class Login extends Component
                     //   safety_document.document.filename = new_val.currentTarget.value;
                     //   this.setState({new_safety_document: safety_document});
                     // }}
-                    style={{width: '250px', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                    style={{width: '100%', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
                   />
                 </div>
               </div>
@@ -227,6 +273,14 @@ class Login extends Component
                   >
                     Login
                   </LoginButton>
+                </div>
+                <div className="pageItem col-md-6">
+                  <SignupButton
+                    onClick={(evt)=>this.showSignup()}
+                    style={{float: 'right'}}
+                  >
+                      Signup
+                  </SignupButton>
                 </div>
               </div>
             </div>

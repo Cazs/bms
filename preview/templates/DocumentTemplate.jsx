@@ -4,9 +4,6 @@ import PropTypes from 'prop-types';
 import { padStart } from 'lodash';
 import currencies from '../../libs/currencies.json';
 
-// Helpers
-import * as SessionManager from '../../app/helpers/SessionManager';
-
 // Styles
 import styled from 'styled-components';
 
@@ -131,71 +128,6 @@ function setAlignItems(configs)
     }
   }
   return pos;
-}
-
-const renderPDF = () =>
-{
-  // atob() is used to convert base64 encoded PDF to binary-like data.
-  // (See also https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/
-  // Base64_encoding_and_decoding.)
-  const pdfData = atob(
-    'JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwog' +
-    'IC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXMKICAv' +
-    'TWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0K' +
-    'Pj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAg' +
-    'L1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSIAogICAgPj4KICA+' +
-    'PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9u' +
-    'dAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2Jq' +
-    'Cgo1IDAgb2JqICAlIHBhZ2UgY29udGVudAo8PAogIC9MZW5ndGggNDQKPj4Kc3RyZWFtCkJU' +
-    'CjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVu' +
-    'ZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4g' +
-    'CjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAwMDAwMzAxIDAw' +
-    'MDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9v' +
-    'dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G');
-
-  // Loaded via <script> tag, create shortcut to access PDF.js exports.
-  // const pdfjsLib = window['pdfjs-dist/build/pdf'];
-
-  // The workerSrc property shall be specified.
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
-
-  // Using DocumentInitParameters object to load binary data.
-  const loadingTask = pdfjsLib.getDocument({data: pdfData});
-  loadingTask.promise.then((pdf) =>
-  {
-    console.log('PDF loaded');
-    
-    // Fetch the first page
-    const pageNumber = 1;
-    pdf.getPage(pageNumber).then((page) => {
-      console.log('Page loaded');
-      
-      const scale = 1.5;
-      const viewport = page.getViewport(scale);
-
-      // Prepare canvas using PDF page dimensions
-      const canvas = document.getElementById('the-canvas');
-      const context = canvas.getContext('2d');
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      // Render PDF page into canvas context
-      const renderContext =
-      {
-        canvasContext: context,
-        viewport
-      };
-      const renderTask = page.render(renderContext);
-      renderTask.then(() =>
-      {
-        console.log('Page rendered');
-      });
-    });
-  }, (reason) =>
-  {
-    // PDF loading error
-    console.error(reason);
-  });
 }
 
 // Component

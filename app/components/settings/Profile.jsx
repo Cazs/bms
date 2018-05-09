@@ -82,18 +82,6 @@ class Profile extends Component
               onChange={this.handleInputChange}
             />
           </div>
-        </div>
-
-        <div className="row">
-          <div className="pageItem col-md-6">
-            <label className="itemLabel">{t('common:fields:address')}</label>
-            <input
-              name="address"
-              type="text"
-              value={this.state.address}
-              onChange={this.handleInputChange}
-            />
-          </div>
 
           <div className="pageItem col-md-6">
             <label className="itemLabel">{t('common:fields:email')}</label>
@@ -101,6 +89,26 @@ class Profile extends Component
               name="email"
               type="text"
               value={this.state.email}
+              onChange={this.handleInputChange}
+            />
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="pageItem col-md-6">
+            <label className="itemLabel">{t('common:fields:address')}</label>
+            <textarea
+              name="address"
+              value={this.state.address}
+              onChange={this.handleInputChange}
+            />
+          </div>
+
+          <div className="pageItem col-md-6">
+            <label className="itemLabel">Postal Address</label>
+            <textarea
+              name="postal_address"
+              value={this.state.postal_address}
               onChange={this.handleInputChange}
             />
           </div>
@@ -127,12 +135,35 @@ class Profile extends Component
             />
           </div>
         </div>
+
+        <div className="row">
+          <div className="pageItem col-md-6">
+            <label className="itemLabel">VAT Number</label>
+            <input
+              name="vat"
+              type="text"
+              value={this.state.vat_number}
+              onChange={this.handleInputChange}
+            />
+          </div>
+
+          <div className="pageItem col-md-6">
+            <label className="itemLabel">Registration Number</label>
+            <input
+              name="reg_number"
+              type="text"
+              value={this.state.reg_number}
+              onChange={this.handleInputChange}
+            />
+          </div>
+        </div>
       </div>
     );
   }
 }
 
-Profile.propTypes = {
+Profile.propTypes =
+{
   profile: PropTypes.object.isRequired,
   t: PropTypes.func.isRequired,
   updateSettings: PropTypes.func.isRequired,

@@ -15,14 +15,16 @@ ipcMain.on('save-pdf', (event, docId) =>
   const win = BrowserWindow.fromWebContents(event.sender);
 
   let printOptions;
-  if (appConfig.has('general.printOptions')) {
+  if (appConfig.has('general.printOptions'))
+  {
     printOptions = appConfig.get('general.printOptions');
-  } else {
+  } else
+  {
     printOptions = {
       landscape: false,
       marginsType: 0,
       printBackground: true,
-      printSelectionOnly: false,
+      printSelectionOnly: false
     };
   }
 

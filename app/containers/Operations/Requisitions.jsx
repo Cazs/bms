@@ -13,6 +13,15 @@ import {BootstrapTable, TableHeaderColumn} from 'react-bootstrap-table';
 import Option from 'muicss/lib/react/option';
 import Select from 'muicss/lib/react/select';
 
+// Actions
+import * as ACTION_TYPES from '../../constants/actions.jsx';
+import * as UIActions from '../../actions/ui';
+
+// Helpers
+import sessionManager from '../../helpers/SessionManager';
+import * as PurchaseOrderActions from '../../actions/operations/purchase_orders';
+import Log, { formatDate } from '../../helpers/Logger';
+
 // Animation
 import { Motion, spring } from 'react-motion';
 import Transition from 'react-motion-ui-pack'
@@ -23,8 +32,11 @@ import * as GlobalConstants from  '../../constants/globals';
 // Selectors
 import { getEmployees } from '../../reducers/HR/EmployeesReducer';
 import { getMaterials } from '../../reducers/Operations/MaterialsReducer';
+import { getSuppliers } from '../../reducers/Operations/SuppliersReducer';
 import { getClients } from '../../reducers/Operations/ClientsReducer';
 import { getRequisitions } from '../../reducers/Operations/RequisitionsReducer';
+import { getPurchaseOrders } from '../../reducers/Operations/PurchaseOrdersReducer';
+import { getCurrentSettings } from '../../../app/reducers/SettingsReducer';
 
 // Components
 import ComboBox from '../../components/shared/ComboBox';
@@ -75,6 +87,7 @@ export class Requisitions extends React.Component
     this.setRequisitionStatus = this.setRequisitionStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
     this.getCaret = this.getCaret.bind(this);
+    this.newRequisition = this.newRequisition.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -83,24 +96,49 @@ export class Requisitions extends React.Component
 
     this.col_toggles_container = null;
     this.col_width = 235;
-    this.state = {  filter: null,
-                    is_new_requisition_modal_open: false,
-                    is_requisition_items_modal_open: false,
-                    selected_requisition: null,
-                    active_row: null,
-                    column_toggles_top: -200,
-                    info: {x: 200, y: 200, display: 'none'},
-                    // Table Column Toggles
-                    col_id_visible: false,
-                    col_object_number_visible: true,
-                    col_client_id_visible: true,
-                    col_contact_person_id_visible: false,
-                    col_description_visible: false,
-                    col_type_visible: false,
-                    col_status_visible: true,
-                    col_creator_visible: false,
-                    col_date_logged_visible: false,
+    this.state =
+    { 
+      filter: null,
+      is_new_requisition_modal_open: false,
+      is_requisition_items_modal_open: false,
+      selected_requisition: null,
+      active_row: null,
+      column_toggles_top: -200,
+      info: {x: 200, y: 200, display: 'none'},
+      new_requisition: this.newRequisition(),
+      // Table Column Toggles
+      col_id_visible: false,
+      col_object_number_visible: true,
+      col_client_id_visible: true,
+      col_contact_person_id_visible: false,
+      col_description_visible: false,
+      col_type_visible: false,
+      col_status_visible: true,
+      col_creator_visible: false,
+      col_date_logged_visible: false
     };
+  }
+
+  newRequisition()
+  {
+    return {
+      supplier_name: null,
+      supplier_id: null,
+      contact: {},
+      contact_person: null,
+      contact_person_id: null,
+      description: '',
+      status: 0,
+      vat: GlobalConstants.VAT,
+      status_description: 'pending',
+      resources: [],
+      creator_name: sessionManager.getSessionUser().name,
+      creator: sessionManager.getSessionUser().usr,
+      creator_employee: sessionManager.getSessionUser(),
+      date_logged: new Date().getTime(), // current date in epoch ms
+      logged_date: formatDate(new Date()), // current date
+      other: ''
+    }
   }
 
   // Load Requisitions & add event listeners
@@ -309,6 +347,187 @@ export class Requisitions extends React.Component
       <PageContent bare>
         <div style={{maxHeight: 'auto'}}>
           {info}
+          {/* Requisition Creation Modal */}
+          <Modal
+            isOpen={this.state.is_new_requisition_modal_open}
+            onAfterOpen={this.afterOpenModal}
+            onRequestClose={this.closeModal}
+            style={modalStyle}
+            contentLabel="New Requisition"
+          >
+            <h2 ref={subtitle => this.subtitle = subtitle} style={{color: 'black'}}>Create New Requisition</h2>
+            <div>
+              <div className="pageItem">
+                {/* <label className="itemLabel">{t('settings:fields:logo:name')}</label>
+                  <Logo
+                    logo={this.state.logo}
+                    handleLogoChange={this.handleLogoChange}
+                  /> */}
+              </div>
+              <div className="row">
+                <div className="pageItem col-md-6">
+                  <label className="itemLabel">Contact</label>
+                  {/* TODO: common:fields:email? */}
+                  <div>
+                    <ComboBox 
+                      ref={(cbx_contacts)=>this.cbx_contacts = cbx_contacts}
+                      items={this.props.employees}
+                      // selected_item={this.state.new_requisition.contact}
+                      label='name'
+                      onChange={(new_val)=>{
+                        const selected_contact = JSON.parse(new_val.currentTarget.value);
+                        const Requisition = this.state.new_requisition;
+                        Requisition.contact_id = selected_contact.usr;
+                        Requisition.contact = selected_contact;
+
+                        this.setState({new_requisition: Requisition});
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="pageItem col-md-6">
+                  <label className="itemLabel">Supplier</label>
+                  <div>
+                    <ComboBox
+                      ref={(cbx_suppliers)=>this.cbx_suppliers = cbx_suppliers}
+                      items={this.props.suppliers}
+                      // selected_item={this.state.new_requisition.supplier}
+                      label='supplier_name'
+                      onChange={(new_val)=>{
+                        const selected_supplier = JSON.parse(new_val.currentTarget.value);
+                        
+                        const Requisition = this.state.new_requisition;
+                        Requisition.supplier_id = selected_supplier._id;
+                        Requisition.supplier = selected_supplier;
+
+                        this.setState({new_requisition: Requisition});
+                        this.sitename = selected_supplier.physical_address;
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="row">
+                <div className="pageItem col-md-6">
+                  <label className="itemLabel">Description</label>
+                  <textarea
+                    name="description"
+                    value={this.state.new_requisition.description}
+                    onChange={this.handleInputChange}
+                    style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                  />
+                </div>
+
+                <div className="pageItem col-md-6">
+                  <label className="itemLabel">Notes</label>
+                  <textarea
+                    name="notes"
+                    value={this.state.new_requisition.other}
+                    onChange={this.handleInputChange}
+                    style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                  />
+                </div>
+              </div>
+
+              <div className='row'>
+                <div className="pageItem col-lg-6 col-xs-6">
+                  <label className="itemLabel">VAT [{this.state.new_requisition.vat} %]</label>
+                  <label className="switch">
+                    <input
+                      name="vat"
+                      type="checkbox"
+                      checked={this.state.new_requisition.vat>0}
+                      onChange={() =>
+                        {
+                          const requisition = this.state.new_requisition;
+                          requisition.vat = requisition.vat > 0 ? 0 : GlobalConstants.VAT;
+                          this.setState(
+                          {
+                            new_requisition: requisition
+                          });
+                        }}
+                    />
+                    <span className="slider round" />
+                  </label>
+                </div>
+              </div>
+
+              <CustomButton
+                onClick={this.closeModal}
+                style={{width: '120px', height: '50px', float: 'right'}}
+                danger
+              >Dismiss
+              </CustomButton>
+
+              <CustomButton
+                onClick={()=>{
+                  const requisition = this.state.new_requisition;
+
+                  if(!requisition.supplier)
+                  {
+                    return this.props.dispatch({
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {
+                        type: 'danger',
+                        message: 'Invalid supplier selected',
+                      },
+                    });
+                  }
+
+                  if(!requisition.contact)
+                  {
+                    return this.props.dispatch({
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {
+                        type: 'danger',
+                        message: 'Invalid contact person selected',
+                      },
+                    });
+                  }
+
+                  // Prepare Requisition
+                  const supplier_name = requisition.supplier.supplier_name.toString();
+                  const requisitions = this.props.requisitions;
+                  requisition.supplier_name = supplier_name;
+                  requisition.object_number = requisitions.length;
+                  requisition.supplier_id = requisition.supplier._id;
+                  requisition.contact_person = requisition.contact.name;
+                  requisition.contact_person_id = requisition.contact.usr;
+                  requisition.status = 0;
+                  requisition.status_description = 'pending';
+                  requisition.creator_name = sessionManager.getSessionUser().name;
+                  requisition.creator = sessionManager.getSessionUser().usr;
+                  requisition.creator_employee = sessionManager.getSessionUser();
+                  requisition.date_logged = new Date().getTime();// current date in epoch ms
+                  requisition.logged_date = formatDate(new Date()); // current date
+
+                  console.log('creating requisition: ', requisition);
+
+                  requisitions.push(requisition);
+
+                  this.setState({new_requisition: this.newRequisition(), is_new_requisition_modal_open: false});
+
+                  // dispatch action to create requisition on local & remote stores
+                  this.props.dispatch(
+                  {
+                    type: ACTION_TYPES.REQUISITION_NEW,
+                    payload: requisition,
+                    // callback(complete_requisition) // w/ _id
+                    // {
+                    //   if(complete_requisition)
+                    //     requisitions.push(complete_requisition);
+                    // }
+                  });
+                  
+                }}
+                style={{width: '120px', height: '50px', float: 'left'}}
+                success
+              >Create
+              </CustomButton>
+            </div>
+          </Modal>
           {/* Requisitions table & Column toggles */}
           <div style={{paddingTop: '0px'}}>
             {/* Requisitions Table column toggles */}
@@ -556,7 +775,7 @@ export class Requisitions extends React.Component
             {requisitions.length === 0 ? (
               <Message danger text='No requisitions were found in the system' style={{marginTop: '145px'}} />
             ) : (
-              <div style={{maxHeight: 'auto', marginTop: '-200px', marginLeft: '-40px', backgroundColor: '#eeeeee'}}>
+              <div style={{maxHeight: 'auto', marginTop: '0px', marginLeft: '-40px', backgroundColor: '#eeeeee'}}>
                 <BootstrapTable
                   id='tblRequisitions'
                   key='tblRequisitions'
@@ -564,7 +783,6 @@ export class Requisitions extends React.Component
                   striped
                   hover
                   insertRow={false}
-                  // selectRow={(row)=>alert(row)}
                   selectRow={{bgColor: 'red'}}
                   expandableRow={this.isExpandableRow}
                   expandComponent={this.expandComponent}
@@ -600,22 +818,22 @@ export class Requisitions extends React.Component
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 'px', background: 'lime'}}
                     tdStyle={() => {({'fontWeight': 'lighter'})}}
                     hidden={!this.state.col_object_number_visible}
-                  > Requisition Number
+                  > Requisition&nbsp;Number
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
-                    dataField='client_name'
+                    dataField='supplier_name'
                     dataSort
                     caretRender={this.getCaret}
                     // editable={{type: 'select'}}
                     customEditor={{
                       getElement: (func, props) =>
-                        <ComboBox items={this.props.clients} selected_item={props.row.client} label='client_name' />
+                        <ComboBox items={this.props.suppliers} selected_item={props.row.supplier} label='supplier_name' />
                     }}
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 240 + 'px', background: 'lime'}}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_client_id_visible}
-                  > Client
+                  > Supplier
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -698,7 +916,9 @@ Requisitions.propTypes =
   dispatch: PropTypes.func.isRequired,
   employees: PropTypes.arrayOf(PropTypes.object).isRequired,
   materials: PropTypes.arrayOf(PropTypes.object).isRequired,
+  suppliers: PropTypes.arrayOf(PropTypes.object).isRequired,
   clients: PropTypes.arrayOf(PropTypes.object).isRequired,
+  purchaseOrders: PropTypes.arrayOf(PropTypes.object).isRequired,
   requisitions: PropTypes.arrayOf(PropTypes.object).isRequired,
    t: PropTypes.func.isRequired,
 };
@@ -709,6 +929,8 @@ const mapStateToProps = state => (
   employees: getEmployees(state),
   materials: getMaterials(state),
   clients: getClients(state),
+  suppliers: getSuppliers(state),
+  purchaseOrders: getPurchaseOrders(state),
   requisitions: getRequisitions(state)
 });
 

@@ -42,7 +42,7 @@ import Modal from 'react-modal';
 import styled from 'styled-components';
 
 // Helpers
-import * as SessionManager from '../../helpers/SessionManager';
+import sessionManager from '../../helpers/SessionManager';
 import Log, { formatDate } from '../../helpers/Logger';
 
 import _withFadeInAnimation from '../../components/shared/hoc/_withFadeInAnimation';
@@ -122,13 +122,13 @@ export class SafetyDocuments extends React.Component
         content_type: null,
         file: null,
         other: null,
-        creator: SessionManager.session_usr.usr,
-        creator_employee: SessionManager.session_usr,
+        creator: sessionManager.getSessionUser().usr,
+        creator_employee: sessionManager.getSessionUser(),
         date_logged: new Date().getTime(),
         logged_date: formatDate(new Date())// current date
       },
-      creator: SessionManager.session_usr.usr,
-      creator_employee: SessionManager.session_usr,
+      creator: sessionManager.getSessionUser().usr,
+      creator_employee: sessionManager.getSessionUser(),
       date_logged: new Date().getTime(),
       logged_date: formatDate(new Date())// current date
     }
@@ -728,15 +728,15 @@ export class SafetyDocuments extends React.Component
                     safety_document.document_title = this.state.new_safety_document.document.filename;
                     safety_document.document_description = this.state.new_safety_document.document.other;
                     safety_document.document_type = this.state.new_safety_document.document.content_type;
-                    safety_document.creator_name = SessionManager.session_usr.name;
-                    safety_document.creator = SessionManager.session_usr.usr;
-                    safety_document.creator_employee = SessionManager.session_usr;
+                    safety_document.creator_name = sessionManager.getSessionUser().name;
+                    safety_document.creator = sessionManager.getSessionUser().usr;
+                    safety_document.creator_employee = sessionManager.getSessionUser();
                     safety_document.date_logged = new Date().getTime();// current date in epoch millis
                     safety_document.logged_date = formatDate(new Date());// current date
                     // Update common attributes for actual document
-                    safety_document.document.creator_name = SessionManager.session_usr.name;
-                    safety_document.document.creator = SessionManager.session_usr.usr;
-                    safety_document.document.creator_employee = SessionManager.session_usr;
+                    safety_document.document.creator_name = sessionManager.getSessionUser().name;
+                    safety_document.document.creator = sessionManager.getSessionUser().usr;
+                    safety_document.document.creator_employee = sessionManager.getSessionUser();
                     safety_document.document.date_logged = new Date().getTime();// current date in epoch millis
                     safety_document.document.logged_date = formatDate(new Date());// current date
 

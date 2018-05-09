@@ -11,7 +11,7 @@ import { Field, Part, Row } from '../components/shared/Part';
 import Button from '../components/shared/Button';
 
 // Helpers
-import * as SessionManager from '../helpers/SessionManager';
+import sessionManager from '../helpers/SessionManager';
 import Log from '../helpers/Logger';
 
 import
@@ -57,6 +57,24 @@ const HomeButton = styled.button`
   }
 `;
 
+// // Ops
+// // import * as UserActions from './actions/hr/users';
+// import * as EmployeeActions from '../actions/hr/employees';
+// import * as ClientActions from '../actions/operations/clients';
+// import * as SupplierActions from '../actions/operations/suppliers';
+// import * as MaterialActions from '../actions/operations/materials';
+// import * as QuoteActions from '../actions/operations/quotes';
+// import * as JobActions from '../actions/operations/jobs';
+// import * as InvoiceActions from '../actions/operations/invoices';
+// import * as PurchaseOrderActions from '../actions/operations/purchase_orders';
+// import * as RequisitionActions from '../actions/operations/requisitions';
+
+// // HR
+// import * as LeaveApplicationActions from '../actions/hr/leave_applications';
+// import * as OvertimeApplicationActions from '../actions/hr/overtime_applications';
+
+// // Compliance
+// import * as ComplianceActions from '../actions/compliance/safety';
 
 // Component
 class Home extends Component
@@ -65,6 +83,11 @@ class Home extends Component
   {
     super(props);
     this.state = { };
+  }
+
+  componentDidMount()
+  {
+    
   }
 
   // Render Main Content
@@ -106,7 +129,7 @@ class Home extends Component
                     // onClick={()=>this.setState({profile_menu_visible: !this.state.profile_menu_visible})}
                     onClick={()=>this.props.changeTab('login')}
                   />
-                  <label style={{fontSize: '26pt', marginLeft: '30px', marginTop: '15px', float: 'left', color: '#fff'}}>{SessionManager.session_usr.name}</label>
+                  <label style={{fontSize: '26pt', marginLeft: '30px', marginTop: '15px', float: 'left', color: '#fff'}}>{sessionManager.getSessionUser().name}</label>
                 </div>
                 <div className="pageItem col-md-4">
                   <p style={{fontSize: '26pt', float: 'right', color: '#fff'}}>Enterprise Resource Engine</p>

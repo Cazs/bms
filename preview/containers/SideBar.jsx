@@ -40,6 +40,8 @@ import Language from '../components/sidebar/Language';
 import Template from '../components/sidebar/Template';
 import Toggler from '../components/sidebar/Toggler';
 
+const appConfig = require('electron-settings');
+
 class SideBar extends Component
 {
   constructor(props)
@@ -66,6 +68,13 @@ class SideBar extends Component
 
   savePDF()
   {
+    appConfig.set('general.printOptions',
+    {
+      landscape: true,
+      // marginsType: 0,
+      // printBackground: true,
+      // printSelectionOnly: false,
+    });
     const pdf_dataID = this.props.pdf_data._id;
     ipc.send('save-pdf', pdf_dataID);
     // Always save template configs to invocie when export to PDF

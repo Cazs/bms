@@ -4,6 +4,7 @@ import * as UIActions from '../actions/ui';
 
 import path  from 'path';
 import Log from './Logger';
+import sessionManager from './SessionManager';
 
 const NeDatastore = require('nedb');
 // path.join(require('nw.gui').App.dataPath
@@ -25,6 +26,38 @@ export const db_leave_applications = new NeDatastore({ filename: path.join(__dir
 export const db_overtime_applications = new NeDatastore({ filename: path.join(__dirname,  '../db/overtime_applications.db'), autoload: true });
 
 export const db_safety_documents = new NeDatastore({ filename: path.join(__dirname,  '../db/safety_documents.db'), autoload: true });
+
+export const authenticate = (dispatch, user) =>  new Promise((resolve, reject) =>
+{
+    const { HttpClient } = require('../helpers/HttpClient');
+    return HttpClient.put('/session', {}, {headers: {'usr': user.username, 'pwd': user.password, 'Content-Type': 'application/json'}})
+                      .then(response =>
+                      {
+                        if(response)
+                        {
+                          if(response.status == 200) // Success, successfully signed in
+                          {
+                            resolve(response.data); // resolve session data
+                            dispatch(UIActions.newNotification('success', 'User ['+user.username+'] has successfully signed in.'));
+                          } else // Some other error
+                          {
+                            reject(new Error('Error: ' + response.status));
+                            return dispatch(UIActions.newNotification('danger', 'Error: ' + response.status));
+                          }
+                        } else // No response
+                        {
+                          reject(new Error('Error: Could not get a valid response from the server.'));
+                          return dispatch(UIActions.newNotification('danger', 'Error: Could not get a valid response from the server.'));
+                        }
+                      })
+                      .catch(err => 
+                      {
+                        // else if(response.status == 404) // Not found
+                        console.log(err);
+                        reject(new Error('Invalid user credentials.'));
+                        dispatch(UIActions.newNotification('warning', 'Error: Invalid user credentials.'));
+                      });
+});
 
 export const getAll = (dispatch, action, endpoint, db, collection_name) => new Promise((resolve, reject) =>
 {
@@ -129,7 +162,7 @@ export const updateLocalResource = (dispatch, db, resource, collection_name) => 
 const getRemoteResource = (dispatch, endpoint, collection_name, callback) => 
 {
     const { HttpClient } = require('../helpers/HttpClient');
-    return HttpClient.get(endpoint)
+    return HttpClient.get(endpoint, {headers: {'Content-Type': 'application/json;', session_id: sessionManager.getSessionId()}})
                       .then(response =>
                       { 
                         if(response)
@@ -178,7 +211,7 @@ const getRemoteResource = (dispatch, endpoint, collection_name, callback) =>
 export const putRemoteResource = (dispatch, db, resource, endpoint, collection_name) =>  new Promise((resolve, reject) =>
 {
     const { HttpClient } = require('../helpers/HttpClient');
-    return HttpClient.put(endpoint, resource)
+    return HttpClient.put(endpoint, resource, {headers: {'Content-Type': 'application/json;', session_id: sessionManager.getSessionId()}})
                       .then(response =>
                       {
                         if(response)
@@ -234,7 +267,7 @@ export const putRemoteResource = (dispatch, db, resource, endpoint, collection_n
 export const postRemoteResource = (dispatch, db, resource, endpoint, collection_name) =>  new Promise((resolve, reject) =>
 {
     const { HttpClient } = require('../helpers/HttpClient');
-    return HttpClient.post(endpoint, resource)
+    return HttpClient.post(endpoint, resource, {headers: {'Content-Type': 'application/json;', session_id: sessionManager.getSessionId()}})
                       .then(response =>
                       { 
                         if(response)
@@ -303,7 +336,7 @@ export const postRemoteResource = (dispatch, db, resource, endpoint, collection_
 export const emailDocument = (dispatch, email, endpoint) =>  new Promise((resolve, reject) =>
 {
     const { HttpClient } = require('../helpers/HttpClient');
-    return HttpClient.post(endpoint, email, {_id: 'test', message: 'test', subject: 'test'})
+    return HttpClient.post(endpoint, email, {_id: 'test', message: 'test', subject: 'test', headers: {'Content-Type': 'application/json;', session_id: sessionManager.getSessionId()}})
                       .then(response =>
                       { 
                         if(response)

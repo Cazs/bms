@@ -14,7 +14,7 @@ import * as ACTION_TYPES from '../../constants/actions.jsx';
 import * as UIActions from '../../actions/ui';
 
 // Helpers
-import * as SessionManager from '../../helpers/SessionManager';
+import sessionManager from '../../helpers/SessionManager';
 import Log, { formatDate } from '../../helpers/Logger';
 
 // import Select from 'react-select';
@@ -327,7 +327,7 @@ export class OvertimeApplications extends React.Component
                         // selected_item={this.state.new_overtime_application.client}
                       label='object_number'
                       onChange={(new_val)=>{
-                          const selected_job = JSON.parse(new_val);
+                          const selected_job = JSON.parse(new_val.currentTarget.value);
                           
                           const overtime_application = this.state.new_overtime_application;
                           overtime_application.job = selected_job;
@@ -460,10 +460,10 @@ export class OvertimeApplications extends React.Component
                   }
 
                   // Prepare Overtime Application
-                  overtime_application.usr = SessionManager.session_usr.usr;
-                  overtime_application.creator_name = SessionManager.session_usr.name;
-                  overtime_application.creator = SessionManager.session_usr.usr;
-                  overtime_application.creator_employee = SessionManager.session_usr;
+                  overtime_application.usr = sessionManager.getSessionUser().usr;
+                  overtime_application.creator_name = sessionManager.getSessionUser().name;
+                  overtime_application.creator = sessionManager.getSessionUser().usr;
+                  overtime_application.creator_employee = sessionManager.getSessionUser();
                   overtime_application.date_logged = new Date().getTime();// current date in epoch ms
                   overtime_application.logged_date = formatDate(new Date()); // current date
 
@@ -835,7 +835,7 @@ export class OvertimeApplications extends React.Component
                             // selected_item={this.state.new_overtime_application.client}
                           label='object_number'
                           onChange={(new_val)=>{
-                              const selected_job = JSON.parse(new_val);
+                              const selected_job = JSON.parse(new_val.currentTarget.value);
                               
                               const overtime_application = this.state.new_overtime_application;
                               overtime_application.job = selected_job;
