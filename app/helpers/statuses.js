@@ -34,15 +34,15 @@ const general_statuses =
 [
     {
     status: 0,
-    status_description: 'pending'
+    status_description: 'Pending'
     },
     {
     status: 1,
-    status_description: 'authorised'
+    status_description: 'Authorised'
     },
     {
     status: 2,
-    status_description: 'rejected'
+    status_description: 'Rejected'
     }
 ];
 

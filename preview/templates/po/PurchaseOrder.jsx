@@ -138,27 +138,19 @@ function PurchaseOrder({ pdf_data, configs, t })
 
   // Render Items
   return (
-    <PurchaseOrderContent alignItems={setAlignItems(configs)} style={{width: '100%', backgroundColor: '#fff', marginTop: '-50px'}}>
-      <div style={{marginTop: '0px', width: '100%'}}>
-        <div className='row' style={{width: '100%'}}>
-          <div className='col-lg-6'>
-            <div style={{width: '300px', height: '160px', float: 'left', background: 'url(../static/images/logo.svg)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat'}} />
-          </div>
-          <div className='col-lg-6'>
-            <h3 style={{float: 'right', textAlign: 'right', marginTop: '30px', fontSize: '16pt', fontFamily: font_family, fontWeight: 'bold'}}>Purchase Order</h3>
-          </div>
+    <PurchaseOrderContent alignItems={setAlignItems(configs)} style={{ backgroundColor: '#fff', marginTop: '0px'}}>
+      <div style={{marginTop: '20px', width: '90%'}}>
+        <div style={{display: 'flex', width: '90%'}}>
+          <div style={{width: '300px', height: '160px', float: 'left', background: 'url(../static/images/logo.tif)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat'}} />
+          <h3 style={{marginLeft: '75px', float: 'right', textAlign: 'right', marginTop: '30px', fontSize: '16pt', fontFamily: font_family, fontWeight: 'bold'}}>Purchase Order</h3>
         </div>
 
-        <div className='row' style={{width: '100%'}}>
-          <div className='col-lg-6' />
-          <div className='col-lg-6'>
-            <p style={{float: 'right', textAlign: 'right', marginTop: '30px', fontSize: '14pt', fontFamily: font_family, fontWeight: 'bold'}}>{pdf_data.profile.company}</p>
-          </div>
-        </div>
+        <p style={{float: 'right', textAlign: 'center', marginTop: '-40px', fontSize: '17pt', fontFamily: font_family, fontWeight: 'bold'}}>{pdf_data.profile.company}</p>
+        <br />
 
-        <div className='row' style={{width: '100%'}}>
-          <div className='pageItem col-lg-4 col-md-4 col-sm-4 col-xs-12'>
-            <table  style={{marginTop: '-37px'}}>
+        <div style={{display: 'block', backgroundColor: 'lime'}}>
+          <div style={{float: 'left', width: '33%'}}>
+            <table style={{marginTop: '-0px'}}>
               <tbody>
                 <tr>
                   <td><p style={{float: 'left', fontWeight: 'bolder', textAlign: 'left', marginTop: '30px', fontSize: font_size, fontFamily: font_family}}>VAT No.: {pdf_data.profile.vat_number}</p></td>
@@ -169,10 +161,13 @@ function PurchaseOrder({ pdf_data, configs, t })
               </tbody>
             </table>
           </div>
-          <div className='pageItem col-lg-4 col-md-4 col-sm-4 col-xs-12'>
-            {pdf_data.profile.address.split(',').map((line)=>(<p>{line}</p>))}
+          <div style={{float: 'left', width: '33%', marginTop: '30px'}}>
+            {
+              pdf_data.profile.address.split(',').map((line)=>
+                (<p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{line}</p>))
+            }
           </div>
-          <div className='pageItem col-lg-4 col-md-4 col-sm-4 col-xs-12'>
+          <div style={{float: 'right', width: '34%', marginTop: '30px'}}>
             <table>
               <tbody>
                 <tr>
@@ -198,24 +193,15 @@ function PurchaseOrder({ pdf_data, configs, t })
             </table>
           </div>
         </div>
+        
+        <br />
+        <div style={{display: 'block', height: '3px', backgroundColor: '#eeeeee'}} />
+        <br />
 
-        <div style={{height: '3px', backgroundColor: '#eeeeee'}} />
-
-        <div className='row'>
-          <div className='pageItem col-lg-4'>
-            <p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{pdf_data.supplier.supplier_name}</p>
-          </div>
-        </div>
-
-        <div className='row'>
-          <div className='pageItem col-lg-4'>
-            <p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Supplier VAT No.: {pdf_data.supplier.vat_number}</p>
-          </div>
-        </div>
-
-        <div className='row'>
-          <div className='pageItem col-lg-4'>
-            {
+        <div style={{display: 'block', width: '90%'}}>
+          <p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{pdf_data.supplier.supplier_name}</p>
+          <p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>Supplier VAT No.: {pdf_data.supplier.vat_number}</p>
+          {
               pdf_data.supplier.physical_address.split(',').map((line)=>
               (
                 <p style={{textAlign: 'left', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>
@@ -223,7 +209,6 @@ function PurchaseOrder({ pdf_data, configs, t })
                 </p>
               )
             )}
-          </div>
         </div>
 
         {/* <div style={{height: '3px', backgroundColor: '#eeeeee'}} /> */}

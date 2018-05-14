@@ -12,7 +12,7 @@ import * as SettingsActions from './actions/settings';
 import AppNav from './components/layout/AppNav';
 import AppMain from './components/layout/AppMain';
 import AppNotification from './components/layout/AppNotification';
-import AppUpdate from './components/layout/AppUpdate';
+// import AppUpdate from './components/layout/AppUpdate';
 import { AppWrapper } from './components/shared/Layout';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import ComboBox from './components/shared/ComboBox';
@@ -74,7 +74,8 @@ class App extends PureComponent
 
   render()
   {
-    const { activeTab, notifications, checkUpdatesMessage } = this.props.ui;
+    // checkUpdatesMessage
+    const { activeTab, notifications } = this.props.ui;
     return (
       <AppWrapper>
         {activeTab !== 'home' && activeTab !== 'login' && activeTab !== 'signup' ? 
@@ -94,7 +95,7 @@ App.propTypes =
   {
     activeTab: PropTypes.string.isRequired,
     notifications: PropTypes.array.isRequired,
-    checkUpdatesMessage: PropTypes.object,
+    // checkUpdatesMessage: PropTypes.object,
   }).isRequired
 };
 

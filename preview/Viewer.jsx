@@ -181,7 +181,6 @@ class Viewer extends Component
 
   render()
   {
-    console.log('current state: ', this.state);
     const {  t, configs } = this.props;
     
     return (

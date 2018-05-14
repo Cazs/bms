@@ -119,21 +119,22 @@ class MainContent extends Component
       <Wrapper>
         {(
           <div className="print-area" style={{ marginLeft: '30px'}}>
-            <div style={
-                {
-                  width: '87%',
-                  height: '110px',
-                  marginLeft: 'auto',
-                  marginRight: 'auto',
-                  marginBottom: '10px',
-                  backgroundColor: '#A183E8',
-                  // 'url(file:///Users/ghost/Workspace/Omega/BMS/bms/static/images/header.jpg)', // TODO: custom headers
-                  // 'url(https://preview.ibb.co/it8G0d/header.jpg)',
-                  background: 'url('+path.join(images_path, 'header.jpg')+')',
-                  backgroundSize: '100% 90%',
-                  backgroundRepeat: 'no-repeat'
-                }}
-            />
+            { this.props.type !== 'po' ?
+              <div style={
+                  {
+                    width: '87%',
+                    height: '110px',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    marginBottom: '10px',
+                    backgroundColor: '#A183E8',
+                    // 'url(file:///Users/ghost/Workspace/Omega/BMS/bms/static/images/header.jpg)', // TODO: custom headers
+                    // 'url(https://preview.ibb.co/it8G0d/header.jpg)',
+                    background: 'url('+path.join(images_path, 'header.jpg')+')',
+                    backgroundSize: '100% 90%',
+                    backgroundRepeat: 'no-repeat'
+                  }}
+              /> : '' }
             <Page style={{marginTop: '-20px'}}>
               <PageContent
                 baseFontSize={setBaseFontSize(this.props.configs.fontSize)}

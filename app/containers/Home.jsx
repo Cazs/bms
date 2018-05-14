@@ -129,10 +129,10 @@ class Home extends Component
                     // onClick={()=>this.setState({profile_menu_visible: !this.state.profile_menu_visible})}
                     onClick={()=>this.props.changeTab('login')}
                   />
-                  <label style={{fontSize: '26pt', marginLeft: '30px', marginTop: '15px', float: 'left', color: '#fff'}}>{sessionManager.getSessionUser().name}</label>
+                  <label style={{fontSize: '18pt', marginLeft: '30px', marginTop: '15px', float: 'left', color: '#fff'}}>{sessionManager.getSessionUser().name}</label>
                 </div>
                 <div className="pageItem col-md-4">
-                  <p style={{fontSize: '26pt', float: 'right', color: '#fff'}}>Enterprise Resource Engine</p>
+                  <p style={{fontSize: '26pt', textAlign: 'center', color: '#fff'}}>Omega BMS</p>
                 </div>
                 <div className="pageItem col-md-4">
                   <div style={{

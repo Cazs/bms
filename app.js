@@ -30,8 +30,9 @@ let tourWindow = null;
 let mainWindow = null;
 let previewWindow = null;
 
-function createTourWindow() {
-  const width = 700;
+function createTourWindow()
+{
+  const width = 1260;
   const height = 600;
 
   // Get X and Y coordinations on primary display
@@ -71,25 +72,27 @@ function createTourWindow() {
   });
 }
 
-function createMainWindow() {
+function createMainWindow()
+{
   // Get window state
   const mainWindownStateKeeper = windowStateKeeper('main');
   // Creating a new window
-  mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow(
+  {
     x: mainWindownStateKeeper.x,
     y: mainWindownStateKeeper.y,
     width: mainWindownStateKeeper.width,
     height: mainWindownStateKeeper.height,
-    minWidth: 930,
-    minHeight: 400,
-    backgroundColor: '#2e2c29',
+    minWidth: 1000,
+    minHeight: 600,
+    backgroundColor: '#ff7400',
     titleBarStyle: 'hidden',
     show: false,
-    title: 'Enterprise Resource Engine',
+    title: 'Omega BMS',
   });
   // Register WindowID
   appConfig.set('mainWindowID', parseInt(mainWindow.id));
-  appConfig.set('appUserModelId', 'Enterprise-Resource-Engine');
+  appConfig.set('appUserModelId', 'Omega-BMS');
   // Track window state
   mainWindownStateKeeper.track(mainWindow);
   // Load Content
@@ -101,15 +104,19 @@ function createMainWindow() {
     })
   );
   // Add Event Listeners
-  mainWindow.on('show', event => {
+  mainWindow.on('show', event =>
+  {
     if (isDev || forceDevtools) mainWindow.webContents.openDevTools({ mode: 'detach' });
   });
-  mainWindow.on('close', event => {
-    if (process.platform === 'darwin') {
+  mainWindow.on('close', event =>
+  {
+    if (process.platform === 'darwin')
+    {
       event.preventDefault();
       if (isDev || forceDevtools) mainWindow.webContents.closeDevTools();
       mainWindow.hide();
-    } else {
+    } else
+    {
       app.quit();
     }
   });
@@ -266,8 +273,8 @@ function migrateData()
         invoice:
         {
           exportDir: appSettings.exportDir,
-          template: appSettings.template,
-          currency: appSettings.currency,
+          // template: appSettings.template,
+          // currency: appSettings.currency,
           dateFormat: 'MM/DD/YYYY',
           tax: {
             tin: '123-456-789',
@@ -386,7 +393,8 @@ function windowStateKeeper(windowName) {
       return;
     }
     // Default
-    windowState = {
+    windowState =
+    {
       x: undefined,
       y: undefined,
       width: 1000,
@@ -394,17 +402,21 @@ function windowStateKeeper(windowName) {
     };
   }
 
-  function saveState() {
-    if (!windowState.isMaximized) {
+  function saveState()
+  {
+    if (!windowState.isMaximized)
+    {
       windowState = window.getBounds();
     }
     windowState.isMaximized = window.isMaximized();
     appConfig.set(`windowState.${windowName}`, windowState);
   }
 
-  function track(win) {
+  function track(win)
+  {
     window = win;
-    ['resize', 'move'].forEach(event => {
+    ['resize', 'move'].forEach(event =>
+      {
       win.on(event, saveState);
     });
   }
@@ -421,15 +433,16 @@ function windowStateKeeper(windowName) {
   };
 }
 
-function initialize() {
-  app.setAppUserModelId('Resource Engine');
+function initialize()
+{
+  app.setAppUserModelId('Omega BMS');
   app.on('ready', () => {
-    app.setAppUserModelId('Resource Engine');
+    app.setAppUserModelId('Omega BMS');
     createTourWindow();
     createMainWindow();
     createPreviewWindow();
     setInitialValues();
-    migrateData();
+    // migrateData();
     if (isDev) addDevToolsExtension();
     addEventListeners();
     loadMainProcessFiles();
@@ -438,12 +451,14 @@ function initialize() {
     showWindow('startup');
   });
   // Reactivate the app
-  app.on('activate', () => {
+  app.on('activate', () =>
+  {
     const { showWindow } = require('./main/tour');
     showWindow('activate');
   });
   // Close all windows before quit the app
-  app.on('before-quit', () => {
+  app.on('before-quit', () =>
+  {
     // Use condition in case quit sequence is initiated by autoUpdater
     // which will destroy all there windows already before emitting this event
     if (tourWindow !== null) tourWindow.destroy();

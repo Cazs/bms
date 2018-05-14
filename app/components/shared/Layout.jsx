@@ -94,7 +94,8 @@ const PageContentStyle = styled.div`
     `
     border: 1px solid rgba(0,0,0,.1);
     border-radius: 4px;
-    background: #FFF;
+    // background: #FFF;
+    background: rgba(0,0,0,.4);
   `};
 `;
 

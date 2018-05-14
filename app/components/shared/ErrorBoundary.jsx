@@ -51,11 +51,11 @@ class ErrorBoundary extends Component {
           </h1>
           <h2>You have found a bug!</h2>
           <p>
-            Please report this to the maintainer of Resource Engine.
+            Please report this to the maintainer of Omega BMS.
             <br />
-            GitHub: https://github.com/FadulousIT/ERP_app
+            GitHub: https://github.com/Omega/BMS
             <br />
-            Email: casper@foag.co.za
+            Email: admin@foag.co.za
           </p>
         </ErrorContainer>
       );

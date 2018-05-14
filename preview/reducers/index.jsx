@@ -15,9 +15,9 @@ const initialState =
   configs: 
   {
     // Set default from settings
-    dateFormat: invoiceSettings.dateFormat,
-    language: generalSettings.language,
-    template: invoiceSettings.template,
+    // dateFormat: invoiceSettings.dateFormat,
+    // language: generalSettings.language,
+    // template: invoiceSettings.template,
 
     accentColor: '#2CCCE4',
     // Other settings
@@ -66,9 +66,9 @@ const RootReducer = handleActions(
       return Object.assign({}, state, {
         profile,
         configs: Object.assign({}, state.configs, {
-          language: general.language,
-          template: invoice.template,
-          dateFormat: invoice.dateFormat,
+          // language: general.language,
+          // template: invoice.template,
+          // dateFormat: invoice.dateFormat,
         }),
       });
     }

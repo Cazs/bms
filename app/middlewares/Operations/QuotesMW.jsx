@@ -1,12 +1,7 @@
 // Node Libs
 import uuidv4 from 'uuid/v4';
 import currencies from '../../../libs/currencies.json';
-// const appConfig = require('electron').remote.require('electron-settings');
-// const ipc = require('electron').ipcRenderer;
 import { ipcMain } from 'electron';
-// const { BrowserWindow } = require('electron');
-
-// , ipcMain, shell
 
 import i18n from '../../../i18n/i18n';
 

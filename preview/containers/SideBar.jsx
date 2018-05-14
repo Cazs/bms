@@ -33,7 +33,6 @@ const Wrapper = styled.div`
 import AccentColor from '../components/sidebar/AccentColor';
 import Actions from '../components/sidebar/Actions';
 import Alignment from '../components/sidebar/Alignment';
-import DateFormat from '../components/sidebar/DateFormat';
 import FontSize from '../components/sidebar/FontSize';
 import LogoSize from '../components/sidebar/LogoSize';
 import Language from '../components/sidebar/Language';
@@ -96,7 +95,6 @@ class SideBar extends Component
       accentColor,
       alignItems,
       customAccentColor,
-      dateFormat,
       fontSize,
       language,
       logoSize,
@@ -106,25 +104,6 @@ class SideBar extends Component
     return (
       <OverflowWrapper>
         <Wrapper>
-          {/* <Template
-            t={t}
-            UILang={UILang}
-            template={template}
-            handleInputChange={this.handleInputChange}
-          /> */}
-          {/* <Language
-            t={t}
-            UILang={UILang}
-            language={language}
-            handleInputChange={this.handleInputChange}
-          /> */}
-          {/* <DateFormat
-            t={t}
-            UILang={UILang}
-            language={language}
-            dateFormat={dateFormat}
-            handleInputChange={this.handleInputChange}
-          /> */}
           <Alignment
             t={t}
             alignItems={alignItems}
@@ -135,26 +114,11 @@ class SideBar extends Component
             fontSize={fontSize}
             handleInputChange={this.handleInputChange}
           />
-          {/* { showLogo && (
-            <LogoSize
-              t={t}
-              logoSize={logoSize}
-              handleInputChange={this.handleInputChange}
-            />
-          )} */}
           <Toggler
             t={t}
             configs={configs}
             handleInputChange={this.handleInputChange}
           />
-          {/* { customAccentColor && (
-            <AccentColor
-              t={t}
-              UILang={UILang}
-              accentColor={accentColor}
-              handleAccentColorChange={this.handleAccentColorChange}
-            />
-          )} */}
           <Actions
             t={t}
             savePDF={this.savePDF}

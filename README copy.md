@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="./static/images/logo.tif" alt="Resource Engine App Logo" width="180" height="auto"/>
+  <img src="./static/images/logo.tif" alt="Omega BMS App Logo" width="180" height="auto"/>
 </p>
 
 <h2>
-  Resource Engine
-  <a href="https://github.com/FadulousIT/resource-engine/releases">
+  Omega BMS
+  <a href="https://github.com/Omega/bms/releases">
     <img src="https://img.shields.io/badge/version-1.1.4-green.svg" alt="v1.1.4">
   </a>
 </h2>

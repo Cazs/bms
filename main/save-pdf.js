@@ -1,6 +1,7 @@
 // Libs
 const { BrowserWindow, ipcMain, shell } = require('electron');
-const ipc = require('electron').ipcRenderer;
+const electron = require('electron');
+const ipc = electron.ipcRenderer;
 const appConfig = require('electron-settings');
 const path = require('path');
 const fs = require('fs');
@@ -11,7 +12,9 @@ const mainWindow = BrowserWindow.fromId(mainWindowID);
 ipcMain.on('save-pdf', (event, docId) =>
 {
   const exportDir = appConfig.get('invoice.exportDir');
-  const pdfPath = path.join(exportDir, `${docId}.pdf`);
+  // const pdfPath = path.join(exportDir, `${docId}.pdf`);
+  const appDir = (electron.app || electron.remote.app).getAppPath(); // getAppPath()
+  const pdfPath = path.join(appDir, `${docId}.pdf`);
   const win = BrowserWindow.fromWebContents(event.sender);
 
   const printOptions =

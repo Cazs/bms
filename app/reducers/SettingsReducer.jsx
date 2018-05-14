@@ -33,7 +33,7 @@ export const getSavedSettings = createSelector(
   settings => settings.saved
 );
 
-export const getDateFormat = createSelector(
-  getSettingsState,
-  settings => settings.saved.invoice.dateFormat
-);
+// export const getDateFormat = createSelector(
+//   getSettingsState,
+//   settings => settings.saved.invoice.dateFormat
+// );

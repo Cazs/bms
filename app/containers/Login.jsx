@@ -154,26 +154,12 @@ class Login extends Component
             </div> */}
           </PageHeaderActions>
         </PageHeader>
-        <PageContent>
-          <div style={{background:'rgba(0,0,0,.4)', height: '100%', marginTop: '-20px'}}>
-            <div style={{padding: '20px', width: '34%', marginTop: '20px', marginLeft: 'auto', marginRight: 'auto'}}>
-              <div style={{
-                  width: '400px',
-                  height: '120px',
-                  float: 'right',
-                  marginRight: 'auto',
-                  marginLeft: 'auto',
-                  // marginTop: '-67px',
-                  background: 'url(../static/images/logo.svg)',
-                  backgroundSize: 'contain',
-                  backgroundRepeat: 'no-repeat'
-                }}
-              />
-            </div>
+        <PageContent style={{}}>
+          <div style={{height: '100%', marginTop: '0px', top: '0px'}}>
             <div style={{
                 padding: '20px',
                 width: '40%',
-                marginTop: '150px',
+                marginTop: '250px',
                 marginLeft: 'auto',
                 marginRight: 'auto',
                 borderRadius: '10px',
@@ -182,7 +168,24 @@ class Login extends Component
                 boxShadow: '-5px 5px 30px #343434'
               }}
             >
-              <div className='row'>
+              <div style={{  
+                // position: 'fixed',
+                width: '100%',
+                height: '180px',
+                // float: 'right',
+                marginTop: '-180px',
+                // marginRight: 'auto',
+                // marginLeft: 'auto',
+                // marginTop: '-67px',
+                background: 'url(../static/images/logo.svg)',
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat'
+              }}
+              />
+              <div
+                className='row'
+                style={{marginTop: '20px'}}
+              >
                 <div className="pageItem col-md-12">
                   <label className="itemLabel" style={{color: '#fff'}}>Username</label>
                   <input

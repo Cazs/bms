@@ -1,10 +1,10 @@
-appId: com.fadulous.resource-engine
+appId: com.omega.bms
 copyright: Casper Ndlovu
-productName: Resource-Engine
+productName: OmegaBMS
 publish:
   - provider: github
     owner: Cazs
-    repo: Resource-Engine
+    repo: OmegaBMS
 directories:
   output: dist/
 mac:
