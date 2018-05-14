@@ -19,8 +19,9 @@ import * as UIActions from '../../actions/ui';
 
 // Helpers
 import sessionManager from '../../helpers/SessionManager';
-import * as PurchaseOrderActions from '../../actions/operations/purchase_orders';
 import Log, { formatDate } from '../../helpers/Logger';
+// import Material from '../../helpers/Material';
+import statuses from '../../helpers/statuses';
 
 // Animation
 import { Motion, spring } from 'react-motion';
@@ -88,6 +89,8 @@ export class Requisitions extends React.Component
     this.expandComponent = this.expandComponent.bind(this);
     this.getCaret = this.getCaret.bind(this);
     this.newRequisition = this.newRequisition.bind(this);
+    this.newPO = this.newPO.bind(this);
+    this.handleRequisitionUpdate = this.handleRequisitionUpdate.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -109,7 +112,7 @@ export class Requisitions extends React.Component
       // Table Column Toggles
       col_id_visible: false,
       col_object_number_visible: true,
-      col_client_id_visible: true,
+      col_supplier_id_visible: true,
       col_contact_person_id_visible: false,
       col_description_visible: false,
       col_type_visible: false,
@@ -130,7 +133,7 @@ export class Requisitions extends React.Component
       description: '',
       status: 0,
       vat: GlobalConstants.VAT,
-      status_description: 'pending',
+      status_description: 'Pending',
       resources: [],
       creator_name: sessionManager.getSessionUser().name,
       creator: sessionManager.getSessionUser().usr,
@@ -283,9 +286,90 @@ export class Requisitions extends React.Component
     return true;
   }
 
+  handleRequisitionUpdate(evt, requisition)
+  {
+    if(!evt || evt.key === 'Enter')
+    {
+      if(sessionManager.getSessionUser().access_level > GlobalConstants.ACCESS_LEVELS[1].level)
+      {
+        Log('verbose_info', 'updating requisition: ' +  requisition);
+        // if(requisition.status == 1)
+        // {
+        //   this.props.dispatch(
+        //   {
+        //     type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+        //     payload: {type: 'danger', message: 'This requisition has already been authorised and can no longer be changed.'}
+        //   });
+        //   return;
+        // }
+        this.props.dispatch(
+        {
+          type: ACTION_TYPES.REQUISITION_UPDATE,
+          payload: Object.assign(requisition, { last_updated_by_employee: sessionManager.getSessionUser().name, last_updated_by: sessionManager.getSessionUser().usr })
+        });
+      } else
+      {
+        this.props.dispatch(
+        {
+          type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+          payload: {type: 'danger', message: 'You are not authorised to update the state of this requisition.'}
+        });
+      }
+    }
+  }
+
+  newPO(requisition)
+  {
+    // Prepare PO
+    const purchase_order = {};
+    const supplier_name = requisition.supplier.supplier_name.toString();
+
+    purchase_order.supplier_name = supplier_name;
+    purchase_order.object_number = this.props.purchaseOrders.length;
+    purchase_order.supplier_id = requisition.supplier._id;
+    purchase_order.supplier = requisition.supplier;
+    purchase_order.contact_person = requisition.contact.name;
+    purchase_order.contact_person_id = requisition.contact.usr;
+    purchase_order.account_name = supplier_name.toLowerCase().replace(' ', '-');
+    purchase_order.reference = 'PO' + supplier_name.toUpperCase().replace(' ', '-');
+    purchase_order.status = 0;
+    purchase_order.vat = GlobalConstants.VAT;
+    purchase_order.resources = [];
+    purchase_order.status_description = 'Pending';
+    purchase_order.creator_name = sessionManager.getSessionUser().name;
+    purchase_order.creator = sessionManager.getSessionUser().usr;
+    purchase_order.creator_employee = sessionManager.getSessionUser();
+    purchase_order.date_logged = new Date().getTime();// current date in epoch ms
+    purchase_order.logged_date = formatDate(new Date()); // current date
+
+    // this.setState({new_purchase_order: this.newPO(), is_new_purchase_order_modal_open: false});
+
+    this.props.purchaseOrders.push(purchase_order);
+
+    // dispatch action to create purchase_order on local & remote stores
+    this.props.dispatch(
+    {
+      type: ACTION_TYPES.PURCHASE_ORDER_NEW,
+      payload: purchase_order
+    });
+  }
+
   expandComponent(row)
   {
-    return (<div />);
+    const requisition_options = (
+      <div style={{padding: '10px'}}>
+        <CustomButton primary onClick={() => this.newPO(row)}>New Purchase Order</CustomButton>
+      </div>
+    );
+
+    return (
+      <div>
+        { requisition_options }
+        <Message danger text='Requisition has no materials.' />
+        {/* form for adding a new RequisitionItem */}
+        {/* {new_req_item_form} */}
+      </div>
+    );
   }
 
   expandColumnComponent({ isExpandableRow, isExpanded })
@@ -374,7 +458,8 @@ export class Requisitions extends React.Component
                       items={this.props.employees}
                       // selected_item={this.state.new_requisition.contact}
                       label='name'
-                      onChange={(new_val)=>{
+                      onChange={(new_val)=>
+                      {
                         const selected_contact = JSON.parse(new_val.currentTarget.value);
                         const Requisition = this.state.new_requisition;
                         Requisition.contact_id = selected_contact.usr;
@@ -415,7 +500,13 @@ export class Requisitions extends React.Component
                   <textarea
                     name="description"
                     value={this.state.new_requisition.description}
-                    onChange={this.handleInputChange}
+                    onChange={(new_val)=>
+                    {
+                      const requisition = this.state.new_requisition;
+                      requisition.description = new_val.currentTarget.value;
+
+                      this.setState({new_requisition: requisition});
+                    }}
                     style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
                   />
                 </div>
@@ -425,7 +516,13 @@ export class Requisitions extends React.Component
                   <textarea
                     name="notes"
                     value={this.state.new_requisition.other}
-                    onChange={this.handleInputChange}
+                    onChange={(new_val)=>
+                    {
+                      const requisition = this.state.new_requisition;
+                      requisition.other = new_val.currentTarget.value;
+
+                      this.setState({new_requisition: requisition});
+                    }}
                     style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
                   />
                 </div>
@@ -496,7 +593,7 @@ export class Requisitions extends React.Component
                   requisition.contact_person = requisition.contact.name;
                   requisition.contact_person_id = requisition.contact.usr;
                   requisition.status = 0;
-                  requisition.status_description = 'pending';
+                  requisition.status_description = 'Pending';
                   requisition.creator_name = sessionManager.getSessionUser().name;
                   requisition.creator = sessionManager.getSessionUser().usr;
                   requisition.creator_employee = sessionManager.getSessionUser();
@@ -604,19 +701,19 @@ export class Requisitions extends React.Component
                       </label>
                     </Field>
 
-                    {/* Client column toggle */}
+                    {/* Supplier column toggle */}
                     <Field className="col-lg-1 col-md-2 col-sm-3 col-xs-4">
-                      <label className="itemLabel">Client</label>
+                      <label className="itemLabel">Supplier</label>
                       <label className="switch">
                         <input
-                          name="requisition_toggle_client_id"
+                          name="requisition_toggle_supplier_id"
                           type="checkbox"
-                          checked={this.state.col_client_id_visible}
+                          checked={this.state.col_supplier_id_visible}
                           onChange={() =>
                           {
                             this.setState(
                             {
-                              col_client_id_visible: !this.state.col_client_id_visible
+                              col_supplier_id_visible: !this.state.col_supplier_id_visible
                             });
                             // this.toggleColumnVisibility()
                           }}
@@ -805,6 +902,7 @@ export class Requisitions extends React.Component
                     // thStyle={{position: 'fixed', left: '190px', background: 'lime'}}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_id_visible}
+                    editable={false}
                   > Requisition&nbsp;ID
                   </TableHeaderColumn>
 
@@ -818,6 +916,7 @@ export class Requisitions extends React.Component
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 'px', background: 'lime'}}
                     tdStyle={() => {({'fontWeight': 'lighter'})}}
                     hidden={!this.state.col_object_number_visible}
+                    editable={false}
                   > Requisition&nbsp;Number
                   </TableHeaderColumn>
 
@@ -828,12 +927,49 @@ export class Requisitions extends React.Component
                     // editable={{type: 'select'}}
                     customEditor={{
                       getElement: (func, props) =>
-                        <ComboBox items={this.props.suppliers} selected_item={props.row.supplier} label='supplier_name' />
+                      (
+                        <ComboBox
+                          items={this.props.suppliers}
+                          selected_item={props.row.supplier}
+                          label='supplier_name'
+                          onChange={(evt)=>
+                          {
+                            if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                            {
+                              // revert combo box selection
+                              // this.cbx_status.state.selected_item = props.row.supplier;
+
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                payload: {type: 'danger', message: 'You are not authorised to update the state of this requisition.'}
+                              });
+
+                              // this.cbx_status.blur();
+                              return;
+                            }
+                            const selected_supplier = JSON.parse(evt.currentTarget.value);
+                            console.log('selected_supplier: ', selected_supplier);
+                            const selected_requisition = props.row;
+                            selected_requisition.supplier_id = selected_supplier._id;
+                            selected_requisition.supplier = selected_supplier;
+                            selected_requisition.supplier_name = selected_supplier.supplier_name;
+
+                            // send signal to update requisition on local & remote storage
+                            this.props.dispatch(
+                            {
+                              type: ACTION_TYPES.REQUISITION_UPDATE,
+                              payload: selected_requisition
+                            });
+                            console.log('dispatched requisition update');
+                          }}
+                        />
+                      )
                     }}
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 240 + 'px', background: 'lime'}}
                     tdStyle={{'fontWeight': 'lighter'}}
-                    hidden={!this.state.col_client_id_visible}
-                  > Supplier
+                    hidden={!this.state.col_supplier_id_visible}
+                  >Supplier
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -845,9 +981,46 @@ export class Requisitions extends React.Component
                     hidden={!this.state.col_contact_person_id_visible}
                     customEditor={{
                       getElement: (func, props) =>
-                        <ComboBox items={this.props.employees} selected_item={props.row.contact} label='name' />
+                      (
+                        <ComboBox
+                          items={this.props.employees}
+                          selected_item={props.row.contact}
+                          label='name'
+                          onChange={(evt)=>
+                          {
+                            if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                            {
+                              // revert combo box selection
+                              // this.cbx_status.state.selected_item = props.row.supplier;
+
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                payload: { type: 'danger', message: 'You are not authorised to update the state of this requisition.'}
+                              });
+
+                              // this.cbx_status.blur();
+                              return;
+                            }
+                            const selected_contact = JSON.parse(evt.currentTarget.value);
+                            console.log('selected contact person: ', selected_contact);
+                            const selected_requisition = props.row;
+                            selected_requisition.contact_person_id = selected_contact.usr;
+                            selected_requisition.contact = selected_contact;
+                            selected_requisition.contact_person = selected_contact.name;
+
+                            // send signal to update requisition on local & remote storage
+                            this.props.dispatch(
+                            {
+                              type: ACTION_TYPES.REQUISITION_UPDATE,
+                              payload: selected_requisition
+                            });
+                            console.log('dispatched requisition update');
+                          }}
+                        />
+                      )
                     }}
-                  > Contact&nbsp;Person
+                  >Contact&nbsp;Person
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
@@ -857,6 +1030,36 @@ export class Requisitions extends React.Component
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_description_visible}
+                    customEditor={{
+                      getElement: (func, props) =>
+                      (
+                        <textarea
+                          defaultValue={props.row.description}
+                          style={{border: '1px solid lime', borderRadius: '2px'}}
+                          onChange={(val) =>
+                          {
+                            if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access and less are not allowed
+                              return this.props.dispatch(UIActions.newNotification('danger', 'You are not authorised to update the state of this requisition.'));
+
+                            const select_requisition = props.row;
+                            select_requisition.description = val.currentTarget.value;
+                            this.setState( { selected_requisition: select_requisition })
+                          }}
+                          
+                          onKeyPress={(evt) =>
+                          {
+                            if(!evt || evt.key === 'Enter')
+                            {
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.REQUISITION_UPDATE,
+                                payload: this.state.selected_requisition
+                              });
+                            }
+                          }}
+                        />
+                      )
+                    }}
                   > Description
                   </TableHeaderColumn>
 
@@ -871,13 +1074,60 @@ export class Requisitions extends React.Component
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
-                    dataField='status'
+                    dataField='status_description'
                     dataSort
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_status_visible}
-                  > Status
+                    customEditor={{
+                      getElement: (func, props) =>
+                      {
+                        const selected_requisition = props.row;
+                        
+                        return (<ComboBox
+                          ref={(cbx_status)=>this.cbx_status = cbx_status}
+                          items={statuses}
+                          // value={GlobalConstants.ACCESS_LEVELS[selected_po.status]}
+                          selected_index={selected_requisition.status} // {GlobalConstants.ACCESS_LEVELS[1]}
+                          label='status_description'
+                          onChange={(new_val)=>
+                          {
+                              const selected_status = JSON.parse(new_val.currentTarget.value);
+                              console.log(selected_status);
+                              console.log(props.row);
+
+                              if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access and less are not allowed
+                              {
+                                // revert combo box selection
+                                // this.cbx_status.state.selected_item = GlobalConstants.ACCESS_LEVELS[0];
+
+                                this.props.dispatch(
+                                {
+                                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                  payload: {type: 'danger', message: 'You are not authorised to update the state of this requisition.'}
+                                });
+
+                                // this.cbx_status.blur();
+                                return;
+                              }
+
+                              console.log('selected status: ', selected_status);
+                              selected_requisition.status = selected_status.status;
+                              selected_requisition.status_description = selected_status.status_description;
+
+                              // send signal to update po on local & remote storage
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.REQUISITION_UPDATE,
+                                payload: selected_requisition
+                              });
+                              console.log('dispatched requisition update');
+                          }}
+                        />)
+                      }
+                    }}
+                  >Status
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -888,6 +1138,7 @@ export class Requisitions extends React.Component
                     // thStyle={{position: 'fixed', right: this.width, border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_creator_visible}
+                    editable={false}
                   > Creator
                   </TableHeaderColumn>
 
@@ -898,6 +1149,7 @@ export class Requisitions extends React.Component
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_date_logged_visible}
+                    editable={false}
                   > Date&nbsp;Logged
                   </TableHeaderColumn>
                 </BootstrapTable>

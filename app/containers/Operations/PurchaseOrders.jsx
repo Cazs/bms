@@ -18,6 +18,8 @@ import * as UIActions from '../../actions/ui';
 import sessionManager from '../../helpers/SessionManager';
 import * as PurchaseOrderActions from '../../actions/operations/purchase_orders';
 import Log, { formatDate } from '../../helpers/Logger';
+// import Material from '../../helpers/Material';
+import statuses from '../../helpers/statuses';
 
 // Animation
 import { Motion, spring } from 'react-motion';
@@ -81,7 +83,9 @@ export class PurchaseOrders extends React.Component
     this.expandComponent = this.expandComponent.bind(this);
     this.getCaret = this.getCaret.bind(this);
     this.showPOPreview = this.showPOPreview.bind(this);
+    this.handlePOUpdate = this.handlePOUpdate.bind(this);
     this.newPO = this.newPO.bind(this);
+    this.showEmailDialog = this.showEmailDialog.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -138,7 +142,7 @@ export class PurchaseOrders extends React.Component
       reference: null,
       status: 0,
       vat: GlobalConstants.VAT,
-      status_description: 'pending',
+      status_description: 'Pending',
       resources: [],
       creator_name: sessionManager.getSessionUser().name,
       creator: sessionManager.getSessionUser().usr,
@@ -331,6 +335,13 @@ export class PurchaseOrders extends React.Component
     const po_options = (
       <div>
         <CustomButton primary onClick={() => this.showPOPreview(row)}>PDF Preview</CustomButton>
+        <CustomButton
+          primary
+          style={{marginLeft: '15px'}}
+          onClick={() => this.showEmailDialog(row)}
+        >
+          eMail&nbsp;PO
+        </CustomButton>
       </div>
     );
 
@@ -478,7 +489,7 @@ export class PurchaseOrders extends React.Component
       row.resources.length === 0 ? (
         <div>
           { po_options }
-          <Message danger text='Purchase Order has no resources.' />
+          <Message danger text='Purchase order has no materials.' />
           {/* form for adding a new PurchaseOrderItem */}
           {new_po_item_form}
         </div>
@@ -631,6 +642,43 @@ export class PurchaseOrders extends React.Component
     this.setState({is_new_purchase_order_modal_open: false});
   }
 
+  handlePOUpdate(evt, po)
+  {
+    if(!evt || evt.key === 'Enter')
+    {
+      if(sessionManager.getSessionUser().access_level > GlobalConstants.ACCESS_LEVELS[1].level)
+      {
+        Log('verbose_info', 'updating po: ' +  po);
+        // if(po.status == 1)
+        // {
+        //   this.props.dispatch(
+        //   {
+        //     type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+        //     payload: {type: 'danger', message: 'This po has already been authorised and can no longer be changed.'}
+        //   });
+        //   return;
+        // }
+        this.props.dispatch(
+        {
+          type: ACTION_TYPES.PURCHASE_ORDER_UPDATE,
+          payload: Object.assign(po, { last_updated_by_employee: sessionManager.getSessionUser().name, last_updated_by: sessionManager.getSessionUser().usr })
+        });
+      } else {
+        this.props.dispatch(
+          {
+            type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+            payload: {type: 'danger', message: 'You are not authorised to update the state of this purchase order.'}
+          });
+      }
+    }
+  }
+
+  showEmailDialog(po)
+  {
+    this.props.showEmailModal(po);
+    ipc.send('model-to-pdf', po, 'po');
+  }
+
   // Render
   render()
   {
@@ -756,7 +804,7 @@ export class PurchaseOrders extends React.Component
                   <textarea
                     name="notes"
                     value={this.state.new_purchase_order.other}
-                    onChange={this.handleInputChange}
+                    // onChange={this.handlePOUpdate}
                     style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
                   />
                 </div>
@@ -806,7 +854,7 @@ export class PurchaseOrders extends React.Component
                   purchase_order.account_name = supplier_name.toLowerCase().replace(' ', '-');
                   purchase_order.reference = 'PO' + supplier_name.toUpperCase().replace(' ', '-');
                   purchase_order.status = 0;
-                  purchase_order.status_description = 'pending';
+                  purchase_order.status_description = 'Pending';
                   purchase_order.creator_name = sessionManager.getSessionUser().name;
                   purchase_order.creator = sessionManager.getSessionUser().usr;
                   purchase_order.creator_employee = sessionManager.getSessionUser();
@@ -1087,10 +1135,11 @@ export class PurchaseOrders extends React.Component
                     dataField='_id'
                     dataSort
                     caretRender={this.getCaret}
+                    editable={false}
                     // thStyle={{position: 'fixed', left: '190px', background: 'lime'}}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_id_visible}
-                  > PO ID
+                  >PO ID
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1098,12 +1147,13 @@ export class PurchaseOrders extends React.Component
                     dataField='object_number'
                     dataSort
                     caretRender={this.getCaret}
+                    editable={false}
                     // thStyle={() => {this.state.col_id_visible?({position: 'fixed', background: 'red' }):({background: 'lime'})}}
                     // thStyle={this.state.col_id_visible?{position: 'fixed', left: '400px',background: 'lime'}:{position: 'fixed', background: 'red'}}
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 'px', background: 'lime'}}
                     tdStyle={() => {({'fontWeight': 'lighter'})}}
                     hidden={!this.state.col_object_number_visible}
-                  > PO&nbsp;Number
+                  >PO&nbsp;Number
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1113,12 +1163,49 @@ export class PurchaseOrders extends React.Component
                     // editable={{type: 'select'}}
                     customEditor={{
                       getElement: (func, props) =>
-                        <ComboBox items={this.props.suppliers} selected_item={props.row.supplier} label='supplier_name' />
+                      (
+                        <ComboBox
+                          items={this.props.suppliers}
+                          selected_item={props.row.supplier}
+                          label='supplier_name'
+                          onChange={(evt)=>
+                          {
+                            if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                            {
+                              // revert combo box selection
+                              // this.cbx_status.state.selected_item = props.row.client;
+
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                payload: {type: 'danger', message: 'You are not authorised to update the state of this purchase order.'}
+                              });
+
+                              // this.cbx_status.blur();
+                              return;
+                            }
+                            const selected_supplier = JSON.parse(evt.currentTarget.value);
+                            console.log('selected_supplier: ', selected_supplier);
+                            const selected_po = props.row;
+                            selected_po.client_id = selected_supplier._id;
+                            selected_po.client = selected_supplier;
+                            selected_po.client_name = selected_supplier.supplier_name;
+
+                            // send signal to update po on local & remote storage
+                            this.props.dispatch(
+                            {
+                              type: ACTION_TYPES.PURCHASE_ORDER_UPDATE,
+                              payload: selected_po
+                            });
+                            console.log('dispatched purchase order update');
+                          }}
+                        />
+                      )
                     }}
                     // thStyle={{position: 'fixed', left: this.state.col_id_end + 240 + 'px', background: 'lime'}}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_supplier_id_visible}
-                  > Supplier
+                  >Supplier
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1130,19 +1217,57 @@ export class PurchaseOrders extends React.Component
                     hidden={!this.state.col_contact_person_id_visible}
                     customEditor={{
                       getElement: (func, props) =>
-                        <ComboBox items={this.props.employees} selected_item={props.row.contact} label='name' />
+                      (
+                        <ComboBox
+                          items={this.props.employees}
+                          selected_item={props.row.contact}
+                          label='name'
+                          onChange={(evt)=>
+                          {
+                            if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level)
+                            {
+                              // revert combo box selection
+                              // this.cbx_status.state.selected_item = props.row.client;
+
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                payload: { type: 'danger', message: 'You are not authorised to update the state of this purchase order.'}
+                              });
+
+                              // this.cbx_status.blur();
+                              return;
+                            }
+                            const selected_contact = JSON.parse(evt.currentTarget.value);
+                            console.log('selected contact person: ', selected_contact);
+                            const selected_po = props.row;
+                            selected_po.contact_person_id = selected_contact.usr;
+                            selected_po.contact = selected_contact;
+                            selected_po.contact_person = selected_contact.name;
+
+                            // send signal to update po on local & remote storage
+                            this.props.dispatch(
+                            {
+                              type: ACTION_TYPES.PURCHASE_ORDER_UPDATE,
+                              payload: selected_po
+                            });
+                            console.log('dispatched purchase order update');
+                          }}
+                        />
+                      )
                     }}
-                  > Contact&nbsp;Person
+                  >Contact&nbsp;Person
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
                     dataField='vat'
                     dataSort
                     caretRender={this.getCaret}
+                    editable={false}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_vat_visible}
-                  > VAT
+                  >VAT
                   </TableHeaderColumn>
                   
                   <TableHeaderColumn
@@ -1152,7 +1277,54 @@ export class PurchaseOrders extends React.Component
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_status_visible}
-                  > Status
+                    customEditor={{
+                      getElement: (func, props) =>
+                      {
+                        const selected_po = props.row;
+                        
+                        return (<ComboBox
+                          ref={(cbx_status)=>this.cbx_status = cbx_status}
+                          items={statuses}
+                          // value={GlobalConstants.ACCESS_LEVELS[selected_po.status]}
+                          selected_index={selected_po.status} // {GlobalConstants.ACCESS_LEVELS[1]}
+                          label='status_description'
+                          onChange={(new_val)=>
+                          {
+                              const selected_status = JSON.parse(new_val.currentTarget.value);
+                              console.log(selected_status);
+                              console.log(props.row);
+
+                              if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access and less are not allowed
+                              {
+                                // revert combo box selection
+                                // this.cbx_status.state.selected_item = GlobalConstants.ACCESS_LEVELS[0];
+
+                                this.props.dispatch(
+                                {
+                                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                  payload: {type: 'danger', message: 'You are not authorised to update the state of this purchase order.'}
+                                });
+
+                                // this.cbx_status.blur();
+                                return;
+                              }
+
+                              console.log('selected status: ', selected_status);
+                              selected_po.status = selected_status.status;
+                              selected_po.status_description = selected_status.status_description;
+
+                              // send signal to update po on local & remote storage
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.PURCHASE_ORDER_UPDATE,
+                                payload: selected_po
+                              });
+                              console.log('dispatched po update');
+                          }}
+                        />)
+                      }
+                    }}
+                  >Status
                   </TableHeaderColumn>
 
                   <TableHeaderColumn
@@ -1160,6 +1332,7 @@ export class PurchaseOrders extends React.Component
                     dataSort
                     ref={this.creator_ref}
                     caretRender={this.getCaret}
+                    editable={false}
                     // thStyle={{position: 'fixed', right: this.width, border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_creator_visible}
@@ -1170,6 +1343,7 @@ export class PurchaseOrders extends React.Component
                     dataField='logged_date'
                     dataSort
                     caretRender={this.getCaret}
+                    editable={false}
                     // thStyle={{position: 'fixed', right: '-20px', border: 'none' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_date_logged_visible}

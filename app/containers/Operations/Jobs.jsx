@@ -24,6 +24,7 @@ import { getEmployees } from '../../reducers/HR/EmployeesReducer';
 import { getMaterials } from '../../reducers/Operations/MaterialsReducer';
 import { getClients } from '../../reducers/Operations/ClientsReducer';
 import { getJobs } from '../../reducers/Operations/JobsReducer';
+import { getQuotes } from '../../reducers/Operations/QuotesReducer';
 
 // Components
 import ComboBox from '../../components/shared/ComboBox';
@@ -80,6 +81,8 @@ export class Jobs extends React.Component
     this.setJobStatus = this.setJobStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
     this.getCaret = this.getCaret.bind(this);
+    this.newJob = this.newJob.bind(this);
+    this.showEmailDialog = this.showEmailDialog.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -110,17 +113,7 @@ export class Jobs extends React.Component
                     col_date_logged_visible: false,
                     
                     // Job to be created
-                    new_job:
-                    {
-                      client_id: null,
-                      contact_id: null,
-                      request: null,
-                      sitename: null,
-                      status: 0,
-                      status_description: 'pending',
-                      notes: null,
-                      vat: GlobalConstants.VAT
-                    },
+                    new_job: this.newJob(),
                     // Job Task to be added
                     new_job_task:
                     {
@@ -130,7 +123,7 @@ export class Jobs extends React.Component
                       assignees: [],
                       assignee_names: [],
                       status: 0,
-                      status_description: 'pending',
+                      status_description: 'Pending',
                       date_scheduled: new Date().getTime(),
                       scheduled_date: formatDate(new Date())
                     },
@@ -145,6 +138,33 @@ export class Jobs extends React.Component
                       additional_costs: ''
                     }
     };
+  }
+
+  newJob()
+  {
+    return {
+      object_number:  0,// this.props.jobs.length,
+      client_id: '',
+      client_name: '',
+      client: null,
+      contact_person_id: '',
+      contact_person: '',
+      contact: null,
+      quote_id: '',
+      quote: null,
+      sitename: '',
+      request: '',
+      vat: GlobalConstants.VAT,
+      status: statuses[0].status,
+      status_description: statuses[0].status_description,
+      creator_name: sessionManager.getSessionUser().name,
+      creator: sessionManager.getSessionUser().usr,
+      creator_employee: sessionManager.getSessionUser(),
+      tasks: [],
+      date_logged: new Date().getTime(), // current date in epoch millis
+      logged_date: formatDate(new Date()), // current date
+      other: ''
+    }
   }
 
   // Load Jobs & add event listeners
@@ -298,6 +318,12 @@ export class Jobs extends React.Component
     return true;
   }
 
+  showEmailDialog(job)
+  {
+    this.props.showEmailModal(job);
+    ipc.send('model-to-pdf', job, 'job-card');
+  }
+
   expandComponent(row)
   {
     const cellEditProp =
@@ -412,46 +438,45 @@ export class Jobs extends React.Component
               success
               style={{width: '120px', height: '50px', float: 'left'}}
               onClick={() =>
+              {
+                if(this.state.new_job_task.description && this.state.new_job_task.location)
+                {
+                  this.state.new_job_task.job_id = row._id;
+                  this.state.new_job_task.object_number = row.tasks.length;
+                  this.state.new_job_task.date_logged = new Date().getTime(); // epoch sec
+                  this.state.new_job_task.logged_date = formatDate(new Date());// current date
+                  this.state.new_job_task.creator = sessionManager.getSessionUser().usr;
+                  this.state.new_job_task.creator_name = sessionManager.getSessionUser().name;
+                  // update state
+                  this.setState(this.state.new_job_task);
+                  console.log('new task to be created: ', this.state.new_job_task);
+                  // push to array of job tasks
+                  row.tasks.push(this.state.new_job_task);
+
+                  // signal add job item
+                  this.props.dispatch({
+                    type: ACTION_TYPES.JOB_TASK_ADD,
+                    payload: this.state.new_job_task
+                  });
+
+                  // TODO: fix this hack
+                  // signal update job - so it saves to local storage
+                  this.props.dispatch({
+                    type: ACTION_TYPES.JOB_UPDATE,
+                    payload: row
+                  });
+                } else
+                  openDialog(
                   {
-                    if(this.state.new_job_task.description && this.state.new_job_task.location)
-                    {
-                      this.state.new_job_task.job_id = row._id;
-                      this.state.new_job_task.object_number = row.tasks.length;
-                      this.state.new_job_task.date_logged = new Date().getTime(); // epoch sec
-                      this.state.new_job_task.logged_date = formatDate(new Date());// current date
-                      this.state.new_job_task.creator = sessionManager.getSessionUser().usr;
-                      this.state.new_job_task.creator_name = sessionManager.getSessionUser().name;
-                      // update state
-                      this.setState(this.state.new_job_task);
-                      console.log('new task to be created: ', this.state.new_job_task);
-                      // push to array of job tasks
-                      row.tasks.push(this.state.new_job_task);
-
-                      // signal add job item
-                      this.props.dispatch({
-                        type: ACTION_TYPES.JOB_TASK_ADD,
-                        payload: this.state.new_job_task
-                      });
-
-                      // TODO: fix this hack
-                      // signal update job - so it saves to local storage
-                      this.props.dispatch({
-                        type: ACTION_TYPES.JOB_UPDATE,
-                        payload: row
-                      });
-                    } else
-                      openDialog(
-                        {
-                          type: 'warning',
-                          title: 'Could not add task to job',
-                          message: 'Please make sure that the description, location and scheduled date are valid.'
-                        }
-                      );
-                      /* buttons: [
-                        t('common:yes'),
-                        t('common:noThanks')
-                      ] */
-                  }}
+                    type: 'warning',
+                    title: 'Could not add task to job',
+                    message: 'Please make sure that the description, location and scheduled date are valid.'
+                  });
+                  /* buttons: [
+                    t('common:yes'),
+                    t('common:noThanks')
+                  ] */
+              }}
             >Add
             </CustomButton>
             <CustomButton style={{width: '120px', height: '50px', float: 'left', marginLeft: '15px'}} danger>Reset Fields</CustomButton>
@@ -470,16 +495,27 @@ export class Jobs extends React.Component
           style={{marginLeft: '15px'}}
           onClick={(evt) =>
           {
-            // if(!row.status == 0)
-            // {
-            //   return this.props.dispatch({
-            //     type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-            //     payload: {
-            //       type: 'danger',
-            //       message: 'Error: Quote has not yet been approved',
-            //     },
-            //   });
-            // }
+            if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[2].level)
+            {
+              this.props.dispatch(
+              {
+                type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                payload: {type: 'danger', message: 'You are not authorised to create invoices.'}
+              });
+              return;
+            }
+
+            // check if job has been approved yet
+            if(row.status !== 1)
+            {
+              return this.props.dispatch({
+                type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                payload: {
+                  type: 'danger',
+                  message: 'Error: Job has not yet been authorised.',
+                },
+              });
+            }
 
             // Prepare Invoice
             const new_invoice =
@@ -496,7 +532,7 @@ export class Jobs extends React.Component
               vat: row.vat,
               creator_name: sessionManager.getSessionUser().name,
               status: 0,
-              status_description: 'pending',
+              status_description: 'Pending',
               creator: sessionManager.getSessionUser().usr,
               creator_employee: sessionManager.getSessionUser(),
               date_logged: new Date().getTime(), // current date in epoch SECONDS
@@ -516,6 +552,13 @@ export class Jobs extends React.Component
             // this.props.changeTab(2);
           }}
         >Create&nbsp;New&nbsp;Invoice
+        </CustomButton>
+        <CustomButton
+          primary
+          style={{marginLeft: '15px'}}
+          onClick={() => this.showEmailDialog(row)}
+        >
+          eMail&nbsp;Job
         </CustomButton>
 
         {/* form for editing Job properties */}
@@ -698,7 +741,7 @@ export class Jobs extends React.Component
       </div>
     );
 
-    return  (
+    return (
       row.tasks.length === 0 ? (
         <div>
           { /* Job options */ }
@@ -711,7 +754,7 @@ export class Jobs extends React.Component
         <div style={{maxHeight: 'auto'}}>
           { /* Job options */ }
           {job_options_form}
-          <h3 style={{textAlign: 'center', 'fontWeight': 'lighter', marginTop: '15px'}}>List of tasks for job #{row.object_number}</h3>
+          <h3 style={{textAlign: 'center', 'fontWeight': 'lighter', marginTop: '15px'}}>List&nbsp;of&nbsp;tasks&nbsp;for&nbsp;job&nbsp;#{row.object_number}</h3>
           <BootstrapTable
             id='tblJobTasks'
             data={row.tasks}
@@ -774,70 +817,71 @@ export class Jobs extends React.Component
               thStyle={{ whiteSpace: 'normal' }}
               customEditor={{
                 getElement: (func, props) =>
-                  (
-                    <div style={{backgroundColor: 'rgba(0,0,0,.3)', borderRadius: '4px', border: '2px solid #5BA5E8'}}>
-                      <ComboBox
-                        items={this.props.employees}
-                        label='name'
-                        value={this.props.employees.length > 0 ? this.props.employees[0]: null}
-                        selected_item={this.props.employees.length > 0 ? this.props.employees[0]: null}
-                        onChange={(new_val)=>
-                        {
-                          const assignee_names = props.row.assignee_names;
-                          const assignees = props.row.assignees;
+                (
+                  <div style={{backgroundColor: 'rgba(0,0,0,.3)', borderRadius: '4px', border: '2px solid #5BA5E8'}}>
+                    <ComboBox
+                      items={this.props.employees}
+                      label='name'
+                      value={this.props.employees.length > 0 ? this.props.employees[0]: null}
+                      selected_item={this.props.employees.length > 0 ? this.props.employees[0]: null}
+                      onChange={(new_val)=>
+                      {
+                        const assignee_names = props.row.assignee_names;
+                        const assignees = props.row.assignees;
 
-                          const selected_user = JSON.parse(new_val.currentTarget.value);
+                        const selected_user = JSON.parse(new_val.currentTarget.value);
 
-                          assignee_names.push(selected_user.name);
-                          assignees.push(selected_user);
+                        assignee_names.push(selected_user.name);
+                        assignees.push(selected_user);
 
-                          const assignee_html = 
-                            '<p style="background-color: rgba(255,255,255,.2);line-height: 45px; border-radius: 15px; border: 1px solid #fff; margin-top: 5px;">'
-                              + selected_user.name
-                              + '<span class="ion-close-circled" onmouseover="this.style.color=\'red\';this.style.cursor=\'pointer\'" onmouseout="this.style.color=\'#fff\'" style="float:right;width: 20px;height: 20px;color: #fff;"></span>'
-                            + '</p>';
-                          if(assignees.length>1)
-                            this.assignee_container.innerHTML += assignee_html;// existing items, append
-                          else this.assignee_container.innerHTML = assignee_html; // no items, add first item
+                        const assignee_html = 
+                          '<p style="background-color: rgba(255,255,255,.2);line-height: 45px; border-radius: 15px; border: 1px solid #fff; margin-top: 5px;">'
+                            + selected_user.name
+                            + '<span class="ion-close-circled" onmouseover="this.style.color=\'red\';this.style.cursor=\'pointer\'" onmouseout="this.style.color=\'#fff\'" style="float:right;width: 20px;height: 20px;color: #fff;"></span>'
+                          + '</p>';
+                        if(assignees.length>1)
+                          this.assignee_container.innerHTML += assignee_html;// existing items, append
+                        else this.assignee_container.innerHTML = assignee_html; // no items, add first item
 
-                          Object.assign(props.row.assignee_names, assignee_names);
-                          Object.assign(props.row.assignees, assignees);
-                        }}
-                      />
-                      {/* Show list of current assignees with delete button */}
-                      <div ref={(r)=> this.assignee_container =r}>
-                        {
-                          props.row.assignees.length > 0 ? 
-                            props.row.assignees.map(assignee=>
-                              //  (<p>{assignee.name}</p>)
-                              (
-                                <p
-                                  style={{
-                                    background: 'rgba(255,255,255,.2)',
-                                    lineHeight: '45px',
-                                    borderRadius: '15px',
-                                    border: '1px solid #fff',
-                                    marginTop: '5px'}}
-                                >
-                                  {assignee.name}
-                                  <span
-                                    id={props.row.assignees.length}
-                                    index={props.row.assignees.length}
-                                    key={props.row.assignees.length}
-                                    ref={(obj)=>this.assignee= obj}
-                                    className="ion-close-circled"
-                                    // onMouseOver='this.style.color="red"; this.style.cursor="pointer"'
-                                    onMouseOver={(el)=>Object.assign(el.target.style, {color: 'red'})}
-                                    onMouseOut={(el)=>Object.assign(el.target.style, {color: '#fff'})}
-                                    onFocus={(el)=>Object.assign(el.target.style, {border: 'lime'})}
-                                    onBlur={(el)=>Object.assign(el.target.style, {border: 'none'})}
-                                    style={{float: 'right', width: '40px', height: '40px'}}
-                                  />
-                                </p>)
-                            ) : (<p>No Assignees, pick from list</p>)
-                        }
-                      </div>
-                    </div>)
+                        Object.assign(props.row.assignee_names, assignee_names);
+                        Object.assign(props.row.assignees, assignees);
+                      }}
+                    />
+                    {/* Show list of current assignees with delete button */}
+                    <div ref={(r)=> this.assignee_container =r}>
+                      {
+                        props.row.assignees.length > 0 ? 
+                          props.row.assignees.map(assignee=>
+                            //  (<p>{assignee.name}</p>)
+                            (
+                              <p
+                                style={{
+                                  background: 'rgba(255,255,255,.2)',
+                                  lineHeight: '45px',
+                                  borderRadius: '15px',
+                                  border: '1px solid #fff',
+                                  marginTop: '5px'}}
+                              >
+                                {assignee.name}
+                                <span
+                                  id={props.row.assignees.length}
+                                  index={props.row.assignees.length}
+                                  key={props.row.assignees.length}
+                                  ref={(obj)=>this.assignee= obj}
+                                  className="ion-close-circled"
+                                  // onMouseOver='this.style.color="red"; this.style.cursor="pointer"'
+                                  onMouseOver={(el)=>Object.assign(el.target.style, {color: 'red'})}
+                                  onMouseOut={(el)=>Object.assign(el.target.style, {color: '#fff'})}
+                                  onFocus={(el)=>Object.assign(el.target.style, {border: 'lime'})}
+                                  onBlur={(el)=>Object.assign(el.target.style, {border: 'none'})}
+                                  style={{float: 'right', width: '40px', height: '40px'}}
+                                />
+                              </p>)
+                          ) : (<p>No Assignees, pick from list</p>)
+                      }
+                    </div>
+                  </div>
+                )
               }}
               // hidden={!this.state.col_contact_person_id_visible}
             > Assignees
@@ -971,10 +1015,12 @@ export class Jobs extends React.Component
                       items={this.props.employees}
                       // selected_item={this.state.new_job.contact}
                       label='name'
-                      onChange={(new_val)=>{
+                      onChange={(new_val)=>
+                      {
                         const selected_contact = JSON.parse(new_val.currentTarget.value);
                         const job = this.state.new_job;
-                        job.contact_id = selected_contact.usr;
+                        job.contact_person_id = selected_contact.usr;
+                        job.contact = selected_contact;
 
                         this.setState({new_job: job});
                       }}
@@ -990,10 +1036,12 @@ export class Jobs extends React.Component
                       items={this.props.clients}
                       // selected_item={this.state.new_job.client}
                       label='client_name'
-                      onChange={(new_val)=>{
+                      onChange={(new_val)=>
+                      {
                         const selected_client = JSON.parse(new_val.currentTarget.value);
                         const job = this.state.new_job;
                         job.client_id = selected_client._id;
+                        job.client = selected_client;
                         this.setState({new_job: job});
                         this.sitename = selected_client.physical_address;
                       }}
@@ -1025,7 +1073,8 @@ export class Jobs extends React.Component
                     name="request"
                     type="text"
                     // value={this.state.new_job.request}
-                    onChange={(new_val)=>{
+                    onChange={(new_val)=>
+                    {
                       const job = this.state.new_job;
                       job.request = new_val.currentTarget.value;
                       this.setState({new_job: job});
@@ -1076,9 +1125,144 @@ export class Jobs extends React.Component
               </CustomButton>
 
               <CustomButton
-                onClick={()=>{
-                  console.log(this.state.new_job);
-                  this.props.jobs.push(this.state.new_job);
+                onClick={()=>
+                {
+                  if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+                  {
+                    this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload: {type: 'danger', message: 'You are not authorised to create jobs.'}
+                    });
+                    return;
+                  }
+
+                  const job = this.state.new_job;
+
+                  if(!job.client)
+                  {
+                    return this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload:
+                      {
+                        type: 'danger',
+                        message: 'Invalid client selected'
+                      }
+                    });
+                  }
+
+                  if(!job.contact)
+                  {
+                    return this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload:
+                      {
+                        type: 'danger',
+                        message: 'Invalid contact person selected'
+                      }
+                    });
+                  }
+
+                  if(!job.sitename)
+                  {
+                    return this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload:
+                      {
+                        type: 'danger',
+                        message: 'Invalid sitename'
+                      }
+                    });
+                  }
+                  
+                  if(!job.request)
+                  {
+                    return this.props.dispatch(
+                    {
+                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                      payload:
+                      {
+                        type: 'danger',
+                        message: 'Error: Invalid job description',
+                      },
+                    });
+                  }
+
+                  // Prepare Quote
+                  const quote = {};
+                  const client_name = job.client.client_name.toString();
+                  quote.object_number = this.props.quotes.length;
+                  quote.client = job.client;
+                  quote.client_id = job.client._id;
+                  quote.client_name = client_name;
+                  quote.contact = job.contact;
+                  quote.contact_person_id = job.contact.usr;
+                  quote.contact_person = job.contact.name;
+                  quote.sitename = job.sitename;
+                  quote.request = job.request;
+                  quote.vat = GlobalConstants.VAT;
+                  quote.status = 3;// statuses[0].status;
+                  quote.status_description = 'Created from job.';// statuses[0].status_description;
+                  quote.revision = 1;
+                  quote.resources = [];
+                  quote.account_name = client_name.toLowerCase().replace(' ', '-');
+                  quote.creator_name = sessionManager.getSessionUser().name;
+                  quote.creator = sessionManager.getSessionUser().usr;
+                  quote.creator_employee = sessionManager.getSessionUser();
+                  quote.date_logged = new Date().getTime();// current date in epoch millis
+                  quote.logged_date = formatDate(new Date()); // current date
+
+                  console.log('new quote [for new job]: ', quote);
+
+                  // this.props.quotes.push(quote);
+                  // mapStateToProps(this.state);
+
+                  const context = this;
+                  // dispatch action to create quote on local & remote stores
+                  this.props.dispatch(
+                  {
+                    type: ACTION_TYPES.QUOTE_NEW,
+                    payload: quote,
+                    // after the quote has been added to local & remote store, push it to the table
+                    callback(new_quote)// w/ _id
+                    {
+                      // alert('creating job');
+                      context.props.quotes.push(new_quote);
+
+                      // Prepare Job
+                      const client_name = job.client.client_name.toString();
+
+                      // client & contact objects have already been set by combo boxes
+                      job.object_number = context.props.jobs.length;
+                      job.client_name = client_name;
+                      job.contact_person = job.contact.name;
+                      job.quote_id = new_quote._id;
+                      job.quote = new_quote;
+                      job.status = statuses[0].status;
+                      job.status_description = statuses[0].status_description;
+                      job.creator_name = sessionManager.getSessionUser().name;
+                      job.creator = sessionManager.getSessionUser().usr;
+                      job.creator_employee = sessionManager.getSessionUser();
+                      job.tasks = [];
+                      job.date_logged = new Date().getTime();// current date in epoch millis
+                      job.logged_date = formatDate(new Date()); // current date
+
+                      console.log('creating new job: ', job);
+                      context.props.dispatch(
+                      {
+                        type: ACTION_TYPES.JOB_NEW,
+                        payload: job,
+                        callback(complete_job)
+                        {
+                          context.props.jobs.push(complete_job);
+                          context.setState({new_job: context.newJob(), is_new_job_modal_open: false});
+                        }
+                      });
+                    }
+                  });
                 }}
                 style={{width: '120px', height: '50px', float: 'left'}}
                 success
@@ -1575,7 +1759,8 @@ Jobs.propTypes =
   materials: PropTypes.arrayOf(PropTypes.object).isRequired,
   clients: PropTypes.arrayOf(PropTypes.object).isRequired,
   jobs: PropTypes.arrayOf(PropTypes.object).isRequired,
-   t: PropTypes.func.isRequired,
+  quotes: PropTypes.arrayOf(PropTypes.object).isRequired,
+  t: PropTypes.func.isRequired
 };
 
 // Map state to props & Export
@@ -1583,6 +1768,7 @@ const mapStateToProps = state => (
 {
   employees: getEmployees(state),
   jobs: getJobs(state),
+  quotes: getQuotes(state),
   clients: getClients(state),
   materials: getMaterials(state)
 });

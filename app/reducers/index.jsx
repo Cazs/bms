@@ -8,6 +8,7 @@ import SettingsReducer from './SettingsReducer';
 import QuotesReducer from './Operations/QuotesReducer';
 import MaterialsReducer from './Operations/MaterialsReducer';
 import JobsReducer from './Operations/JobsReducer';
+import QuickJobsReducer from './Operations/QuickJobsReducer';
 import ClientsReducer from './Operations/ClientsReducer';
 import SuppliersReducer from './Operations/SuppliersReducer';
 import InvoicesReducer from './Operations/InvoicesReducer';
@@ -37,6 +38,7 @@ export default combineReducers(
   purchaseOrders: PurchaseOrdersReducer,
   requisitions: RequisitionReducer,
   jobs: JobsReducer,
+  // quickjobs: QuickJobsReducer,
   // hr
   leaveApplications: LeaveApplicationsReducer,
   overtimeApplications: OvertimeApplicationsReducer,

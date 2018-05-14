@@ -20,7 +20,10 @@ const EmployeesMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all Employees
       return DataManager.getAll(dispatch, action, '/employees', DataManager.db_employees, 'employees')
-                        .then(docs => next({type: ACTION_TYPES.EMPLOYEE_GET_ALL, payload: docs }));
+                        .then(docs =>
+                          next({type: ACTION_TYPES.EMPLOYEE_GET_ALL, payload: docs }))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.EMPLOYEE_GET_ALL, payload: []}));
     }
 
     case ACTION_TYPES.EMPLOYEE_NEW:
@@ -28,8 +31,12 @@ const EmployeesMW = ({ dispatch, getState }) => next => action =>
       const new_employee = Object.assign(action.payload, {object_number: getState().employees.length});
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_employees, new_employee, '/employee', 'employees')
-                        .then(response => 
-                            next({ type: ACTION_TYPES.EMPLOYEE_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+                        .then(response =>
+                          { 
+                            const new_employee = Object.assign(action.payload, {_id: response}); // w/ _id
+                            next({ type: ACTION_TYPES.EMPLOYEE_NEW, payload: new_employee });
+                            action.callback(new_employee);
+                          });
     }
 
     case ACTION_TYPES.EMPLOYEE_UPDATE:

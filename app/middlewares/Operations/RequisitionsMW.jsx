@@ -21,7 +21,9 @@ const RequisitionsMW = ({ dispatch, getState }) => next => action =>
       // Get all Requisitions
       return DataManager.getAll(dispatch, action, '/requisitions', DataManager.db_requisitions, 'requisitions')
                         .then(docs =>
-                          next(Object.assign({}, action, { payload: docs || []  })));
+                          next(Object.assign({}, action, { payload: docs || []  })))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.REQUISITION_GET_ALL, payload: []}));
     }
 
     case ACTION_TYPES.REQUISITION_NEW:

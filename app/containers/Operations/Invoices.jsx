@@ -21,6 +21,11 @@ import Transition from 'react-motion-ui-pack'
 // Global constants
 import * as GlobalConstants from  '../../constants/globals';
 
+// Actions
+import * as ACTION_TYPES from '../../constants/actions.jsx';
+import * as UIActions from '../../actions/ui';
+import * as InvoiceActions from '../../actions/operations/invoices';
+
 // Selectors
 import { getInvoices } from '../../reducers/Operations/InvoicesReducer';
 import { getClients } from '../../reducers/Operations/ClientsReducer';
@@ -35,11 +40,7 @@ import Message from '../../components/shared/Message';
 import CustomButton, { ButtonsGroup } from '../../components/shared/Button';
 import { Field, Part, Row } from '../../components/shared/Part';
 import Logo from '../../components/settings/_partials/profile/Logo';
-
 import Modal from 'react-modal';
-
-// Actions
-import * as InvoiceActions from '../../actions/operations/invoices';
 
 // Styles
 import styled from 'styled-components';
@@ -53,6 +54,11 @@ import {
   PageContent,
 } from '../../components/shared/Layout';
 
+// Helpers
+import sessionManager from '../../helpers/SessionManager';
+import Log, { formatDate } from '../../helpers/Logger';
+// import Material from '../../helpers/Material';
+import statuses from '../../helpers/statuses';
 
 const modalStyle =
 {
@@ -79,6 +85,7 @@ export class Invoices extends React.Component
     this.setInvoiceStatus = this.setInvoiceStatus.bind(this);
     this.expandComponent = this.expandComponent.bind(this);
     this.getCaret = this.getCaret.bind(this);
+    this.showEmailDialog = this.showEmailDialog.bind(this);
     
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -260,6 +267,13 @@ export class Invoices extends React.Component
     return (
       <div>
         <CustomButton primary onClick={() => this.showInvoicePreview(row)}>PDF Preview</CustomButton>
+        <CustomButton
+          primary
+          style={{marginLeft: '15px'}}
+          onClick={() => this.showEmailDialog(row)}
+        >
+          eMail&nbsp;Invoice
+        </CustomButton>
       </div>);
   }
 
@@ -296,6 +310,12 @@ export class Invoices extends React.Component
     this.setState({is_new_invoice_modal_open: false});
   }
 
+  showEmailDialog(invoice)
+  {
+    this.props.showEmailModal(invoice);
+    ipc.send('model-to-pdf', invoice, 'invoice');
+  }
+
   // Render
   render()
   {
@@ -319,10 +339,12 @@ export class Invoices extends React.Component
 
     const clientFormatter = (cell, row) => `<i class='glyphicon glyphicon-${cell.client_name}'></i> ${cell.client_name}`;
 
-    const info = (
+    const info =
+    (
       <div style={{position: 'fixed', display: this.state.info.display, top: this.state.info.y, left: this.state.info.x, background:'rgba(0,0,0,.8)', borderRadius: '4px', boxShadow: '0px 0px 10px #343434', border: '1px solid #000', zIndex: '300'}}>
         <p style={{color: '#fff', marginTop: '5px'}}>&nbsp;click&nbsp;to&nbsp;sort&nbsp;by&nbsp;this&nbsp;column&nbsp;</p>
-      </div>);
+      </div>
+    );
       
     return (
       <PageContent bare>
@@ -350,7 +372,8 @@ export class Invoices extends React.Component
               }}
             >  
               {/* , maxWidth: (window.innerWidth * 0.82) + 'px' */}
-              { window.onresize = () => {
+              { window.onresize = () =>
+              {
                 Object.assign(this.toggle_container.style, {marginLeft: (-45 + (window.outerWidth * 0.01)) + 'px'});
               }}
               <div ref={(r)=>this.toggle_container = r} key='invoices_col_toggles' style={{boxShadow: '0px 10px 35px #343434', marginLeft: '-35px', position: 'fixed', top:  '130px', zIndex: '20'}}>
@@ -746,6 +769,37 @@ export class Invoices extends React.Component
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_amount_received_visible}
+                    customEditor={{
+                      getElement: (func, props) =>
+                      (
+                        <input
+                          type='text'
+                          defaultValue={props.row.receivable}
+                          style={{border: '1px solid lime', borderRadius: '2px'}}
+                          onChange={(val) =>
+                          {
+                            if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access and less are not allowed
+                              return this.props.dispatch(UIActions.newNotification('danger', 'You are not authorised to update the state of this invoice.'));
+
+                            const select_invoice = props.row;
+                            select_invoice.receivable = val.currentTarget.value;
+                            this.setState( { selected_invoice: select_invoice })
+                          }}
+                          
+                          onKeyPress={(evt) =>
+                          {
+                            if(!evt || evt.key === 'Enter')
+                            {
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.INVOICE_UPDATE,
+                                payload: this.state.select_invoice
+                              });
+                            }
+                          }}
+                        />
+                      )
+                    }}
                   > Amount&nbsp;Received
                   </TableHeaderColumn>
 
@@ -774,11 +828,57 @@ export class Invoices extends React.Component
                   <TableHeaderColumn
                     dataField='status_description'
                     dataSort
-                    editable
                     caretRender={this.getCaret}
                     // thStyle={{position: 'fixed' }}
                     tdStyle={{'fontWeight': 'lighter'}}
                     hidden={!this.state.col_status_visible}
+                    customEditor={{
+                      getElement: (func, props) =>
+                      {
+                        const selected_invoice = props.row;
+                        
+                        return (<ComboBox
+                          ref={(cbx_status)=>this.cbx_status = cbx_status}
+                          items={statuses}
+                          // value={GlobalConstants.ACCESS_LEVELS[selected_invoice.status]}
+                          selected_index={selected_invoice.status} // {GlobalConstants.ACCESS_LEVELS[1]}
+                          label='status_description'
+                          onChange={(new_val)=>
+                          {
+                              const selected_status = JSON.parse(new_val.currentTarget.value);
+                              console.log(selected_status);
+                              console.log(props.row);
+
+                              if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access and less are not allowed
+                              {
+                                // revert combo box selection
+                                // this.cbx_status.state.selected_item = GlobalConstants.ACCESS_LEVELS[0];
+
+                                this.props.dispatch(
+                                {
+                                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                                  payload: {type: 'danger', message: 'You are not authorised to update the state of this invoice.'}
+                                });
+
+                                // this.cbx_status.blur();
+                                return;
+                              }
+
+                              console.log('selected status: ', selected_status);
+                              selected_invoice.status = selected_status.status;
+                              selected_invoice.status_description = selected_status.status_description;
+
+                              // send signal to update invoice on local & remote storage
+                              this.props.dispatch(
+                              {
+                                type: ACTION_TYPES.INVOICE_UPDATE,
+                                payload: selected_invoice
+                              });
+                              console.log('dispatched invoice update');
+                          }}
+                        />)
+                      }
+                    }}
                   > Status
                   </TableHeaderColumn>
 

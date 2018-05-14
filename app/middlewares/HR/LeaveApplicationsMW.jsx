@@ -19,7 +19,10 @@ const LeaveApplicationsMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all LeaveApplications
       return DataManager.getAll(dispatch, action, '/leave_applications', DataManager.db_leave_applications, 'leave_applications')
-                        .then(docs => next(Object.assign({}, action, { payload: docs  })));
+                        .then(docs =>
+                          next(Object.assign({}, action, { payload: docs || [] })))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.LEAVE_GET_ALL, payload: []}));
     }
 
     case ACTION_TYPES.LEAVE_NEW:

@@ -20,7 +20,10 @@ const ResourcesMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all Resources
       return DataManager.getAll(dispatch, action, '/resources', DataManager.db_materials, 'resources')
-                        .then(docs => next(Object.assign({}, action, { payload: docs  })));
+                        .then(docs =>
+                          next(Object.assign({}, action, { payload: docs || [] })))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.MATERIAL_GET_ALL, payload: []}));
     }
 
     case ACTION_TYPES.MATERIAL_NEW:

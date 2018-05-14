@@ -20,7 +20,10 @@ const SuppliersMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all Suppliers
       return DataManager.getAll(dispatch, action, '/suppliers', DataManager.db_suppliers, 'suppliers')
-                        .then(docs => next(Object.assign({}, action, { payload: docs  })));
+                        .then(docs =>
+                          next(Object.assign({}, action, { payload: docs || [] })))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.SUPPLIER_GET_ALL, payload: []}));
     }
 
     case ACTION_TYPES.SUPPLIER_NEW:

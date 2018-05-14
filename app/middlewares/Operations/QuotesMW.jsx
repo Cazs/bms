@@ -25,7 +25,10 @@ const QuotesMW = ({ dispatch, getState }) => next => (action) =>
     {
       // Get all Quotes
       return DataManager.getAll(dispatch, action, '/quotes', DataManager.db_quotes, 'quotes')
-                        .then(docs => next({ type: ACTION_TYPES.QUOTE_GET_ALL, payload: docs }));
+                        .then(docs =>
+                          next({ type: ACTION_TYPES.QUOTE_GET_ALL, payload: docs || []}))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.QUOTE_GET_ALL, payload: []}));
     }
 
     case ACTION_TYPES.QUOTE_NEW:
@@ -36,7 +39,7 @@ const QuotesMW = ({ dispatch, getState }) => next => (action) =>
                         .then(response =>
                           {
                             const new_quote = Object.assign(action.payload, {_id: response}); // w/ _id
-                            next({ type: ACTION_TYPES.QUOTE_NEW, payload: new_quote })
+                            next({ type: ACTION_TYPES.QUOTE_NEW, payload: new_quote });
                             action.callback(new_quote);
                           });
                         // .then(response => 

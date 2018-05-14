@@ -21,6 +21,7 @@ import { getSuppliers } from '../reducers/Operations/SuppliersReducer';
 import styled from 'styled-components';
 
 // Helpers
+import  * as DataManager from '../helpers/DataManager';
 import sessionManager from '../helpers/SessionManager';
 import Log, { formatDate } from '../helpers/Logger';
 import * as GlobalConstants from '../constants/globals';
@@ -29,6 +30,8 @@ import Material from '../helpers/Material';
 // Components
 import { Field, Part, Row } from '../components/shared/Part';
 import Button from '../components/shared/Button';
+import LoginButton from '../components/shared/LoginButton';
+import SignupButton from '../components/shared/SignupButton';
 import { Tab, Tabs, TabContent } from '../components/shared/Tabs';
 import {
   PageWrapper,
@@ -38,7 +41,6 @@ import {
   PageContent,
 } from '../components/shared/Layout';
 import _withFadeInAnimation from '../components/shared/hoc/_withFadeInAnimation';
-
 import Modal from 'react-modal';
 
 // Selectors
@@ -73,20 +75,49 @@ class Operations extends Component
     this.changeTab = this.changeTab.bind(this);
     this.createClient = this.createClient.bind(this);
     this.createSupplier = this.createSupplier.bind(this);
+    this.newEmployee = this.newEmployee.bind(this);
+    this.showEmailModal = this.showEmailModal.bind(this);
 
     this.state =
     {
       visibleTab: 'Quotes',
 
       is_new_client_modal_open: false,
+      is_email_modal_open: false,
       is_new_supplier_modal_open: false,
       is_new_material_modal_open: false,
+      is_new_contact_modal_open: false,
 
+      new_employee: this.newEmployee(),
       new_client: this.createClient(),
       new_supplier: this.createSupplier(),
-      new_material: Material()
+      new_material: Material(),
+
+      new_email:
+      {
+        document_id: null,
+        destination: '',
+        subject: '',
+        message: '',
+        path: null,
+        file: null,
+        // raw_data: null
+      }
     };
-    this.header_actions = React.createRef();
+  }
+
+  newEmployee()
+  {
+    return {
+      usr: null,
+      pwd: null,
+      firstname: null,
+      lastname: null,
+      name: null,
+      email: null,
+      cell: null,
+      access_level: 0 // no-access users, i.e. external contacts
+    }
   }
 
   createClient()
@@ -141,6 +172,13 @@ class Operations extends Component
     {
       this.changeTab(tab_num);
     });
+
+    // TODO: check if removed listeners on close
+    ipc.on('email-document-ready', (event, doc_id, doc_path) =>
+    {
+      console.log(doc_path);
+      this.setState({new_email: Object.assign(this.state.new_email, {document_id: doc_id, path: doc_path})});
+    });
   }
 
    // Remove all IPC listeners when unmounted
@@ -155,12 +193,197 @@ class Operations extends Component
     this.setState({ visibleTab: tabNum });
   }
 
+  showEmailModal()
+  {
+    this.setState(
+    {
+      is_email_modal_open: true,
+      // new_email: Object.assign(this.state.new_email, {raw_data: obj})
+    });
+  }
+
   // Render Main Content
 
   render()
   {
     const { t } = this.props;
     const { quotes } = this.props;
+
+    const new_contact_modal = 
+    (
+      <div>
+        {/* New Contact Modal */}
+        <Modal
+          isOpen={this.state.is_new_contact_modal_open}
+            // onAfterOpen={this.afterOpenModal}
+            // onRequestClose={this.closeModal}
+          style={{
+            content :
+            {
+              top     : '20%',
+              left    : '14%',
+              right   : 'auto',
+              bottom  : 'auto',
+              border  : '2px solid black',
+              minWidth: window.outerWidth-300, // '950px'
+            }
+          }}
+          contentLabel="New Contact"
+        >
+          <h2 ref={supplier_subtitle => this.supplier_subtitle = supplier_subtitle} style={{color: 'black'}}>Create New Contact</h2>
+          <div>
+            <div className='row'>
+              <div className="pageItem col-md-6">
+                <label className="itemLabel" style={{color: '#000'}}>Firstname</label>
+                <input
+                  ref={(txt_firstname)=>this.txt_firstname = txt_firstname}
+                  name="firstname"
+                  type="text"
+                  value={this.state.new_employee.firstname}
+                  onChange={(new_val)=>
+                  {
+                    const employee = this.state.new_employee;
+                    employee.firstname = new_val.currentTarget.value;
+                    this.setState({new_employee: employee});
+                  }}
+                  style={{width: '250px', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+
+              <div className="pageItem col-md-6">
+                <label className="itemLabel" style={{color: '#000'}}>Lastname</label>
+                <input
+                  ref={(txt_lastname)=>this.txt_lastname = txt_lastname}
+                  name="lastname"
+                  type="text"
+                  value={this.state.new_employee.lastname}
+                  onChange={(new_val)=>
+                  {
+                    const employee = this.state.new_employee;
+                    employee.lastname = new_val.currentTarget.value;
+                    this.setState({new_employee: employee});
+                  }}
+                  style={{width: '250px', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+            </div>
+
+            <div className='row'>
+              <div className="pageItem col-md-6">
+                <label className="itemLabel" style={{color: '#000'}}>eMail&nbsp;Address</label>
+                <input
+                  ref={(txt_email)=>this.txt_email = txt_email}
+                  name="email"
+                  type="email"
+                  value={this.state.new_employee.email}
+                  onChange={(new_val)=>
+                  {
+                    const employee = this.state.new_employee;
+                    employee.email = new_val.currentTarget.value;
+                    this.setState({new_employee: employee});
+                  }}
+                  style={{width: '250px', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+
+              <div className="pageItem col-md-6">
+                <label className="itemLabel" style={{color: '#000'}}>Cell No.</label>
+                <input
+                  ref={(txt_cell)=>this.txt_cell = txt_cell}
+                  name="cell"
+                  type="text"
+                  value={this.state.new_employee.cell}
+                  onChange={(new_val)=>
+                  {
+                    const employee = this.state.new_employee;
+                    employee.cell = new_val.currentTarget.value;
+                    this.setState({new_employee: employee});
+                  }}
+                  style={{width: '250px', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+            </div>
+
+            <div className='row'>
+              <div className="pageItem col-md-6">
+                <LoginButton
+                  onClick={(evt)=>
+                  {
+                    if(sessionManager.getSessionUser().access_level < GlobalConstants.ACCESS_LEVELS[1].level) // no access and less are not allowed
+                      return this.props.dispatch(UIActions.newNotification('danger', 'You are not authorised to create contacts.'));
+
+                    console.log('creating account: ', this.state.new_employee);
+
+                    if(!this.state.new_employee.firstname || this.state.new_employee.firstname.length <= 1)
+                      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid contact firstname.'));
+
+                    if(!this.state.new_employee.lastname || this.state.new_employee.lastname.length <= 1)
+                      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid contact lastname.'));
+
+                    if(!this.state.new_employee.email || this.state.new_employee.email.length <= 1 ||
+                       !this.state.new_employee.email.includes('@') || !this.state.new_employee.email.includes('\.'))
+                      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid contact email address.'));
+
+                    if(!this.state.new_employee.cell || this.state.new_employee.cell.length <= 9)
+                      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid cellphone number.'));
+
+                    this.state.new_employee.usr = this.state.new_employee.email;
+                    this.state.new_employee.pwd = this.state.new_employee.cell; // TODO: bcrypt
+                    this.state.new_employee.name = this.state.new_employee.firstname + ' ' + this.state.new_employee.lastname;
+                    this.state.new_employee.initials = this.state.new_employee.firstname.charAt(0) + this.state.new_employee.lastname.charAt(0);
+                    this.state.new_employee.active = false;
+                    this.state.new_employee.access_level = 0;
+                    this.state.new_employee.status = 3; // marks employee as external contact
+
+                    const context = this;
+                    // Send signup request
+                    DataManager.putRemoteResource(this.props.dispatch, DataManager.db_employees, this.state.new_employee, '/employee', 'employees')
+                    .then(res =>
+                    {
+                      console.log('response data: ' + res);
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload:
+                        {
+                          type: 'success',
+                          message: 'Successfully created new contact.'
+                        }
+                      });
+                      const new_employee = Object.assign(context.state.new_employee, {_id: res}); // w/ _id
+                      context.props.employees.push(new_employee);
+                      context.setState({new_employee: context.newEmployee(), is_new_contact_modal_open: false});
+                    })
+                    .catch(err =>
+                    {
+                      console.log('error: ', err);
+                      this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload:
+                        {
+                          type: 'danger',
+                          message: err.message
+                        }
+                      });
+                    });
+                  }}
+                >
+                  Create
+                </LoginButton>
+              </div>
+              <div className="pageItem col-md-6">
+                <SignupButton
+                  onClick={(evt)=>this.setState({is_new_contact_modal_open: false})}
+                >
+                  Dismiss
+                </SignupButton>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    );
 
     const new_client_modal = 
     (
@@ -363,7 +586,7 @@ class Operations extends Component
                 <Button
                   onClick={(event)=>
                   {
-                    if(!this.state.new_client.client_name) // TODO: stricter validation
+                    if(!this.state.new_client.client_name || this.state.new_client.client_name.length <= 1) // TODO: stricter validation
                     {
                       return this.props.dispatch(
                       {
@@ -376,7 +599,7 @@ class Operations extends Component
                       });
                     }
 
-                    if(!this.state.new_client.tel) // TODO: stricter validation
+                    if(!this.state.new_client.tel || this.state.new_client.tel.length <= 9) // TODO: stricter validation
                     {
                       return this.props.dispatch(
                       {
@@ -389,7 +612,8 @@ class Operations extends Component
                       });
                     }
 
-                    if(!this.state.new_client.contact_email) // TODO: stricter validation
+                    if(!this.state.new_client.contact_email || this.state.new_client.contact_email.length <= 1 ||
+                       !this.state.new_client.contact_email.includes('@') || !this.state.new_client.contact_email.includes('\.'))
                     {
                       return this.props.dispatch(
                       {
@@ -402,7 +626,7 @@ class Operations extends Component
                       });
                     }
 
-                    if(!this.state.new_client.tax_number) // TODO: stricter validation
+                    if(!this.state.new_client.tax_number || this.state.new_client.tax_number.length <= 3)
                     {
                       return this.props.dispatch(
                       {
@@ -415,7 +639,7 @@ class Operations extends Component
                       });
                     }
 
-                    if(!this.state.new_client.registration_number) // TODO: stricter validation
+                    if(!this.state.new_client.registration_number || this.state.new_client.registration_number.length <= 3)
                     {
                       return this.props.dispatch(
                       {
@@ -428,7 +652,7 @@ class Operations extends Component
                       });
                     }
 
-                    if(this.state.new_client.date_partnered <= 0) // TODO: stricter validation
+                    if(this.state.new_client.date_partnered <= 0 || this.state.new_client.date_partnered > new Date().getTime())
                     {
                       return this.props.dispatch(
                       {
@@ -489,7 +713,8 @@ class Operations extends Component
             </div>
           </div>
         </Modal>
-      </div>);
+      </div>
+    );
 
     const new_supplier_modal = 
     (
@@ -692,7 +917,7 @@ class Operations extends Component
                 <Button
                   onClick={(event)=>
                   {
-                    if(!this.state.new_supplier.supplier_name) // TODO: stricter validation
+                    if(!this.state.new_supplier.supplier_name || this.state.new_supplier.supplier_name.length <= 1)
                     {
                       return this.props.dispatch(
                       {
@@ -705,7 +930,7 @@ class Operations extends Component
                       });
                     }
 
-                    if(!this.state.new_supplier.tel) // TODO: stricter validation
+                    if(!this.state.new_supplier.tel || this.state.new_supplier.tel.length <= 9)
                     {
                       return this.props.dispatch(
                       {
@@ -718,7 +943,8 @@ class Operations extends Component
                       });
                     }
 
-                    if(!this.state.new_supplier.contact_email) // TODO: stricter validation
+                    if(!this.state.new_supplier.contact_email || this.state.new_supplier.contact_email.length <= 1 ||
+                      !this.state.new_supplier.contact_email.includes('@') || !this.state.new_supplier.contact_email.includes('\.'))
                     {
                       return this.props.dispatch(
                       {
@@ -731,7 +957,33 @@ class Operations extends Component
                       });
                     }
 
-                    if(this.state.new_supplier.date_partnered <= 0) // TODO: stricter validation
+                    if(!this.state.new_supplier.tax_number || this.state.new_supplier.tax_number.length <= 3)
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid supplier tax number'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_supplier.registration_number || this.state.new_supplier.registration_number.length <= 3)
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid supplier registration number'
+                        }
+                      });
+                    }
+
+                    if(this.state.new_supplier.date_partnered <= 0 || this.state.new_supplier.date_partnered > new Date().getTime()) // TODO: stricter validation
                     {
                       return this.props.dispatch(
                       {
@@ -792,7 +1044,8 @@ class Operations extends Component
             </div>
           </div>
         </Modal>
-      </div>);
+      </div>
+    );
 
     const new_material_modal =
     (
@@ -1047,17 +1300,252 @@ class Operations extends Component
             </div>
           </div>
         </Modal>
-      </div>);
+      </div>
+    );
+
+    const email_modal =
+    (
+      <div>
+        {/* eMailing Modal */}
+        <Modal
+          isOpen={this.state.is_email_modal_open}
+            // onAfterOpen={this.afterOpenModal}
+            // onRequestClose={this.closeModal}
+          style={modalStyle}
+          contentLabel="Compose eMail"
+        >
+          <h2 ref={email_subtitle => this.email_subtitle = email_subtitle} style={{color: 'black'}}>Compose eMail</h2>
+          <div>
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">eMail Address</label>
+                <input
+                  ref={(txt_email_address)=>this.txt_email_address = txt_email_address}
+                  name="email_address"
+                  type="text"
+                  value={this.state.new_email.destination}
+                  onChange={(new_val)=>
+                  {
+                    const email = this.state.new_email;
+                    email.destination = new_val.currentTarget.value;
+                    this.setState({new_email: email});
+                  }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Subject</label>
+                <input
+                  name="subject"
+                  type="text"
+                  ref={(txt_subject)=>this.txt_subject = txt_subject}
+                  value={this.state.new_email.subject}
+                  onChange={(new_val)=>
+                  {
+                    const email = this.state.new_email;
+                    email.subject = new_val.currentTarget.value;
+                    this.setState({new_email: email});
+                  }}
+                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <label className="itemLabel">Message</label>
+                <textarea
+                  name="message"
+                  ref={(txt_message)=>this.txt_message = txt_message}
+                  value={this.state.new_email.message}
+                  onChange={(new_val)=>
+                  {
+                    const email = this.state.new_email;
+                    email.message = new_val.currentTarget.value;
+                    this.setState({new_email: email});
+                  }}
+                  style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                />
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="pageItem col-md-6">
+                <Button
+                  onClick={(event)=>
+                  {
+                    if(!this.state.new_email.destination || this.state.new_email.destination.length <= 1 ||
+                      !this.state.new_email.destination.includes('@') || !this.state.new_email.destination.includes('\.'))
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid destination email address'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_email.subject) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid email subject'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_email.message) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid email message'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_email.path) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'warning',
+                          message: 'Document is not yet ready.'
+                        }
+                      });
+                    }
+
+                    if(!this.state.new_email.document_id) // TODO: stricter validation
+                    {
+                      return this.props.dispatch(
+                      {
+                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                        payload: 
+                        {
+                          type: 'danger',
+                          message: 'Invalid document id.'
+                        }
+                      });
+                    }
+                    
+                    // Prepare eMail
+                    // const appConfig = require('electron-settings');
+                    // const path = require('path');
+                    const fs = require('fs');
+                    // const exportDir = appConfig.get('invoice.exportDir');
+                    // const pdfPath = path.join(this.state.new_email.path, `${this.state.document_id}.pdf`);
+
+                    const file_data = fs.readFileSync(this.state.new_email.path);
+                    const file_base64_str = `data:application/pdf;base64,${file_data.toString('base64')}`;
+
+                    // console.log('file_data: ', file_data);
+
+                    const file =
+                    {
+                      filename: this.state.new_email.document_id,
+                      content_type: 'application/pdf',
+                      file: file_data.toString('base64') // file_base64_str.split('base64,').pop()
+                    }
+
+                    console.log('new file to be emailed: ', file);
+
+                    /* const Http = require('axios').create(
+                    {
+                        headers:
+                        {
+                          quote_id: this.state.new_email.document_id,
+                          destination: this.state.new_email.destination,
+                          subject: this.state.new_email.subject,
+                          message : this.state.new_email.message,
+                          session_id : sessionManager.session_id,
+                          'Content-Type': 'application/json'
+                        }
+                    }); */
+
+                    const { HttpClient, SERVER_IP, SERVER_PORT } = require('../helpers/HttpClient');
+
+                    const headers = 
+                    {
+                      document_id: this.state.new_email.document_id,
+                      destination: this.state.new_email.destination,
+                      subject: this.state.new_email.subject,
+                      message : this.state.new_email.message,
+                      session_id : sessionManager.session_id,
+                      'Content-Type': 'application/json'
+                    }
+
+                    return HttpClient.post('http://' + SERVER_IP + ':' + SERVER_PORT + '/mailto', file, { headers })
+                                .then(response =>
+                                {
+                                  if(response)
+                                  {
+                                    if(response.status == 200) // Success, successfully emailed document
+                                    {
+                                      console.log('Successfully emailed document.');
+                                      this.setState({is_email_modal_open: false});
+                                      return this.props.dispatch(UIActions.newNotification('success', 'Successfully emailed document.'));
+                                    } 
+                                    console.log('Error: ' + response.status);
+                                    return this.props.dispatch(UIActions.newNotification('danger', 'Error ['+response.status+']: ' + (response.statusText || response.data)));
+                                  }
+                                  console.log('Error: Could not get a valid response from the server.');
+                                  return this.props.dispatch(UIActions.newNotification('danger', 'Error: Could not get a valid response from the server.'));
+                                })
+                                .catch(err =>
+                                {
+                                  console.log('Error: ', err);
+                                  return this.props.dispatch(UIActions.newNotification('danger', err.message));
+                                });
+
+                  }}
+                  style={{width: '120px', height: '50px', float: 'right'}}
+                  success
+                >Send
+                </Button>
+              </div>
+
+              <div className="pageItem col-md-6">
+                <Button
+                  danger
+                  style={{width: '120px', height: '50px', float: 'left'}}
+                  onClick={()=>this.setState({is_email_modal_open: false})}
+                >Dismiss
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    );
 
     return (
       <PageWrapper>
         <PageHeader>
           <PageHeaderTitle>Operations | {this.state.visibleTab}</PageHeaderTitle>
-          <PageHeaderActions ref={this.header_actions}>
-            <div style={{display: 'inline', float: 'right', marginTop: '-30px', paddingRight: '100px', borderBottom: '2px', borderColor: 'black'}}>
+          <PageHeaderActions>
+            {/* <div style={{display: 'inline', float: 'right', marginTop: '2px', paddingRight: '100px', borderBottom: '2px', borderColor: 'black'}}>
               {/* <Button primary>
                 {t('common:save')}
-              </Button> */}
+              </Button> *}
+              <Button
+                primary
+                onClick={()=>this.setState({is_new_contact_modal_open: true})}
+              >
+                New Contact
+              </Button>
               <Button
                 primary
                 onClick={()=>this.setState({is_new_client_modal_open: true})}
@@ -1076,9 +1564,9 @@ class Operations extends Component
               >
                 New Stock Item
               </Button>
-            </div>
+            </div> */}
           </PageHeaderActions>
-          <Tabs style={{backgroundColor: 'lime', borderTop: '2px solid black', marginTop: '30px', zIndex: '90'}}>
+          <Tabs style={{width: '100%', borderTop: '2px solid black', marginTop: '0px', zIndex: '90'}}>
             <Tab
               href="#"
               className={this.state.visibleTab === 'Quotes' ? 'active' : ''}
@@ -1114,25 +1602,59 @@ class Operations extends Component
             >
               {t('Requisitions')}
             </Tab>
+            <div style={{display: 'inline', float: 'right', marginTop: '5px', paddingLeft: '50px', borderBottom: '2px', borderColor: 'black', width: 'auto'}}>
+              {/* <Button primary>
+                {t('common:save')}
+              </Button> */}
+              <Button
+                primary
+                onClick={()=>this.setState({is_new_contact_modal_open: true})}
+              >
+                New Contact
+              </Button>
+              <Button
+                primary
+                style={{marginLeft: '5px'}}
+                onClick={()=>this.setState({is_new_client_modal_open: true})}
+              >
+                New Client
+              </Button>
+              <Button
+                primary
+                style={{marginLeft: '5px'}}
+                onClick={()=>this.setState({is_new_supplier_modal_open: true})}
+              >
+                New Supplier
+              </Button>
+              <Button
+                primary
+                style={{marginLeft: '5px'}}
+                onClick={()=>this.setState({is_new_material_modal_open: true})}
+              >
+                New Stock Item
+              </Button>
+            </div>
           </Tabs>
         </PageHeader>
         <PageContent>
+          {email_modal}
+          {new_contact_modal}
           {new_client_modal}
           {new_supplier_modal}
           {new_material_modal}
           <TabContent>
             {this.state.visibleTab === 'Quotes' && (
               // <Profile t={t} />
-              <Quotes />
+              <Quotes showEmailModal={()=>this.showEmailModal()} />
             )}
             {this.state.visibleTab === 'Jobs' && (
-              <Jobs />
+              <Jobs showEmailModal={()=>this.showEmailModal()} />
             )}
             {this.state.visibleTab === 'Invoices' && (
-              <Invoices />
+              <Invoices showEmailModal={()=>this.showEmailModal()} />
             )}
             {this.state.visibleTab === 'POs' && (
-              <PurchaseOrders />
+              <PurchaseOrders showEmailModal={()=>this.showEmailModal()} />
             )}
             {this.state.visibleTab === 'Requisitions' && (
               <Requisitions />
@@ -1151,12 +1673,14 @@ Operations.propTypes =
   materials: PropTypes.arrayOf(PropTypes.object).isRequired,
   clients: PropTypes.arrayOf(PropTypes.object).isRequired,
   suppliers: PropTypes.arrayOf(PropTypes.object).isRequired,
+  employees: PropTypes.arrayOf(PropTypes.object).isRequired,
   t: PropTypes.func.isRequired,
 };
 
 // Map state to props & Export
-const mapStateToProps = state => (
-{
+const mapStateToProps = state =>
+({
+  employees: getEmployees(state),
   clients: getClients(state),
   suppliers: getSuppliers(state),
   materials: getMaterials(state)

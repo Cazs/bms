@@ -19,7 +19,10 @@ const OvertimeApplicationsMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all OvertimeApplications
       return DataManager.getAll(dispatch, action, '/overtime_applications', DataManager.db_overtime_applications, 'overtime_applications')
-                        .then(docs => next(Object.assign({}, action, { payload: docs  })));
+                        .then(docs =>
+                          next(Object.assign({}, action, { payload: docs || []  })))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.OVERTIME_GET_ALL, payload: []}));
     }
 
     case ACTION_TYPES.OVERTIME_NEW:

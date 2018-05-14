@@ -14,19 +14,27 @@ ipcMain.on('save-pdf', (event, docId) =>
   const pdfPath = path.join(exportDir, `${docId}.pdf`);
   const win = BrowserWindow.fromWebContents(event.sender);
 
-  let printOptions;
-  if (appConfig.has('general.printOptions'))
+  const printOptions =
   {
-    printOptions = appConfig.get('general.printOptions');
-  } else
-  {
-    printOptions = {
       landscape: false,
-      marginsType: 0,
       printBackground: true,
-      printSelectionOnly: false
+      pageSize: 'A4',
+      marginsType: 10
+      // printBackground: true,
+      // printSelectionOnly: false
     };
-  }
+  // if (appConfig.has('general.printOptions'))
+  // {
+  //   printOptions = appConfig.get('general.printOptions');
+  // } else
+  // {
+  //   printOptions = {
+  //     landscape: false,
+  //     marginsType: 0,
+  //     printBackground: true,
+  //     printSelectionOnly: false
+  //   };
+  // }
 
   win.webContents.printToPDF(printOptions, (error, data) =>
   {
@@ -53,7 +61,7 @@ ipcMain.on('save-pdf', (event, docId) =>
         location: pdfPath,
       });
 
-      mainWindow.webContents.send('email-document-ready', pdfPath);
+      mainWindow.webContents.send('email-document-ready', docId, pdfPath);
     });
   });
 });

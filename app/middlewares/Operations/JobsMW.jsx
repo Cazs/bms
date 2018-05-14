@@ -20,15 +20,23 @@ const JobsMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all Jobs
       return DataManager.getAll(dispatch, action, '/jobs', DataManager.db_jobs, 'jobs')
-                        .then(docs => next(Object.assign({}, action, { payload: docs  })));
+                        .then(docs =>
+                          next(Object.assign({}, action, { payload: docs || []})))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.JOB_GET_ALL, payload: []}));
     }
+
     case ACTION_TYPES.JOB_NEW:
     {
       const new_job = Object.assign(action.payload, {object_number: getState().jobs.length});
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_jobs, new_job, '/job', 'jobs')
-                        .then(response => 
-                          next({ type: ACTION_TYPES.JOB_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+                        .then(response =>
+                        {
+                          const new_job = Object.assign(action.payload, {_id: response}); // w/ _id
+                          next({ type: ACTION_TYPES.JOB_NEW, payload: new_job });
+                          action.callback(new_job);
+                        });
     }
 
     case ACTION_TYPES.JOB_UPDATE:
@@ -36,6 +44,29 @@ const JobsMW = ({ dispatch, getState }) => next => action =>
       console.log('job update:', action.payload);
       return DataManager.postRemoteResource(dispatch, DataManager.db_jobs, action.payload, '/job', 'jobs')
                         .then(response => next({ type: ACTION_TYPES.JOB_UPDATE, payload: response }));
+    }
+
+    case ACTION_TYPES.QUICK_JOBS_GET_ALL:
+    {
+      // Get all QuickJobs
+      return DataManager.getAll(dispatch, action, '/quickjobs', DataManager.db_quickjobs, 'quickjobs')
+                        .then(docs => next(Object.assign({}, action, { payload: docs  })));
+    }
+    
+    case ACTION_TYPES.QUICK_JOB_NEW:
+    {
+      // const new_job = Object.assign(action.payload, {object_number: getState().jobs.length});
+      // Save to remote store then local store
+      return DataManager.putRemoteResource(dispatch, DataManager.db_quickjobs, action.payload, '/quickjob', 'quickjobs')
+                        .then(response =>
+                          next({ type: ACTION_TYPES.QUICK_JOB_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+    }
+
+    case ACTION_TYPES.QUICK_JOB_UPDATE:
+    {
+      console.log('quick job update:', action.payload);
+      return DataManager.postRemoteResource(dispatch, DataManager.db_quickjobs, action.payload, '/quickjob', 'quickjobs')
+                        .then(response => next({ type: ACTION_TYPES.QUICK_JOB_UPDATE, payload: response }));
     }
 
     case ACTION_TYPES.JOB_TASK_ADD:

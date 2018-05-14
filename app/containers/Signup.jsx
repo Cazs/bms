@@ -13,6 +13,8 @@ import * as UIActions from '../actions/ui';
 // Components
 import { Field, Part, Row } from '../components/shared/Part';
 import Button from '../components/shared/Button';
+import LoginButton from '../components/shared/LoginButton';
+import SignupButton from '../components/shared/SignupButton';
 
 // Helpers
 import  * as DataManager from '../helpers/DataManager';
@@ -29,53 +31,6 @@ import
 } from '../components/shared/Layout';
 import _withFadeInAnimation from '../components/shared/hoc/_withFadeInAnimation';
 
-// Styles
-import styled from 'styled-components';
-const Profile = styled.div`
-  float: left;
-  width: 80px;
-  height: 105%;
-  background: url(../static/images/profile_minimal.png);
-  background-size: contain;
-  background-repeat: no-repeat;
-  &:hover
-  {
-    background: url(../static/images/profile.png);
-    background-size: contain;
-    background-repeat: no-repeat;
-  }
-`;
-
-const LoginButton = styled.button`
-  width: 150px;
-  height: 50px;
-  font-size: 18pt;
-  background-color: rgba(0,255,0,.4);
-  border: 1px solid #fff;
-  border-radius: 3px;
-  color: #fff;
-  &:hover
-  {
-    background-color: rgba(0,200,0,1);
-    color: #000;
-  }
-`;
-
-const SignupButton = styled.button`
-  width: 150px;
-  height: 50px;
-  font-size: 18pt;
-  background-color: #46729C;
-  border: 1px solid #fff;
-  border-radius: 3px;
-  color: #fff;
-  &:hover
-  {
-    background-color: #72BAFF;
-    color: #000;
-  }
-`;
-
 // Component
 class Signup extends Component
 {
@@ -84,21 +39,26 @@ class Signup extends Component
     super(props);
     this.signup = this.signup.bind(this);
     this.showLogin = this.showLogin.bind(this);
+    this.newEmployee = this.newEmployee.bind(this);
 
     this.state = 
     {
-      new_employee:
-      {
-        usr: null,
-        pwd: null,
-        firstname: null,
-        lastname: null,
-        name: null,
-        email: null,
-        cell: null,
-        access_level: 1 // TODO: start with 0 access level, change it when they've verified their email address.
-      }
+      new_employee: this.newEmployee()
     };
+  }
+
+  newEmployee()
+  {
+    return {
+      usr: null,
+      pwd: null,
+      firstname: null,
+      lastname: null,
+      name: null,
+      email: null,
+      cell: null,
+      access_level: 1 // TODO: start with 0 access level, change it when they've verified their email address.
+    }
   }
 
   showLogin()
@@ -110,6 +70,26 @@ class Signup extends Component
   {
     console.log('creating account: ', this.state.new_employee);
     
+    if(!this.state.new_employee.usr || this.state.new_employee.usr.length <= 1)
+      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid user handle.'));
+
+    if(!this.state.new_employee.pwd || this.state.new_employee.pwd.length <= 7)
+      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid password.\nPasswords must be at least 8 characters.'));
+      // !this.state.new_employee.pwd.includes('@') || !this.state.new_employee.pwd.includes('\.')) TODO: check for special chars
+
+    if(!this.state.new_employee.firstname || this.state.new_employee.firstname.length <= 1)
+      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid firstname.'));
+
+    if(!this.state.new_employee.lastname || this.state.new_employee.lastname.length <= 1)
+      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid lastname.'));
+
+    if(!this.state.new_employee.email || this.state.new_employee.email.length <= 1 ||
+        !this.state.new_employee.email.includes('@') || !this.state.new_employee.email.includes('\.'))
+      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid email address.'));
+
+    if(!this.state.new_employee.cell || this.state.new_employee.cell.length <= 9)
+      return this.props.dispatch(UIActions.newNotification('danger', 'Invalid cellphone number.'));
+
     this.state.new_employee.name = this.state.new_employee.firstname + ' ' + this.state.new_employee.lastname;
     this.state.new_employee.initials = this.state.new_employee.firstname.charAt(0) + this.state.new_employee.lastname.charAt(0);
     this.state.new_employee.active = false;

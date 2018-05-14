@@ -13,6 +13,8 @@ import * as UIActions from '../actions/ui';
 // Components
 import { Field, Part, Row } from '../components/shared/Part';
 import Button from '../components/shared/Button';
+import LoginButton from '../components/shared/LoginButton';
+import SignupButton from '../components/shared/SignupButton';
 
 // Helpers
 import  * as DataManager from '../helpers/DataManager';
@@ -20,7 +22,6 @@ import sessionManager from '../helpers/SessionManager';
 import Log from '../helpers/Logger';
 
 // Ops
-// import * as UserActions from './actions/hr/users';
 import * as EmployeeActions from '../actions/hr/employees';
 import * as ClientActions from '../actions/operations/clients';
 import * as SupplierActions from '../actions/operations/suppliers';
@@ -47,53 +48,6 @@ import
   PageContent,
 } from '../components/shared/Layout';
 import _withFadeInAnimation from '../components/shared/hoc/_withFadeInAnimation';
-
-// Styles
-import styled from 'styled-components';
-const Profile = styled.div`
-  float: left;
-  width: 80px;
-  height: 105%;
-  background: url(../static/images/profile_minimal.png);
-  background-size: contain;
-  background-repeat: no-repeat;
-  &:hover
-  {
-    background: url(../static/images/profile.png);
-    background-size: contain;
-    background-repeat: no-repeat;
-  }
-`;
-
-const LoginButton = styled.button`
-  width: 150px;
-  height: 50px;
-  font-size: 18pt;
-  background-color: rgba(0,255,0,.4);
-  border: 1px solid #fff;
-  border-radius: 3px;
-  color: #fff;
-  &:hover
-  {
-    background-color: rgba(0,200,0,1);
-    color: #000;
-  }
-`;
-
-const SignupButton = styled.button`
-  width: 150px;
-  height: 50px;
-  font-size: 18pt;
-  background-color: #46729C;
-  border: 1px solid #fff;
-  border-radius: 3px;
-  color: #fff;
-  &:hover
-  {
-    background-color: #72BAFF;
-    color: #000;
-  }
-`;
 
 // Component
 class Login extends Component
@@ -169,12 +123,13 @@ class Login extends Component
     dispatch(LeaveApplicationActions.getLeaveApplications());
     dispatch(OvertimeApplicationActions.getOvertimeApplications());
 
-    // // Get Operational data
+    // Get Operational data
     dispatch(ClientActions.getClients());
     dispatch(SupplierActions.getSuppliers());
     dispatch(MaterialActions.getMaterials());
     dispatch(QuoteActions.getQuotes());
     dispatch(JobActions.getJobs());
+    // dispatch(JobActions.getQuickJobs());
     dispatch(InvoiceActions.getInvoices());
     dispatch(PurchaseOrderActions.getPurchaseOrders());
     dispatch(RequisitionActions.getRequisitions());

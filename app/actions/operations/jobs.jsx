@@ -3,6 +3,8 @@ import { createAction } from 'redux-actions';
 
 export const getJobs = createAction(ACTION_TYPES.JOB_GET_ALL);
 
+export const getQuickJobs = createAction(ACTION_TYPES.QUICK_JOBS_GET_ALL);
+
 export const saveJob = createAction(
   ACTION_TYPES.JOB_SAVE,
   jobData => jobData
@@ -25,6 +27,11 @@ export const editJob = createAction(
 
 export const updateJob = createAction(
   ACTION_TYPES.JOB_UPDATE,
+  updatedJob => updatedJob
+);
+
+export const updateQuickJob = createAction(
+  ACTION_TYPES.QUICK_JOB_UPDATE,
   updatedJob => updatedJob
 );
 

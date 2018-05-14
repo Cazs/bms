@@ -20,7 +20,10 @@ const InvoicesMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all Invoices
       return DataManager.getAll(dispatch, action, '/invoices', DataManager.db_invoices, 'invoices')
-                        .then(docs => next(Object.assign({}, action, { payload: docs  })));
+                        .then(docs =>
+                          next(Object.assign({}, action, { payload: docs || [] })))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.INVOICE_GET_ALL, payload: []}));
     }
 
     case ACTION_TYPES.INVOICE_NEW:
@@ -28,11 +31,19 @@ const InvoicesMW = ({ dispatch, getState }) => next => action =>
       const new_invoice = Object.assign(action.payload, {object_number: getState().invoices.length});
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_invoices, new_invoice, '/invoice', 'invoices')
-                        .then(response => 
+                        .then(response =>
                           {
-                            next(action);
-                            // next({ type: ACTION_TYPES.INVOICE_GET_ALL, payload: docs });
+                            const invoice = Object.assign(action.payload, {_id: response}); // w/ _id
+                            next({ type: ACTION_TYPES.INVOICE_NEW, payload: invoice });
+                            action.callback(invoice);
                           });
+    }
+
+    case ACTION_TYPES.INVOICE_UPDATE:
+    {
+      console.log('invoice update:', action.payload);
+      return DataManager.postRemoteResource(dispatch, DataManager.db_invoices, action.payload, '/invoice', 'invoices')
+                        .then(response => next({ type: ACTION_TYPES.INVOICE_UPDATE, payload: response }));
     }
 
     case ACTION_TYPES.INVOICE_SAVE:
@@ -135,33 +146,6 @@ const InvoicesMW = ({ dispatch, getState }) => next => action =>
       //   type: ACTION_TYPES.INVOICE_SAVE,
       //   payload: duplicateInvoice,
       // });
-    }
-
-    case ACTION_TYPES.INVOICE_UPDATE:
-    {
-      // return updateDoc('invoices', action.payload)
-      //   .then(docs => {
-      //     next({
-      //       type: ACTION_TYPES.INVOICE_UPDATE,
-      //       payload: docs,
-      //     });
-      //     dispatch({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'success',
-      //         message: i18n.t('messages:invoice:updated'),
-      //       },
-      //     });
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
     }
 
     case ACTION_TYPES.INVOICE_CONFIGS_SAVE:

@@ -36,7 +36,10 @@ const ClientsMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all Clients from DB server
       return DataManager.getAll(dispatch, action, '/clients', DataManager.db_clients, 'clients')
-                        .then(docs => next(Object.assign({}, action, { payload: docs  })));
+                        .then(docs =>
+                          next(Object.assign({}, action, { payload: docs  || [] })))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.CLIENT_GET_ALL, payload: []}));
     }
 
     case ACTION_TYPES.CLIENT_SAVE:

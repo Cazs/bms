@@ -86,6 +86,7 @@ const ExtraCost = styled.div`
   word-wrap: break-word;
   overflow-wrap: normal;
   height: auto;
+  min-width: 150px;
   // Hover
   &:hover {
     cursor: pointer;
@@ -106,6 +107,7 @@ export class Quotes extends React.Component
     this.expandComponent = this.expandComponent.bind(this);
     this.getCaret = this.getCaret.bind(this);
     this.newQuote = this.newQuote.bind(this);
+    this.showEmailDialog = this.showEmailDialog.bind(this);
 
     // this.creator_ref = React.createRef();
     this.openModal = this.openModal.bind(this);
@@ -117,7 +119,6 @@ export class Quotes extends React.Component
     this.state = {  filter: null,
                     is_new_quote_modal_open: false,
                     is_quote_items_modal_open: false,
-                    is_email_modal_open: false,
                     is_new_material_modal_open: false,
 
                     active_row: null,
@@ -192,7 +193,7 @@ export class Quotes extends React.Component
       vat: GlobalConstants.VAT,
       status: 0,
       revision: 1,
-      status_description: 'pending',
+      status_description: 'Pending',
       resources: []
     }
   }
@@ -207,14 +208,6 @@ export class Quotes extends React.Component
       {
         this.confirmedDeleteQuote(quoteId);
       }
-    });
-
-    // TODO: check if removed listeners on close
-    ipc.on('email-document-ready', (event, doc_path) =>
-    {
-      // alert('PDF document ready');
-      console.log(doc_path);
-      this.setState({new_email: Object.assign(this.state.new_email, {path: doc_path})});
     });
   }
 
@@ -355,8 +348,9 @@ export class Quotes extends React.Component
 
   showEmailDialog(quote)
   {
-    this.setState({selected_quote: quote, is_email_modal_open: true});
-    ipc.send('quote-to-pdf', quote);
+    // this.setState({selected_quote: quote, is_email_modal_open: true});
+    this.props.showEmailModal(quote);
+    ipc.send('model-to-pdf', quote, 'quote');
   }
 
   expandComponent(row)
@@ -438,8 +432,8 @@ export class Quotes extends React.Component
                 sitename: row.sitename,
                 vat: row.vat,
                 creator_name: sessionManager.getSessionUser().name,
-                status: 0,
-                status_description: 'pending',
+                status: statuses[0].status,
+                status_description: statuses[0].status_description,
                 quote_revisions: row.revision,
                 tasks: [],
                 creator: sessionManager.getSessionUser().usr,
@@ -685,8 +679,8 @@ export class Quotes extends React.Component
               dataField='item_number'
               dataSort
               caretRender={this.getCaret}
-              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '80px'}}
-              thStyle={{ whiteSpace: 'normal', width: '80px' }}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '70px'}}
+              thStyle={{ whiteSpace: 'normal', width: '70px' }}
               editable={false}
               // hidden={!this.state.col_object_number_visible}
             >Item
@@ -780,8 +774,8 @@ export class Quotes extends React.Component
               dataField='markup'
               dataSort
               caretRender={this.getCaret}
-              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal'}}
-              thStyle={{ whiteSpace: 'normal' }}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '115px'}}
+              thStyle={{ whiteSpace: 'normal', width: '115px' }}
               customEditor={{
                 getElement: (func, props) =>
                 (
@@ -937,8 +931,8 @@ export class Quotes extends React.Component
               dataField='extra_costs_total'
               dataSort
               caretRender={this.getCaret}
-              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '140px'}}
-              thStyle={{ whiteSpace: 'normal', width: '140px'}}
+              tdStyle={{'fontWeight': 'lighter', whiteSpace: 'normal', width: '190px'}}
+              thStyle={{ whiteSpace: 'normal', width: '190px'}}
               // hidden={!this.state.col_request_visible}
               customEditor={{
                 getElement: (func, props) =>
@@ -1186,15 +1180,15 @@ export class Quotes extends React.Component
       if(sessionManager.getSessionUser().access_level > GlobalConstants.ACCESS_LEVELS[1].level)
       {
         Log('verbose_info', 'updating quote: ' +  quote);
-        if(quote.status == 1)
-        {
-          this.props.dispatch(
-          {
-            type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-            payload: {type: 'danger', message: 'This quote has already been authorised and can no longer be changed.'}
-          });
-          return;
-        }
+        // if(quote.status == 1)
+        // {
+        //   this.props.dispatch(
+        //   {
+        //     type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+        //     payload: {type: 'danger', message: 'This quote has already been authorised and can no longer be changed.'}
+        //   });
+        //   return;
+        // }
         this.props.dispatch({
           type: ACTION_TYPES.QUOTE_UPDATE,
           payload: Object.assign(quote, { last_updated_by_employee: sessionManager.getSessionUser().name, last_updated_by: sessionManager.getSessionUser().usr })
@@ -1233,271 +1227,20 @@ export class Quotes extends React.Component
       expandRowBgColor: 'rgba(0, 0, 0, .4)',
     };
 
-    const info_modal = (
+    const info_modal =
+    (
       <div style={{position: 'fixed', display: this.state.info.display, top: this.state.info.y, left: this.state.info.x, background:'rgba(0,0,0,.8)', borderRadius: '4px', boxShadow: '0px 0px 10px #343434', border: '1px solid #000', zIndex: '300'}}>
         <p style={{color: '#fff', marginTop: '5px'}}>{this.state.info.message}</p>
-      </div>);
+      </div>
+    );
 
     // const clientFormatter = (cell, row) => (<div>test</div>);
     const clientFormatter = (cell, row) => `<i class='glyphicon glyphicon-${cell.client_name}'></i> ${cell.client_name}`;
 
-    const email_modal = (
-      <div>
-        {/* eMailing Modal */}
-        <Modal
-          isOpen={this.state.is_email_modal_open}
-            // onAfterOpen={this.afterOpenModal}
-            // onRequestClose={this.closeModal}
-          style={modalStyle}
-          contentLabel="eMail Quote"
-        >
-          <h2 ref={email_subtitle => this.email_subtitle = email_subtitle} style={{color: 'black'}}>eMail Quote</h2>
-          <div>
-            <div className="row">
-              <div className="pageItem col-md-6">
-                <label className="itemLabel">eMail Address</label>
-                <input
-                  ref={(txt_email_address)=>this.txt_email_address = txt_email_address}
-                  name="email_address"
-                  type="text"
-                  value={this.state.new_email.destination}
-                  onChange={(new_val)=>
-                  {
-                    const email = this.state.new_email;
-                    email.destination = new_val.currentTarget.value;
-                    this.setState({new_email: email});
-                  }}
-                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-                />
-              </div>
+    
 
-              <div className="pageItem col-md-6">
-                <label className="itemLabel">Subject</label>
-                <input
-                  name="subject"
-                  type="text"
-                  ref={(txt_subject)=>this.txt_subject = txt_subject}
-                  value={this.state.new_email.subject}
-                  onChange={(new_val)=>
-                  {
-                    const email = this.state.new_email;
-                    email.subject = new_val.currentTarget.value;
-                    this.setState({new_email: email});
-                  }}
-                  style={{border: '1px solid #2FA7FF', borderRadius: '3px'}}
-                />
-              </div>
-            </div>
-
-            <div className="row">
-              <div className="pageItem col-md-6">
-                <label className="itemLabel">Message</label>
-                <textarea
-                  name="message"
-                  ref={(txt_message)=>this.txt_message = txt_message}
-                  value={this.state.new_email.message}
-                  onChange={(new_val)=>
-                  {
-                    const email = this.state.new_email;
-                    email.message = new_val.currentTarget.value;
-                    this.setState({new_email: email});
-                  }}
-                  style={{width: '580px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
-                />
-              </div>
-            </div>
-
-            <div className="row">
-              <div className="pageItem col-md-6">
-                <Button
-                  onClick={(event)=>
-                  {
-                    if(!this.state.new_email.destination) // TODO: stricter validation
-                    {
-                      return this.props.dispatch(
-                      {
-                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                        payload: 
-                        {
-                          type: 'danger',
-                          message: 'Invalid destination email address'
-                        }
-                      });
-                    }
-
-                    if(!this.state.new_email.subject) // TODO: stricter validation
-                    {
-                      return this.props.dispatch(
-                      {
-                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                        payload: 
-                        {
-                          type: 'danger',
-                          message: 'Invalid email subject'
-                        }
-                      });
-                    }
-
-                    if(!this.state.new_email.message) // TODO: stricter validation
-                    {
-                      return this.props.dispatch(
-                      {
-                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                        payload: 
-                        {
-                          type: 'danger',
-                          message: 'Invalid email message'
-                        }
-                      });
-                    }
-
-                    if(!this.state.new_email.path) // TODO: stricter validation
-                    {
-                      return this.props.dispatch(
-                      {
-                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                        payload: 
-                        {
-                          type: 'danger',
-                          message: 'Invalid destination email address'
-                        }
-                      });
-                    }
-
-                    if(!this.state.selected_quote) // TODO: stricter validation
-                    {
-                      return this.props.dispatch(
-                      {
-                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                        payload: 
-                        {
-                          type: 'danger',
-                          message: 'Invalid quote selected'
-                        }
-                      });
-                    }
-
-                    // Prepare eMail
-                    // const emailProps =
-                    // {
-                    //   destination: this.txt_email_address.value,
-                    //   subject: this.txt_subject.value,
-                    //   message: this.txt_message.value,
-                    //   metafile: null, // to be generated by mailer
-                    //   quote_id: this.state.selected_quote._id,
-                    //   session_id: sessionManager.session_id,
-                    //   quote: this.state.selected_quote
-                    // }
-
-                    // const appConfig = require('electron-settings');
-                    // const path = require('path');
-                    const fs = require('fs');
-                    // const exportDir = appConfig.get('invoice.exportDir');
-                    // const pdfPath = path.join(this.state.new_email.path, `${this.state.selected_quote._id}.pdf`);
-
-                    const file_data = fs.readFileSync(this.state.new_email.path);
-                    const file_base64_str = `data:application/pdf;base64,${file_data.toString('base64')}`;
-
-                    // console.log('file_data: ', file_data);
-
-                    const file =
-                    {
-                      filename: this.state.selected_quote._id,
-                      content_type: 'application/pdf',
-                      file: file_data.toString('base64') // file_base64_str.split('base64,').pop()
-                    }
-
-                    console.log('new file to be emailed: ', file);
-
-                    const Http = require('axios').create(
-                    {
-                        headers:
-                        {
-                          quote_id: this.state.selected_quote._id,
-                          destination: this.state.new_email.destination,
-                          subject: this.state.new_email.subject,
-                          message : this.state.new_email.message,
-                          session_id : sessionManager.session_id,
-                          'Content-Type': 'application/json'
-                        }
-                    });
-
-                    return Http.post('http://127.0.0.1:8080/quote/mailto', file)
-                                    .then(response =>
-                                    {
-                                      if(response)
-                                      {
-                                        if(response.status == 200) // Success, successfully emailed document
-                                        {
-                                          console.log('Successfully emailed document.');
-                                          return this.props.dispatch(
-                                          {
-                                            type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                                            payload: 
-                                            {
-                                              type: 'success',
-                                              message: 'Successfully emailed document.'
-                                            }
-                                          });
-                                        } 
-                                        console.log('Error: ' + response.status);
-                                        return this.props.dispatch(
-                                        {
-                                          type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                                          payload: 
-                                          {
-                                            type: 'danger',
-                                            message: 'Error ['+response.status+']: ' + (response.statusText || response.data)
-                                          }
-                                        });
-                                      } 
-                                      console.log('Error: Could not get a valid response from the server.');
-                                      return this.props.dispatch(
-                                      {
-                                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                                        payload: 
-                                        {
-                                          type: 'danger',
-                                          message: 'Error: Could not get a valid response from the server.'
-                                        }
-                                      });
-                                    })
-                                    .catch(err =>
-                                    {
-                                      console.log('Error: ', err);
-                                      this.props.dispatch(
-                                      {
-                                        type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                                        payload: 
-                                        {
-                                          type: 'danger',
-                                          message: err.message
-                                        }
-                                      })
-                                    });
-
-                  }}
-                  style={{width: '120px', height: '50px', float: 'right'}}
-                  success
-                >Send
-                </Button>
-              </div>
-
-              <div className="pageItem col-md-6">
-                <Button
-                  danger
-                  style={{width: '120px', height: '50px', float: 'left'}}
-                  onClick={()=>this.setState({is_email_modal_open: false})}
-                >Dismiss
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      </div>
-    );
-
-    const new_quote_modal = (
+    const new_quote_modal =
+    (
       <Modal
         isOpen={this.state.is_new_quote_modal_open}
         onAfterOpen={this.afterOpenModal}
@@ -2374,7 +2117,7 @@ export class Quotes extends React.Component
           {new_quote_modal}
           {new_material_modal}
           {material_extra_costs_modal}
-          {email_modal}
+          {/* {email_modal} */}
           {/* Quotes table & Column toggles */}
           <div style={{ paddingTop: '0px' }}>
             
@@ -2975,6 +2718,7 @@ export class Quotes extends React.Component
 Quotes.propTypes =
 {
   dispatch: PropTypes.func.isRequired,
+  showEmailModal: PropTypes.func.isRequired,
   // changeTab: PropTypes.func.isRequired,
   employees: PropTypes.arrayOf(PropTypes.object).isRequired,
   materials: PropTypes.arrayOf(PropTypes.object).isRequired,

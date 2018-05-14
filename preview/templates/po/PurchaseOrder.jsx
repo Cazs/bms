@@ -250,11 +250,11 @@ function PurchaseOrder({ pdf_data, configs, t })
                 {/* <td>{padStart(index + 1, 2, 0)}.</td> */}
                 <td>{ row.item_description }</td>
                 <td>{ row.quantity }</td>
-                <td>{ row.cost }</td>
+                <td>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ row.cost }</td>
                 <td>{ row.discount }</td>
                 <td>{ pdf_data.vat }</td>
                 <td><p style={{textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ Number(row.rate) * Number(row.quantity)}</p></td>
-                <td><p style={{textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ (Number(row.rate) * Number(row.quantity)) + ((Number(row.rate) * Number(row.quantity)) * Number(pdf_data.vat)/100)}</p></td>
+                <td><p style={{textAlign: 'right', fontSize: font_size, fontFamily: font_family, fontWeight: font_weight}}>{GlobalConstants.CURRENCY_SYMBOL}&nbsp;{ Number(Number((Number(row.rate) * Number(row.quantity))) + Number((Number(row.rate) * Number(row.quantity)) * Number(pdf_data.vat)/100))}</p></td>
               </tr>
             ))}
           </tbody>

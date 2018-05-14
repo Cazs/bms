@@ -69,7 +69,6 @@ export const QUOTE_NEW = 'QUOTE_NEW';
 export const QUOTE_MATERIAL_NEW = 'QUOTE_MATERIAL_NEW';
 export const QUOTE_UPDATE = 'QUOTE_UPDATE';
 export const LOCAL_QUOTE_UPDATE = 'LOCAL_QUOTE_UPDATE';
-
 export const QUOTE_ITEM_ADD = 'QUOTE_ITEM_ADD';
 export const QUOTE_ITEM_UPDATE = 'QUOTE_ITEM_UPDATE';
 export const QUOTE_ITEM_EXTRA_COST_ADD = 'QUOTE_ITEM_EXTRA_COST_ADD';
@@ -84,13 +83,16 @@ export const QUOTE_DUPLICATE = 'QUOTE_DUPLICATE';
 
 // JOB
 // ===========================================================
+export const QUICK_JOBS_GET_ALL = 'QUICK_JOBS_GET_ALL';
+export const QUICK_JOB_NEW = 'QUICK_JOB_NEW';
+export const QUICK_JOB_UPDATE = 'QUICK_JOB_UPDATE';
+export const JOB_GET_ALL = 'JOB_GET_ALL';
 export const JOB_NEW = 'JOB_NEW';
-export const JOB_EDIT = 'JOB_EDIT';
 export const JOB_UPDATE = 'JOB_UPDATE';
+export const JOB_EDIT = 'JOB_EDIT';
 export const JOB_TASK_ADD = 'JOB_TASK_ADD';
 export const JOB_SAVE = 'JOB_SAVE';
 export const JOB_DELETE = 'JOB_DELETE';
-export const JOB_GET_ALL = 'JOB_GET_ALL';
 export const JOB_SET_STATUS = 'JOB_SET_STATUS';
 export const JOB_CONFIGS_SAVE = 'JOB_CONFIGS_SAVE';
 export const JOB_DUPLICATE = 'JOB_DUPLICATE';
@@ -109,8 +111,8 @@ export const TASK_DUPLICATE = 'TASK_DUPLICATE';
 // INVOICE
 // ===========================================================
 export const INVOICE_NEW = 'INVOICE_NEW';
-export const INVOICE_EDIT = 'INVOICE_EDIT';
 export const INVOICE_UPDATE = 'INVOICE_UPDATE';
+export const INVOICE_EDIT = 'INVOICE_EDIT';
 export const INVOICE_SAVE = 'INVOICE_SAVE';
 export const INVOICE_DELETE = 'INVOICE_DELETE';
 export const INVOICE_GET_ALL = 'INVOICE_GET_ALL';

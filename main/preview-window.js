@@ -136,14 +136,14 @@ ipcMain.on('preview-document', (event, docData) =>
 //   }
 // });
 
-ipcMain.on('quote-to-pdf', (event, quoteData) =>
+ipcMain.on('model-to-pdf', (event, data, type) =>
 {
   // Show & Focus
   // previewWindow.show();
   // previewWindow.focus();
   // Pass Data
   previewWindow.webContents.send('is-exporting', true); // makes viewer generate PDF
-  previewWindow.webContents.send('update-quote-preview', quoteData);
+  previewWindow.webContents.send('update-'+type+'-preview', data);
 });
 
 ipcMain.on('preview-quote', (event, quoteData) =>

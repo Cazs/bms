@@ -20,14 +20,17 @@ const PurchaseOrdersMW = ({ dispatch, getState }) => next => action =>
     {
       // Get all Purchase Orders
       return DataManager.getAll(dispatch, action, '/purchaseorders', DataManager.db_purchase_orders, 'purchase_orders')
-      .then(docs => next(Object.assign({}, action, { payload: docs  })));
+                        .then(docs =>
+                          next(Object.assign({}, action, { payload: docs || [] })))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.PURCHASE_ORDER_GET_ALL, payload: []}));
     }
     
     case ACTION_TYPES.PURCHASE_ORDER_NEW:
     {
-      const new_po = Object.assign(action.payload, {object_number: getState().purchaseOrders.length});
+      // const new_po = Object.assign(action.payload, {object_number: getState().purchaseOrders.length});
       // Save to remote store then local store
-      return DataManager.putRemoteResource(dispatch, DataManager.db_purchase_orders, new_po, '/purchaseorder', 'purchase_orders')
+      return DataManager.putRemoteResource(dispatch, DataManager.db_purchase_orders, action.payload, '/purchaseorder', 'purchase_orders')
       .then(response => 
         next({ type: ACTION_TYPES.PURCHASE_ORDER_NEW, payload: Object.assign(action.payload, {_id: response}) }));
     }

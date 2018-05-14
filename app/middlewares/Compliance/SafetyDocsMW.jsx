@@ -28,7 +28,10 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
     {
       // Get safety documents
       return DataManager.getAll(dispatch, action, '/documents/safety', DataManager.db_safety_documents, 'safety_documents')
-                        .then(docs => next({ type: ACTION_TYPES.SAFETY_DOC_GET_ALL, payload: docs }));
+                        .then(docs =>
+                          next({ type: ACTION_TYPES.SAFETY_DOC_GET_ALL, payload: docs }))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.SAFETY_DOC_GET_ALL, payload: []}));
     }
 
 
