@@ -11,9 +11,9 @@ const mainWindow = BrowserWindow.fromId(mainWindowID);
 
 ipcMain.on('save-pdf', (event, docId) =>
 {
-  const exportDir = appConfig.get('invoice.exportDir');
+  // const exportDir = appConfig.get('invoice.exportDir');
   // const pdfPath = path.join(exportDir, `${docId}.pdf`);
-  const appDir = (electron.app || electron.remote.app).getAppPath(); // getAppPath()
+  const appDir = (electron.app || electron.remote.app).getPath('appData'); // getAppPath()
   const pdfPath = path.join(appDir, `${docId}.pdf`);
   const win = BrowserWindow.fromWebContents(event.sender);
 

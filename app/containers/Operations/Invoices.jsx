@@ -33,7 +33,7 @@ import { getEmployees } from '../../reducers/HR/EmployeesReducer';
 import { getMaterials } from '../../reducers/Operations/MaterialsReducer';
 
 // Components
-import Invoice from '../../components/invoices/Invoice';
+// import Invoice from '../../components/invoices/Invoice';
 import ComboBox from '../../components/shared/ComboBox';
 
 import Message from '../../components/shared/Message';

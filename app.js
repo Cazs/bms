@@ -11,7 +11,7 @@ const omit = require('lodash').omit;
 
 // Electron Libs
 const { app, BrowserWindow, ipcMain } = require('electron');
-const { autoUpdater } = require('electron-updater');
+// const { autoUpdater } = require('electron-updater');
 
 // Place a BrowserWindow in center of primary display
 const centerOnPrimaryDisplay = require('./helpers/center-on-primary-display');
@@ -373,7 +373,7 @@ function addEventListeners() {
       mainWindow.destroy();
       previewWindow.destroy();
       // Start the quit and update sequence
-      autoUpdater.quitAndInstall(false);
+      // autoUpdater.quitAndInstall(false);
     })
   });
 }

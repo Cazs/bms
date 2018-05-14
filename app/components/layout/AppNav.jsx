@@ -126,7 +126,7 @@ export const ActiveIndicator = styled.div`
   }
 `;
 
-import AppUpdate from './AppUpdate';
+// import AppUpdate from './AppUpdate';
 
 function AppNav({ activeTab, changeTab })
 {
@@ -154,7 +154,7 @@ function AppNav({ activeTab, changeTab })
         </Motion>
         {allTabsComponent}
       </div>
-      <AppUpdate />
+      {/* <AppUpdate /> */}
     </SideBar>
   );
 }

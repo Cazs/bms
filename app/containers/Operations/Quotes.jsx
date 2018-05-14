@@ -33,7 +33,7 @@ import { getQuotes } from '../../reducers/Operations/QuotesReducer';
 // Components
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 
-import Quote from '../../components/quotes/Quote';
+// import Quote from '../../components/quotes/Quote';
 import ComboBox from '../../components/shared/ComboBox';
 
 import Message from '../../components/shared/Message';

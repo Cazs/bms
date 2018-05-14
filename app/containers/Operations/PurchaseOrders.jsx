@@ -676,7 +676,7 @@ export class PurchaseOrders extends React.Component
   showEmailDialog(po)
   {
     this.props.showEmailModal(po);
-    ipc.send('model-to-pdf', po, 'po');
+    ipc.send('model-to-pdf', Object.assign({profile: this.props.settings.profile}, po), 'po');
   }
 
   // Render

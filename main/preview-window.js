@@ -26,7 +26,9 @@ ipcMain.on('preview-document', (event, docData) =>
   PDFWindow.addSupport(pdfWindow);
 
   const path = require('path');
-  const pdf_path = path.resolve( 'static/temp.pdf');
+  const appDir = (require('electron').app || require('electron').remote.app).getAppPath(); // getAppPath()
+  const pdf_path = path.join(appDir, `temp.pdf`);
+  // const pdf_path = path.resolve( 'static/temp.pdf');
   // const decodedBase64 = require('base64topdf').base64Decode(docData.file.split(';base64,').pop(), pdf_path);
   require('fs').writeFile(pdf_path, docData.file.split(';base64,').pop(), {encoding: 'base64'}, (err) =>
   {
