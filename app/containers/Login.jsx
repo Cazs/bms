@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-import { isEqual } from 'lodash';
+// import { isEqual } from 'lodash';
 import { translate } from 'react-i18next';
 
 // Actions
@@ -60,6 +60,11 @@ class Login extends Component
     this.initDataset = this.initDataset.bind(this);
 
     this.state = { };
+  }
+
+  componentDidMount()
+  {
+    this.txt_username.focus();
   }
 
   showSignup()
@@ -168,7 +173,7 @@ class Login extends Component
                 boxShadow: '-5px 5px 30px #343434'
               }}
             >
-              <div style={{  
+              <div style={{
                 // position: 'fixed',
                 width: '100%',
                 height: '180px',
@@ -201,6 +206,13 @@ class Login extends Component
                     //   this.setState({new_safety_document: safety_document});
                     // }}
                     style={{width: '100%', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                    onKeyPress={(evt)=>
+                    {
+                      if(evt.key === 'Enter')
+                      {
+                        this.login();
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -212,14 +224,14 @@ class Login extends Component
                     ref={(txt_password)=>this.txt_password = txt_password}
                     name="password"
                     type="password"
-                    // value={this.state.new_safety_document.document.filename}
-                    // onChange={(new_val)=>
-                    // {
-                    //   const safety_document = this.state.new_safety_document;
-                    //   safety_document.document.filename = new_val.currentTarget.value;
-                    //   this.setState({new_safety_document: safety_document});
-                    // }}
                     style={{width: '100%', height: '35px', border: '1px solid #2FA7FF', borderRadius: '3px'}}
+                    onKeyPress={(evt)=>
+                      {
+                        if(evt.key === 'Enter')
+                        {
+                          this.login();
+                        }
+                      }}
                   />
                 </div>
               </div>

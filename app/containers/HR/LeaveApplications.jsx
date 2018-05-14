@@ -114,10 +114,13 @@ export class LeaveApplications extends React.Component
                     {
                       usr: null,
                       type: null,
-                      start_date: 0,
-                      end_date: 0,
+                      date_started: formatDate(new Date()),
+                      start_date: new Date().getTime(),
+                      date_ended: formatDate(new Date()),
+                      end_date: new Date().getTime(),
                       return_date: 0,
-                      status: 0
+                      status: 0,
+                      status_description: 'Pending'
                     }
     };
   }
@@ -308,15 +311,8 @@ export class LeaveApplications extends React.Component
             style={modalStyle}
             contentLabel="New LeaveApplication Modal"
           >
-            <h2 ref={subtitle => this.subtitle = subtitle} style={{color: 'black'}}>Create New LeaveApplication</h2>
+            <h2 ref={subtitle => this.subtitle = subtitle} style={{color: 'black'}}>New leave application</h2>
             <div>
-              <div className="pageItem">
-                {/* <label className="itemLabel">{t('settings:fields:logo:name')}</label>
-                  <Logo
-                    logo={this.state.logo}
-                    handleLogoChange={this.handleLogoChange}
-                  /> */}
-              </div>
               <div className="row">
                 <div className="pageItem col-md-6">
                   <label className="itemLabel">Start Date </label>
@@ -330,7 +326,7 @@ export class LeaveApplications extends React.Component
                       const leave_application = this.state.new_leave_application;
                       
                       leave_application.date_started = formatDate(new Date(new_val.currentTarget.value));
-                      leave_application.start_date = leave_application.date_started.getTime();
+                      leave_application.start_date = new Date(new_val.currentTarget.value).getTime();
                       
                       this.setState({new_leave_application: leave_application});
                     }}
@@ -350,7 +346,7 @@ export class LeaveApplications extends React.Component
                       const leave_application = this.state.new_leave_application;
                       
                       leave_application.date_ended = formatDate(new Date(new_val.currentTarget.value));
-                      leave_application.end_date = leave_application.date_ended.getTime();
+                      leave_application.end_date = new Date(new_val.currentTarget.value).getTime();
                       
                       this.setState({new_leave_application: leave_application});
                     }}
@@ -385,15 +381,13 @@ export class LeaveApplications extends React.Component
                     />
                   </div>
                 </div>
-                {/* this.state.new_job_task.scheduled_date.getFullYear() + '-' 
-                      + ((this.state.new_job_task.scheduled_date.getMonth()+1) >= 10 ? this.state.new_job_task.scheduled_date.getMonth() + 1 : '0' + (this.state.new_job_task.scheduled_date.getMonth() + 1)) + '-'
-                      + (this.state.new_job_task.scheduled_date.getDate() >= 10 ? this.state.new_job_task.scheduled_date.getDate() : '0' + this.state.new_job_task.scheduled_date.getDate()) */}
                 <div className="pageItem col-md-6">
                   <label className="itemLabel">Notes</label>
                   <textarea
                     name="notes"
                     value={this.state.new_leave_application.other}
-                    onChange={(evt)=>{
+                    onChange={(evt)=>
+                    {
                       const leave_application = this.state.new_leave_application;
                       leave_application.other = evt.currentTarget.value;
                       this.setState({new_leave_application: leave_application});

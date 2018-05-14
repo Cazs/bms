@@ -98,6 +98,7 @@ export class OvertimeApplications extends React.Component
                     selected_overtime: null,
                     active_row: null,
                     column_toggles_top: -200,
+                    
                     // Table Column Toggles
                     col_id_visible: false,
                     col_object_number_visible: true,
@@ -114,10 +115,14 @@ export class OvertimeApplications extends React.Component
                     {
                       usr: null,
                       type: null,
-                      date: 0,
-                      time_in: 0,
-                      time_out: 0,
-                      status: 0
+                      date: new Date().getTime(),
+                      overtime_date: new Date(),
+                      time_in: new Date().getTime(),
+                      in_time: formatDate(new Date()),
+                      time_out: new Date().getTime(),
+                      out_time: formatDate(new Date()),
+                      status: 0,
+                      status_description: 'Pending'
                     }
     };
   }
@@ -308,7 +313,7 @@ export class OvertimeApplications extends React.Component
             style={modalStyle}
             contentLabel="New OvertimeApplication Modal"
           >
-            <h2 ref={subtitle => this.subtitle = subtitle} style={{color: 'black'}}>New Overtime Application</h2>
+            <h2 ref={subtitle => this.subtitle = subtitle} style={{color: 'black'}}>New overtime application</h2>
             <div>
               <div className="pageItem">
                 {/* <label className="itemLabel">{t('settings:fields:logo:name')}</label>
@@ -353,7 +358,7 @@ export class OvertimeApplications extends React.Component
                       const overtime_application = this.state.new_overtime_application;
                       
                       overtime_application.overtime_date = formatDate(new Date(new_val.currentTarget.value));
-                      overtime_application.date = overtime_application.overtime_date.getTime();
+                      overtime_application.date = new Date(new_val.currentTarget.value).getTime();
                       
                       this.setState({new_overtime_application: overtime_application});
                     }}
@@ -375,7 +380,7 @@ export class OvertimeApplications extends React.Component
                       const overtime_application = this.state.new_overtime_application;
                       
                       overtime_application.in_time = formatDate(new Date(new_val.currentTarget.value));
-                      overtime_application.time_in = overtime_application.in_time.getTime();
+                      overtime_application.time_in = new Date(new_val.currentTarget.value).getTime();
                       
                       this.setState({new_overtime_application: overtime_application});
                     }}
@@ -395,7 +400,7 @@ export class OvertimeApplications extends React.Component
                       const overtime_application = this.state.new_overtime_application;
                       
                       overtime_application.out_time = formatDate(new Date(new_val.currentTarget.value));
-                      overtime_application.time_out = overtime_application.out_time.getTime();
+                      overtime_application.time_out = new Date(new_val.currentTarget.value).getTime();
                       
                       this.setState({new_overtime_application: overtime_application});
                     }}
