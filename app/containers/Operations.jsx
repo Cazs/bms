@@ -1729,19 +1729,19 @@ class Operations extends Component
           <TabContent>
             {this.state.visibleTab === 'Quotes' && (
               // <Profile t={t} />
-              <Quotes showEmailModal={()=>this.showEmailModal()} />
+              <Quotes showEmailModal={()=>this.showEmailModal()} setLoading={this.props.setLoading} />
             )}
             {this.state.visibleTab === 'Jobs' && (
-              <Jobs showEmailModal={()=>this.showEmailModal()} />
+              <Jobs showEmailModal={()=>this.showEmailModal()} setLoading={this.props.setLoading} />
             )}
             {this.state.visibleTab === 'Invoices' && (
-              <Invoices showEmailModal={()=>this.showEmailModal()} />
+              <Invoices showEmailModal={()=>this.showEmailModal()} setLoading={this.props.setLoading} />
             )}
             {this.state.visibleTab === 'POs' && (
-              <PurchaseOrders showEmailModal={()=>this.showEmailModal()} />
+              <PurchaseOrders showEmailModal={()=>this.showEmailModal()} setLoading={this.props.setLoading} />
             )}
             {this.state.visibleTab === 'Requisitions' && (
-              <Requisitions />
+              <Requisitions setLoading={this.props.setLoading} />
             )}
           </TabContent>
         </PageContent>

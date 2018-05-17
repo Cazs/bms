@@ -381,7 +381,7 @@ export class Quotes extends React.Component
             onClick={() => this.setState({is_new_material_modal_open: true, selected_quote: row})}
             style={{marginRight: '20px'}}
           >
-          New&nbsp;Material
+            New&nbsp;Material
           </Button>
           <Button primary onClick={() => this.showQuotePreview(row)}>PDF Preview</Button>
           <Button
@@ -1378,104 +1378,117 @@ export class Quotes extends React.Component
           <Button
             onClick={()=>
             {
-                  if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+              if(sessionManager.getSessionUser().access_level <= GlobalConstants.ACCESS_LEVELS[1].level) // standard access & less are not allowed
+              {
+                this.props.dispatch(
+                {
+                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                  payload: {type: 'danger', message: 'You are not authorised to create quotes.'}
+                });
+                return;
+              }
+
+              this.props.setLoading(true);
+              this.setState({is_new_quote_modal_open: false});
+
+              const quote = this.state.new_quote;
+
+              if(!quote.client)
+              {
+                this.props.setLoading(false);
+                this.setState({is_new_quote_modal_open: true});
+                return this.props.dispatch(
+                {
+                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                  payload:
                   {
-                    this.props.dispatch(
-                    {
-                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                      payload: {type: 'danger', message: 'You are not authorised to create quotes.'}
-                    });
-                    return;
+                    type: 'danger',
+                    message: 'Invalid client selected'
                   }
+                });
+              }
 
-                  const quote = this.state.new_quote;
+              if(!quote.contact)
+              {
+                this.props.setLoading(false);
+                this.setState({is_new_quote_modal_open: true});
 
-                  if(!quote.client)
+                return this.props.dispatch(
+                {
+                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                  payload:
                   {
-                    return this.props.dispatch(
-                    {
-                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                      payload:
-                      {
-                        type: 'danger',
-                        message: 'Invalid client selected'
-                      }
-                    });
+                    type: 'danger',
+                    message: 'Invalid contact person selected'
                   }
+                });
+              }
 
-                  if(!quote.contact)
+              if(!quote.sitename)
+              {
+                this.props.setLoading(false);
+                this.setState({is_new_quote_modal_open: true});
+                
+                return this.props.dispatch(
+                {
+                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                  payload:
                   {
-                    return this.props.dispatch(
-                    {
-                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                      payload:
-                      {
-                        type: 'danger',
-                        message: 'Invalid contact person selected'
-                      }
-                    });
+                    type: 'danger',
+                    message: 'Invalid sitename'
                   }
+                });
+              }
+              
+              if(!quote.request)
+              {
+                this.props.setLoading(false);
+                this.setState({is_new_quote_modal_open: true});
 
-                  if(!quote.sitename)
+                return this.props.dispatch(
+                {
+                  type: ACTION_TYPES.UI_NOTIFICATION_NEW,
+                  payload:
                   {
-                    return this.props.dispatch(
-                    {
-                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                      payload:
-                      {
-                        type: 'danger',
-                        message: 'Invalid sitename'
-                      }
-                    });
-                  }
-                  
-                  if(!quote.request)
-                  {
-                    return this.props.dispatch(
-                    {
-                      type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                      payload:
-                      {
-                        type: 'danger',
-                        message: 'Error: Invalid quote description',
-                      },
-                    });
-                  }
+                    type: 'danger',
+                    message: 'Error: Invalid quote description',
+                  },
+                });
+              }
 
-                  // Prepare Quote
-                  const client_name = quote.client.client_name.toString();
-                  quote.object_number = this.props.quotes.length;
-                  quote.client_name = client_name;
-                  quote.client_id = quote.client._id;
-                  quote.contact_person = quote.contact.name;
-                  quote.contact_person_id = quote.contact.usr;
-                  quote.status = statuses[0].status;
-                  quote.status_description = statuses[0].status_description;
-                  quote.revision = 1;
-                  quote.account_name = client_name.toLowerCase().replace(' ', '-');
-                  quote.creator_name = sessionManager.getSessionUser().name;
-                  quote.creator = sessionManager.getSessionUser().usr;
-                  quote.creator_employee = sessionManager.getSessionUser();
-                  quote.date_logged = new Date().getTime();// current date in epoch millis
-                  quote.logged_date = formatDate(new Date()); // current date
+              // Prepare Quote
+              const client_name = quote.client.client_name.toString();
+              quote.object_number = this.props.quotes.length;
+              quote.client_name = client_name;
+              quote.client_id = quote.client._id;
+              quote.contact_person = quote.contact.name;
+              quote.contact_person_id = quote.contact.usr;
+              quote.status = statuses[0].status;
+              quote.status_description = statuses[0].status_description;
+              quote.revision = 1;
+              quote.account_name = client_name.toLowerCase().replace(' ', '-');
+              quote.creator_name = sessionManager.getSessionUser().name;
+              quote.creator = sessionManager.getSessionUser().usr;
+              quote.creator_employee = sessionManager.getSessionUser();
+              quote.date_logged = new Date().getTime();// current date in epoch millis
+              quote.logged_date = formatDate(new Date()); // current date
 
-                  // this.props.quotes.push(quote);
-                  // mapStateToProps(this.state);
-
-                  const context = this;
-                  // dispatch action to create quote on local & remote stores
-                  this.props.dispatch(
-                  {
-                    type: ACTION_TYPES.QUOTE_NEW,
-                    payload: quote,
-                    // after the quote has been added to local & remote store, push it to the table
-                    callback(new_quote)// w/ _id
-                    {
-                      context.props.quotes.push(new_quote);
-                      context.setState({new_quote: context.newQuote(), is_new_quote_modal_open: false});
-                    }
-                  });
-                }}
+              const context = this;
+              // dispatch action to create quote on local & remote stores
+              this.props.dispatch(
+              {
+                type: ACTION_TYPES.QUOTE_NEW,
+                payload: quote,
+                // after the quote has been added to local & remote store, push it to the table
+                callback(new_quote)// w/ _id
+                {
+                  context.props.setLoading(false);
+                  context.setState({is_new_quote_modal_open: false});
+                  context.props.quotes.push(new_quote);
+                  context.setState({new_quote: context.newQuote(), is_new_quote_modal_open: false});
+                }
+              });
+            }}
             style={{width: '120px', height: '50px', float: 'left'}}
             success
           >Create
