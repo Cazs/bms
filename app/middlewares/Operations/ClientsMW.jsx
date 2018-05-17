@@ -22,7 +22,15 @@ const ClientsMW = ({ dispatch, getState }) => next => action =>
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_clients, new_client, '/client', 'clients')
                         .then(response => 
-                            next({ type: ACTION_TYPES.CLIENT_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+                        {
+                          const client = Object.assign(action.payload, {_id: response}); // w/ _id
+                          next({ type: ACTION_TYPES.CLIENT_NEW, payload: client });
+                          if(action.callback)
+                            action.callback(client);
+                        })
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.CLIENT_NEW, payload: []}));
+                            // next({ type: ACTION_TYPES.CLIENT_NEW, payload: Object.assign(action.payload, {_id: response}) }));
     }
 
     case ACTION_TYPES.CLIENT_UPDATE:

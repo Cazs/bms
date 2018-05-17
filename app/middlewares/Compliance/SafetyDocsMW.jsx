@@ -21,7 +21,14 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
       console.log('safety doc add:', action.payload);
       return DataManager.putRemoteResource(dispatch, DataManager.db_safety_documents, action.payload, '/document/safety', 'safety_documents')
                         .then(response =>
-                          next({ type: ACTION_TYPES.SAFETY_DOC_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+                        {
+                          const doc = Object.assign(action.payload, {_id: response}); // w/ _id
+                          next({ type: ACTION_TYPES.OVERTIME_NEW, payload: doc });
+                          if(action.callback)
+                            action.callback(doc);
+                        })
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.SAFETY_DOC_NEW, payload: []}));
     }
     
     case ACTION_TYPES.SAFETY_DOC_GET_ALL:
@@ -39,42 +46,10 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
     {
       console.log('safety document update:', action.payload);
       return DataManager.postRemoteResource(dispatch, DataManager.db_safety_documents, action.payload, '/document/safety', 'safety_documents')
-                        .then(response => next({ type: ACTION_TYPES.SAFETY_DOC_UPDATE, payload: response }));
-    }
-
-    case ACTION_TYPES.SAFETY_DOC_DELETE:
-    {
-      // return deleteDoc('users', action.payload)
-      //   .then(remainingDocs => {
-      //     next({
-      //       type: ACTION_TYPES.SAFETY_DOC_DELETE,
-      //       payload: remainingDocs,
-      //     });
-      //     // Send Notification
-      //     dispatch({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'success',
-      //         message: i18n.t('messages:user:deleted'),
-      //       },
-      //     });
-      //     // Clear form if this user is being editted
-      //     const { editMode } = getState().form.settings;
-      //     if (editMode.active) {
-      //       if (editMode.data._id === action.payload) {
-      //         dispatch({ type: ACTION_TYPES.FORM_CLEAR });
-      //       }
-      //     }
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
+                        .then(response =>
+                          next({ type: ACTION_TYPES.SAFETY_DOC_UPDATE, payload: response }))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.SAFETY_DOC_UPDATE, payload: []}));
     }
 
     case ACTION_TYPES.SAFETY_DOC_DUPLICATE:
@@ -90,27 +65,6 @@ const SafetyMW = ({ dispatch, getState }) => next => action =>
         type: ACTION_TYPES.SAFETY_DOC_SAVE,
         payload: duplicateUser
       });
-    }
-    
-    case ACTION_TYPES.SAFETY_DOC_SET_STATUS:
-    {
-      // const { userID, status } = action.payload;
-      // return getSingleDoc('users', userID)
-      //   .then(doc => {
-      //     dispatch({
-      //       type: ACTION_TYPES.SAFETY_DOC_UPDATE,
-      //       payload: Object.assign({}, doc, { status })
-      //     })
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
     }
 
     default: {

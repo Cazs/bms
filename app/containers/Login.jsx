@@ -58,8 +58,6 @@ class Login extends Component
     this.login = this.login.bind(this);
     this.showSignup = this.showSignup.bind(this);
     this.initDataset = this.initDataset.bind(this);
-
-    this.state = { };
   }
 
   componentDidMount()
@@ -72,8 +70,11 @@ class Login extends Component
     this.props.changeTab('signup');
   }
 
+  
+
   login()
   {
+    this.props.setLoading(true);
     console.log('authenticating %s:%s', this.txt_username.value, this.txt_password.value);
 
     // TODO: bcrypt
@@ -103,10 +104,12 @@ class Login extends Component
       });
       this.initDataset();
       this.props.changeTab('home');
+      this.props.setLoading(false);
     })
     .catch(err =>
     {
       console.log('error: ', err);
+      this.props.setLoading(false);
       this.props.dispatch(
       {
         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -159,7 +162,7 @@ class Login extends Component
             </div> */}
           </PageHeaderActions>
         </PageHeader>
-        <PageContent style={{}}>
+        <PageContent>
           <div style={{height: '100%', marginTop: '0px', top: '0px'}}>
             <div style={{
                 padding: '20px',
@@ -239,12 +242,14 @@ class Login extends Component
               <div className='row'>
                 <div className="pageItem col-md-6">
                   <LoginButton
+                    style={{width: '200px', height: '85px'}}
                     onClick={(evt)=>this.login()}
                   >
                     Login
                   </LoginButton>
                 </div>
                 <div className="pageItem col-md-6">
+                  <p style={{textAlign: 'right', color: '#fff'}}>Don't have an account?</p>
                   <SignupButton
                     onClick={(evt)=>this.showSignup()}
                     style={{float: 'right'}}
@@ -266,6 +271,7 @@ Login.propTypes =
 {
   dispatch: PropTypes.func.isRequired,
   changeTab: PropTypes.func.isRequired,
+  setLoading: PropTypes.func.isRequired,
   t: PropTypes.func.isRequired
 };
 

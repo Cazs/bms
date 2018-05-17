@@ -31,113 +31,35 @@ const PurchaseOrdersMW = ({ dispatch, getState }) => next => action =>
       // const new_po = Object.assign(action.payload, {object_number: getState().purchaseOrders.length});
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_purchase_orders, action.payload, '/purchaseorder', 'purchase_orders')
-      .then(response => 
-        next({ type: ACTION_TYPES.PURCHASE_ORDER_NEW, payload: Object.assign(action.payload, {_id: response}) }));
+                        .then(response => 
+                        {
+                          const new_po = Object.assign(action.payload, {_id: response}); // w/ _id
+                          next({ type: ACTION_TYPES.MATERIAL_NEW, payload: new_po });
+                          if(action.callback)
+                            action.callback(new_po);
+                        })
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.PURCHASE_ORDER_NEW, payload: []}));
     }
     
     case ACTION_TYPES.PURCHASE_ORDER_UPDATE:
     {
       console.log('purchase order update:', action.payload);
       return DataManager.postRemoteResource(dispatch, DataManager.db_purchase_orders, action.payload, '/purchaseorder', 'purchase_orders')
-                        .then(response => next({ type: ACTION_TYPES.PURCHASE_ORDER_UPDATE, payload: response }));
+                        .then(response =>
+                          next({ type: ACTION_TYPES.PURCHASE_ORDER_UPDATE, payload: response }))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.PURCHASE_ORDER_UPDATE, payload: []}));
     }
     
     case ACTION_TYPES.PURCHASE_ORDER_ITEM_ADD:
     {
       console.log('po item add:', action.payload);
       return DataManager.putRemoteResource(dispatch, null, action.payload, '/purchaseorder/resource', 'purchase order resources')
-      .then(response => next({ type: ACTION_TYPES.PURCHASE_ORDER_ITEM_ADD, payload: response }));
-    }
-      
-      case ACTION_TYPES.PURCHASE_ORDER_SAVE:
-      {
-        // Save doc to db
-        // return saveDoc('purchaseOrders', action.payload)
-        //   .then(newDocs => {
-          //     next({
-            //       type: ACTION_TYPES.PURCHASE_ORDER_SAVE,
-            //       payload: newDocs,
-      //     });
-      //     dispatch({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'success',
-      //         message: i18n.t('messages:purchaseOrder:saved'),
-      //       },
-      //     });
-      //     // Preview Window
-      //     ipc.send('preview-purchaseOrder', action.payload);
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
-    }
-
-    case ACTION_TYPES.PURCHASE_ORDER_EDIT:
-    {
-      // Continue
-      // return getAllDocs('contacts')
-      //   .then(allDocs => {
-      //     next(
-      //       Object.assign({}, action, {
-      //         payload: Object.assign({}, action.payload, {
-      //           contacts: allDocs
-      //         })
-      //       })
-      //     );
-      //     // Change Tab to Form
-      //     dispatch(UIActions.changeActiveTab('form'));
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
-    }
-    
-    case ACTION_TYPES.PURCHASE_ORDER_DELETE:
-    {
-      // return deleteDoc('purchaseOrders', action.payload)
-      //   .then(remainingDocs => {
-      //     next({
-      //       type: ACTION_TYPES.PURCHASE_ORDER_DELETE,
-      //       payload: remainingDocs,
-      //     });
-      //     // Send Notification
-      //     dispatch({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'success',
-      //         message: i18n.t('messages:purchaseOrder:deleted'),
-      //       },
-      //     });
-      //     // Clear form if this purchaseOrder is being editted
-      //     const { editMode } = getState().form.settings;
-      //     if (editMode.active) {
-      //       if (editMode.data._id === action.payload) {
-      //         dispatch({ type: ACTION_TYPES.FORM_CLEAR });
-      //       }
-      //     }
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
+                        .then(response =>
+                          next({ type: ACTION_TYPES.PURCHASE_ORDER_ITEM_ADD, payload: response }))
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.PURCHASE_ORDER_ITEM_ADD, payload: []}));
     }
 
     case ACTION_TYPES.PURCHASE_ORDER_DUPLICATE:
@@ -153,49 +75,6 @@ const PurchaseOrdersMW = ({ dispatch, getState }) => next => action =>
         type: ACTION_TYPES.PURCHASE_ORDER_SAVE,
         payload: duplicatePurchaseOrder,
       });
-    }
-
-
-    case ACTION_TYPES.PURCHASE_ORDER_CONFIGS_SAVE:
-    {
-      // const { purchaseOrderID, configs } = action.payload;
-      // return getSingleDoc('purchaseOrders', purchaseOrderID)
-      //   .then(doc => {
-      //     dispatch({
-      //       type: ACTION_TYPES.PURCHASE_ORDER_UPDATE,
-      //       payload: Object.assign({}, doc, {configs})
-      //     })
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
-    }
-
-    case ACTION_TYPES.PURCHASE_ORDER_SET_STATUS:
-    {
-      // const { purchaseOrderID, status } = action.payload;
-      // return getSingleDoc('purchaseOrders', purchaseOrderID)
-      //   .then(doc => {
-      //     dispatch({
-      //       type: ACTION_TYPES.PURCHASE_ORDER_UPDATE,
-      //       payload: Object.assign({}, doc, { status })
-      //     })
-      //   })
-      //   .catch(err => {
-      //     next({
-      //       type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-      //       payload: {
-      //         type: 'warning',
-      //         message: err.message,
-      //       },
-      //     });
-      //   });
     }
 
     default: {

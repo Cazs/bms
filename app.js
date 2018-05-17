@@ -83,8 +83,8 @@ function createMainWindow()
     y: mainWindownStateKeeper.y,
     width: mainWindownStateKeeper.width,
     height: mainWindownStateKeeper.height,
-    minWidth: 1000,
-    minHeight: 600,
+    minWidth: 1260,
+    minHeight: 650,
     backgroundColor: '#ff7400',
     titleBarStyle: 'hidden',
     show: false,
@@ -173,8 +173,8 @@ function setInitialValues() {
   // Default Logo
   const logoPath = path.resolve(__dirname, './static/images/logo.svg');
   const logoData = fs.readFileSync(logoPath);
-  const logoBase64String =
-    'data:image/svg+xml;base64,' + logoData.toString('base64');
+  const logoBase64String = 'data:image/svg+xml;base64,' + logoData.toString('base64');
+  
   // Default Options
   const defaultOptions =
   {

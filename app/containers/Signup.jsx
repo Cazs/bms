@@ -68,27 +68,46 @@ class Signup extends Component
 
   signup()
   {
+    this.props.setLoading(true);
     console.log('creating account: ', this.state.new_employee);
     
     if(!this.state.new_employee.usr || this.state.new_employee.usr.length <= 1)
+    {
+      this.props.setLoading(false);
       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid user handle.'));
+    }
 
     if(!this.state.new_employee.pwd || this.state.new_employee.pwd.length <= 7)
+    {
+      this.props.setLoading(false);
       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid password.\nPasswords must be at least 8 characters.'));
+    }
       // !this.state.new_employee.pwd.includes('@') || !this.state.new_employee.pwd.includes('\.')) TODO: check for special chars
 
     if(!this.state.new_employee.firstname || this.state.new_employee.firstname.length <= 1)
+    {
+      this.props.setLoading(false);
       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid firstname.'));
+    }
 
     if(!this.state.new_employee.lastname || this.state.new_employee.lastname.length <= 1)
+    {
+      this.props.setLoading(false);
       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid lastname.'));
+    }
 
     if(!this.state.new_employee.email || this.state.new_employee.email.length <= 1 ||
         !this.state.new_employee.email.includes('@') || !this.state.new_employee.email.includes('\.'))
+    {
+      this.props.setLoading(false);
       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid email address.'));
+    }
 
     if(!this.state.new_employee.cell || this.state.new_employee.cell.length <= 9)
+    {
+      this.props.setLoading(false);
       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid cellphone number.'));
+    }
 
     this.state.new_employee.name = this.state.new_employee.firstname + ' ' + this.state.new_employee.lastname;
     this.state.new_employee.initials = this.state.new_employee.firstname.charAt(0) + this.state.new_employee.lastname.charAt(0);
@@ -109,10 +128,12 @@ class Signup extends Component
         }
       });
       this.props.changeTab('login');
+      this.props.setLoading(false);
     })
     .catch(err =>
     {
       console.log('error: ', err);
+      this.props.setLoading(false);
       this.props.dispatch(
       {
         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -281,13 +302,16 @@ class Signup extends Component
               <div className='row'>
                 <div className="pageItem col-md-6">
                   <SignupButton
+                    style={{width: '200px', height: '85px'}}
                     onClick={(evt)=>this.signup()}
                   >
                     Signup
                   </SignupButton>
                 </div>
                 <div className="pageItem col-md-6">
+                  <p style={{textAlign: 'right', color: '#fff'}}>Already have an account?</p>
                   <LoginButton
+                    style={{float: 'right'}}
                     onClick={(evt)=>this.showLogin()}
                   >
                     Login

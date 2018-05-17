@@ -26,13 +26,13 @@ class AppMain extends Component
     const { activeTab } = this.props;    
     return (
       <AppMainContent>
-        {activeTab === 'signup' && <Signup changeTab={this.props.changeTab} />}
-        {activeTab === 'login' && <Login changeTab={this.props.changeTab} />}
-        {activeTab === 'home' && <Home changeTab={this.props.changeTab} />}
-        {activeTab === 'operations' && <Operations />}
-        {activeTab === 'hr' && <HR />}
-        {activeTab === 'safety' && <Safety />}
-        {activeTab === 'settings' && <Settings />}
+        {activeTab === 'signup' && <Signup changeTab={this.props.changeTab} setLoading={this.props.setLoading} />}
+        {activeTab === 'login' && <Login changeTab={this.props.changeTab} setLoading={this.props.setLoading} />}
+        {activeTab === 'home' && <Home changeTab={this.props.changeTab} setLoading={this.props.setLoading} />}
+        {activeTab === 'operations' && <Operations setLoading={this.props.setLoading} />}
+        {activeTab === 'hr' && <HR setLoading={this.props.setLoading} />}
+        {activeTab === 'safety' && <Safety setLoading={this.props.setLoading} />}
+        {activeTab === 'settings' && <Settings setLoading={this.props.setLoading} />}
       </AppMainContent>
     );
   }

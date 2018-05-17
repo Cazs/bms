@@ -220,6 +220,7 @@ class Operations extends Component
           style={{
             content :
             {
+              position: 'fixed',
               top     : '20%',
               left    : '14%',
               right   : 'auto',
@@ -312,20 +313,39 @@ class Operations extends Component
                     if(sessionManager.getSessionUser().access_level < GlobalConstants.ACCESS_LEVELS[1].level) // no access and less are not allowed
                       return this.props.dispatch(UIActions.newNotification('danger', 'You are not authorised to create contacts.'));
 
+                    this.props.setLoading(true);
+                    this.setState({is_new_contact_modal_open: false});
+
                     console.log('creating account: ', this.state.new_employee);
 
                     if(!this.state.new_employee.firstname || this.state.new_employee.firstname.length <= 1)
+                    {
+                      this.props.setLoading(false);
+                      this.setState({is_new_contact_modal_open: true});
                       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid contact firstname.'));
+                    }
 
                     if(!this.state.new_employee.lastname || this.state.new_employee.lastname.length <= 1)
+                    {
+                      this.props.setLoading(false);
+                      this.setState({is_new_contact_modal_open: true});
                       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid contact lastname.'));
+                    }
 
                     if(!this.state.new_employee.email || this.state.new_employee.email.length <= 1 ||
                        !this.state.new_employee.email.includes('@') || !this.state.new_employee.email.includes('\.'))
+                    {
+                      this.props.setLoading(false);
+                      this.setState({is_new_contact_modal_open: true});
                       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid contact email address.'));
+                    }
 
                     if(!this.state.new_employee.cell || this.state.new_employee.cell.length <= 9)
+                    {
+                      this.props.setLoading(false);
+                      this.setState({is_new_contact_modal_open: true});
                       return this.props.dispatch(UIActions.newNotification('danger', 'Invalid cellphone number.'));
+                    }
 
                     this.state.new_employee.usr = this.state.new_employee.email;
                     this.state.new_employee.pwd = this.state.new_employee.cell; // TODO: bcrypt
@@ -336,11 +356,13 @@ class Operations extends Component
                     this.state.new_employee.status = 3; // marks employee as external contact
 
                     const context = this;
+                    
                     // Send signup request
                     DataManager.putRemoteResource(this.props.dispatch, DataManager.db_employees, this.state.new_employee, '/employee', 'employees')
                     .then(res =>
                     {
                       console.log('response data: ' + res);
+                      this.props.setLoading(false);
                       this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -357,6 +379,8 @@ class Operations extends Component
                     .catch(err =>
                     {
                       console.log('error: ', err);
+                      this.props.setLoading(false);
+                      this.setState({is_new_contact_modal_open: true});
                       this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -586,8 +610,16 @@ class Operations extends Component
                 <Button
                   onClick={(event)=>
                   {
+                    if(sessionManager.getSessionUser().access_level < GlobalConstants.ACCESS_LEVELS[1].level) // no access and less are not allowed
+                      return this.props.dispatch(UIActions.newNotification('danger', 'You are not authorised to create clients.'));
+
+                    this.props.setLoading(true);
+                    this.setState({is_new_client_modal_open: false});
+
                     if(!this.state.new_client.client_name || this.state.new_client.client_name.length <= 1) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_client_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -601,6 +633,8 @@ class Operations extends Component
 
                     if(!this.state.new_client.tel || this.state.new_client.tel.length <= 9) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_client_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -615,6 +649,8 @@ class Operations extends Component
                     if(!this.state.new_client.contact_email || this.state.new_client.contact_email.length <= 1 ||
                        !this.state.new_client.contact_email.includes('@') || !this.state.new_client.contact_email.includes('\.'))
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_client_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -628,6 +664,8 @@ class Operations extends Component
 
                     if(!this.state.new_client.tax_number || this.state.new_client.tax_number.length <= 3)
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_client_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -641,6 +679,8 @@ class Operations extends Component
 
                     if(!this.state.new_client.registration_number || this.state.new_client.registration_number.length <= 3)
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_client_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -654,6 +694,8 @@ class Operations extends Component
 
                     if(this.state.new_client.date_partnered <= 0 || this.state.new_client.date_partnered > new Date().getTime())
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_client_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -674,24 +716,21 @@ class Operations extends Component
                     client.date_logged = new Date().getTime();// current date in epoch millis
                     client.logged_date = formatDate(new Date()); // current date
 
-                    this.setState({new_client: client, is_new_client_modal_open: false});
+                    // mapStateToProps(this.state);
 
-                    this.props.clients.push(this.state.new_client);
-                    mapStateToProps(this.state);
-
-                    // this.props.dispatch({
-                    //   type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                    //   payload: {
-                    //     type: 'success',
-                    //     message: 'Successfully created new client',
-                    //   },
-                    // });
+                    const context = this;
 
                     // dispatch action to create client on local & remote stores
                     this.props.dispatch(
                     {
                       type: ACTION_TYPES.CLIENT_NEW,
-                      payload: client
+                      payload: client,
+                      callback(new_client)
+                      {
+                        context.props.clients.push(new_client);
+                        context.setState({new_client: client, is_new_client_modal_open: false});
+                        context.props.setLoading(false);
+                      }
                     });
 
                     this.setState({new_client: this.createClient()});
@@ -917,8 +956,16 @@ class Operations extends Component
                 <Button
                   onClick={(event)=>
                   {
+                    if(sessionManager.getSessionUser().access_level < GlobalConstants.ACCESS_LEVELS[1].level) // no access and less are not allowed
+                      return this.props.dispatch(UIActions.newNotification('danger', 'You are not authorised to create suppliers.'));
+
+                    this.props.setLoading(true);
+                    this.setState({is_new_supplier_modal_open: false});
+
                     if(!this.state.new_supplier.supplier_name || this.state.new_supplier.supplier_name.length <= 1)
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_supplier_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -932,6 +979,8 @@ class Operations extends Component
 
                     if(!this.state.new_supplier.tel || this.state.new_supplier.tel.length <= 9)
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_supplier_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -946,6 +995,8 @@ class Operations extends Component
                     if(!this.state.new_supplier.contact_email || this.state.new_supplier.contact_email.length <= 1 ||
                       !this.state.new_supplier.contact_email.includes('@') || !this.state.new_supplier.contact_email.includes('\.'))
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_supplier_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -959,6 +1010,8 @@ class Operations extends Component
 
                     if(!this.state.new_supplier.tax_number || this.state.new_supplier.tax_number.length <= 3)
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_supplier_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -972,6 +1025,8 @@ class Operations extends Component
 
                     if(!this.state.new_supplier.registration_number || this.state.new_supplier.registration_number.length <= 3)
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_supplier_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -985,6 +1040,8 @@ class Operations extends Component
 
                     if(this.state.new_supplier.date_partnered <= 0 || this.state.new_supplier.date_partnered > new Date().getTime()) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_supplier_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -995,6 +1052,7 @@ class Operations extends Component
                         }
                       });
                     }
+
                     // Prepare supplier object
                     const supplier = this.state.new_supplier;
                     supplier.object_number = this.props.suppliers.length;
@@ -1005,24 +1063,21 @@ class Operations extends Component
                     supplier.date_logged = new Date().getTime();// current date in epoch millis
                     supplier.logged_date = formatDate(new Date()); // current date
 
-                    this.setState({new_supplier: supplier, is_new_supplier_modal_open: false});
+                    // mapStateToProps(this.state);
 
-                    this.props.suppliers.push(this.state.new_supplier);
-                    mapStateToProps(this.state);
-
-                    // this.props.dispatch({
-                    //   type: ACTION_TYPES.UI_NOTIFICATION_NEW,
-                    //   payload: {
-                    //     type: 'success',
-                    //     message: 'Successfully created new supplier',
-                    //   },
-                    // });
+                    const context = this;
 
                     // dispatch action to create supplier on local & remote stores
                     this.props.dispatch(
                     {
                       type: ACTION_TYPES.SUPPLIER_NEW,
-                      payload: supplier
+                      payload: supplier,
+                      callback(new_supplier)
+                      {
+                        context.props.suppliers.push(new_supplier);
+                        context.setState({new_supplier, is_new_supplier_modal_open: false});
+                        context.props.setLoading(false);
+                      }
                     });
 
                     this.setState({new_supplier: this.createSupplier()});
@@ -1178,8 +1233,16 @@ class Operations extends Component
                 <Button
                   onClick={(event)=>
                   {
+                    if(sessionManager.getSessionUser().access_level < GlobalConstants.ACCESS_LEVELS[1].level) // no access and less are not allowed
+                      return this.props.dispatch(UIActions.newNotification('danger', 'You are not authorised to create materials.'));
+
+                    this.props.setLoading(true);
+                    this.setState({is_new_material_modal_open: false});
+
                     if(!this.state.new_material.resource_description) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_material_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1193,6 +1256,8 @@ class Operations extends Component
 
                     if(this.state.new_material.resource_value <= 0) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_material_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1206,6 +1271,8 @@ class Operations extends Component
 
                     if(!this.state.new_material.resource_type) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_material_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1219,6 +1286,8 @@ class Operations extends Component
 
                     if(!this.state.new_material.unit) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_material_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1232,6 +1301,8 @@ class Operations extends Component
 
                     if(this.state.new_material.quantity <= 0) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_material_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1245,6 +1316,8 @@ class Operations extends Component
 
                     if(this.state.new_material.date_acquired <= 0) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_new_material_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1264,23 +1337,26 @@ class Operations extends Component
                     material.creator_employee = sessionManager.getSessionUser();
                     material.date_logged = new Date().getTime();// current date in epoch millis
                     material.logged_date = formatDate(new Date()); // current date
-
-                    this.props.materials.push(material);
-
-                    this.setState(
-                    {
-                      // reset selected material
-                      new_material: Material(),
-                      is_new_material_modal_open: false
-                    });
                     
-                    mapStateToProps(this.state);
-
+                    // mapStateToProps(this.state);
+                    const context = this;
                     // dispatch action to create material on local & remote stores
                     this.props.dispatch(
                     {
                       type: ACTION_TYPES.MATERIAL_NEW,
-                      payload: material
+                      payload: material,
+                      callback(new_material)
+                      {
+                        context.props.materials.push(new_material);
+                        context.setState({new_material, is_new_material_modal_open: false});
+                        context.props.setLoading(false);
+                      }
+                    });
+
+                    this.setState(
+                    {
+                      // reset selected material
+                      new_material: Material()
                     });
                   }}
                   style={{width: '120px', height: '50px', float: 'right'}}
@@ -1608,7 +1684,11 @@ class Operations extends Component
               </Button> */}
               <Button
                 primary
-                onClick={()=>this.setState({is_new_contact_modal_open: true})}
+                onClick={()=>
+                {
+                  this.props.setLoading(true);
+                  this.setState({is_new_contact_modal_open: true})
+                }}
               >
                 New Contact
               </Button>

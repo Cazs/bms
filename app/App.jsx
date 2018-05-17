@@ -27,6 +27,16 @@ class App extends PureComponent
     super(props);
     this.changeTab = this.changeTab.bind(this);
     this.removeNotification = this.removeNotification.bind(this);
+    this.setLoading = this.setLoading.bind(this);
+
+    this.state = {
+      is_loading: false
+    };
+  }
+
+  setLoading(val)
+  {
+    this.setState({is_loading: val});
   }
 
   componentDidMount()
@@ -78,11 +88,33 @@ class App extends PureComponent
     const { activeTab, notifications } = this.props.ui;
     return (
       <AppWrapper>
+        <div style={{
+          position: 'fixed',
+          visibility: this.state.is_loading ? 'visible' : 'hidden',
+          top: '0px',
+          left: '0px',
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0,0,0,.5)',
+          zIndex: '100'
+        }}
+        >
+          <div
+            style={{
+              width: '100px',
+              height: '100px',
+              margin: '27% auto 0px auto',
+              background: 'url(../static/images/loading.gif)',
+              backgroundSize: 'contain',
+              zIndex: '10000'
+            }}
+          />
+        </div>
         {activeTab !== 'home' && activeTab !== 'login' && activeTab !== 'signup' ? 
           <AppNav activeTab={activeTab} changeTab={this.changeTab} />
           : '' }
         <AppNotification notifications={notifications} removeNotification={this.removeNotification} />
-        <AppMain activeTab={activeTab} changeTab={this.changeTab} />
+        <AppMain activeTab={activeTab} changeTab={this.changeTab} setLoading={this.setLoading} />
       </AppWrapper>
     );
   }

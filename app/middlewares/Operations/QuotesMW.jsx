@@ -32,13 +32,14 @@ const QuotesMW = ({ dispatch, getState }) => next => (action) =>
       // Save to remote store then local store
       return DataManager.putRemoteResource(dispatch, DataManager.db_quotes, new_quote, '/quote', 'quotes')
                         .then(response =>
-                          {
-                            const new_quote = Object.assign(action.payload, {_id: response}); // w/ _id
-                            next({ type: ACTION_TYPES.QUOTE_NEW, payload: new_quote });
-                            action.callback(new_quote);
-                          });
-                        // .then(response => 
-                          // next({ type: ACTION_TYPES.QUOTE_NEW, payload: Object.assign(action.payload, {_id: response})}));
+                        {
+                          const quote = Object.assign(action.payload, {_id: response}); // w/ _id
+                          next({ type: ACTION_TYPES.QUOTE_NEW, payload: quote });
+                          if(action.callback)
+                            action.callback(quote);
+                        })
+                        .catch(err =>
+                          next({ type: ACTION_TYPES.PURCHASE_ORDER_NEW, payload: []}));
     }
 
     case ACTION_TYPES.QUOTE_UPDATE:
