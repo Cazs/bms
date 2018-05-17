@@ -1451,9 +1451,17 @@ class Operations extends Component
                 <Button
                   onClick={(event)=>
                   {
+                    if(sessionManager.getSessionUser().access_level < GlobalConstants.ACCESS_LEVELS[1].level) // no access and less are not allowed
+                      return this.props.dispatch(UIActions.newNotification('danger', 'You are not authorised to send emails.'));
+
+                    this.props.setLoading(true);
+                    this.setState({is_email_modal_open: false});
+
                     if(!this.state.new_email.destination || this.state.new_email.destination.length <= 1 ||
                       !this.state.new_email.destination.includes('@') || !this.state.new_email.destination.includes('\.'))
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_email_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1467,6 +1475,8 @@ class Operations extends Component
 
                     if(!this.state.new_email.subject) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_email_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1480,6 +1490,8 @@ class Operations extends Component
 
                     if(!this.state.new_email.message) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_email_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1493,6 +1505,8 @@ class Operations extends Component
 
                     if(!this.state.new_email.path) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_email_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1506,6 +1520,8 @@ class Operations extends Component
 
                     if(!this.state.new_email.document_id) // TODO: stricter validation
                     {
+                      this.props.setLoading(false);
+                      this.setState({is_email_modal_open: true});
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1536,21 +1552,6 @@ class Operations extends Component
                       file: file_data.toString('base64') // file_base64_str.split('base64,').pop()
                     }
 
-                    console.log('new file to be emailed: ', file);
-
-                    /* const Http = require('axios').create(
-                    {
-                        headers:
-                        {
-                          quote_id: this.state.new_email.document_id,
-                          destination: this.state.new_email.destination,
-                          subject: this.state.new_email.subject,
-                          message : this.state.new_email.message,
-                          session_id : sessionManager.session_id,
-                          'Content-Type': 'application/json'
-                        }
-                    }); */
-
                     const { HttpClient, SERVER_IP, SERVER_PORT } = require('../helpers/HttpClient');
 
                     const headers = 
@@ -1564,27 +1565,30 @@ class Operations extends Component
                     }
 
                     return HttpClient.post('http://' + SERVER_IP + ':' + SERVER_PORT + '/mailto', file, { headers })
-                                .then(response =>
-                                {
-                                  if(response)
-                                  {
-                                    if(response.status == 200) // Success, successfully emailed document
-                                    {
-                                      console.log('Successfully emailed document.');
-                                      this.setState({is_email_modal_open: false});
-                                      return this.props.dispatch(UIActions.newNotification('success', 'Successfully emailed document.'));
-                                    } 
-                                    console.log('Error: ' + response.status);
-                                    return this.props.dispatch(UIActions.newNotification('danger', 'Error ['+response.status+']: ' + (response.statusText || response.data)));
-                                  }
-                                  console.log('Error: Could not get a valid response from the server.');
-                                  return this.props.dispatch(UIActions.newNotification('danger', 'Error: Could not get a valid response from the server.'));
-                                })
-                                .catch(err =>
-                                {
-                                  console.log('Error: ', err);
-                                  return this.props.dispatch(UIActions.newNotification('danger', err.message));
-                                });
+                                      .then(response =>
+                                      {
+                                        this.props.setLoading(false);
+                                        if(response)
+                                        {
+                                          if(response.status == 200) // Success, successfully emailed document
+                                          {
+                                            console.log('Successfully emailed document.');
+                                            this.setState({is_email_modal_open: false});
+                                            return this.props.dispatch(UIActions.newNotification('success', 'Successfully emailed document.'));
+                                          } 
+                                          console.log('Error: ' + response.status);
+                                          return this.props.dispatch(UIActions.newNotification('danger', 'Error ['+response.status+']: ' + (response.statusText || response.data)));
+                                        }
+                                        console.log('Error: Could not get a valid response from the server.');
+                                        return this.props.dispatch(UIActions.newNotification('danger', 'Error: Could not get a valid response from the server.'));
+                                      })
+                                      .catch(err =>
+                                      {
+                                        console.log('Error: ', err);
+                                        this.props.setLoading(false);
+                                        this.setState({is_email_modal_open: true});
+                                        return this.props.dispatch(UIActions.newNotification('danger', err.message));
+                                      });
 
                   }}
                   style={{width: '120px', height: '50px', float: 'right'}}
