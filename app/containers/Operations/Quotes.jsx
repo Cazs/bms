@@ -52,6 +52,9 @@ import sessionManager from '../../helpers/SessionManager';
 import Log, { formatDate } from '../../helpers/Logger';
 import Material from '../../helpers/Material';
 import statuses from '../../helpers/statuses';
+const centerOnPrimaryDisplay = require('../../../helpers/center-on-primary-display');
+import { getQuoteItemTotal } from '../../../helpers/quote.js';
+import { globalShortcut } from 'electron';
 
 import
   {
@@ -61,16 +64,14 @@ import
     PageHeaderActions,
     PageContent,
   } from '../../components/shared/Layout';
-import { globalShortcut } from 'electron';
-import { getQuoteItemTotal } from '../../../helpers/quote.js';
 
 
 const modalStyle =
 {
   content :
   {
-    top                   : '15%',
-    left                  : '7%',
+    top                   : centerOnPrimaryDisplay(window.outerWidth-160, 520).y, // '15%',
+    left                  : centerOnPrimaryDisplay(window.outerWidth-160, 520).x,// '7%',
     right                 : 'auto',
     bottom                : 'auto',
     border                : '2px solid black',
@@ -1933,8 +1934,14 @@ export class Quotes extends React.Component
                       return;
                     }
 
+                    this.props.setLoading(true);
+                    this.setState({is_new_material_modal_open: false});
+
                     if(!this.state.new_material.resource_description) // TODO: stricter validation
                     {
+                      this.props.setLoading(true);
+                      this.setState({is_new_quote_modal_open: false});
+
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1948,6 +1955,9 @@ export class Quotes extends React.Component
 
                     if(this.state.new_material.resource_value <= 0) // TODO: stricter validation
                     {
+                      this.props.setLoading(true);
+                      this.setState({is_new_material_modal_open: false});
+
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1961,6 +1971,9 @@ export class Quotes extends React.Component
 
                     if(!this.state.new_material.resource_type) // TODO: stricter validation
                     {
+                      this.props.setLoading(true);
+                      this.setState({is_new_material_modal_open: false});
+
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1974,6 +1987,9 @@ export class Quotes extends React.Component
 
                     if(!this.state.new_material.unit) // TODO: stricter validation
                     {
+                      this.props.setLoading(true);
+                      this.setState({is_new_material_modal_open: false});
+
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -1987,6 +2003,9 @@ export class Quotes extends React.Component
 
                     if(this.state.new_material.quantity <= 0) // TODO: stricter validation
                     {
+                      this.props.setLoading(true);
+                      this.setState({is_new_material_modal_open: false});
+
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -2000,6 +2019,9 @@ export class Quotes extends React.Component
 
                     if(this.state.new_material.date_acquired <= 0) // TODO: stricter validation
                     {
+                      this.props.setLoading(true);
+                      this.setState({is_new_material_modal_open: false});
+
                       return this.props.dispatch(
                       {
                         type: ACTION_TYPES.UI_NOTIFICATION_NEW,
@@ -2022,16 +2044,7 @@ export class Quotes extends React.Component
                     material.date_logged = new Date().getTime();// current date in epoch millis
                     material.logged_date = formatDate(new Date()); // current date
 
-                    this.props.materials.push(material);
-
-                    this.setState(
-                    {
-                      // reset selected material
-                      new_material: Material(),
-                      is_new_material_modal_open: false
-                    });
-                    
-                    mapStateToProps(this.state);
+                    // this.props.materials.push(material);
 
                     // prepare quote material
                     const quote_item = 
@@ -2080,13 +2093,17 @@ export class Quotes extends React.Component
                           payload: Object.assign({}, new_quote_item, {quote: null, resource: null}),
                           callback(new_quote_item_from_server)
                           {
+                            context.props.setLoading(false);
+
+                            context.props.materials.push(material);
                             // add item to quote's list of resources ( remove reference to original quote to avoid infinite, recursive updates) 
                             selected_quote.resources.push(Object.assign({}, new_quote_item_from_server, {quote: null, resource: new_quote_item.resource}));
                             context.setState(
                             {
                               // reset selected material
                               new_material: Material(),
-                              selected_quote_item: new_quote_item_from_server
+                              selected_quote_item: new_quote_item_from_server,
+                              is_new_material_modal_open: false
                             });
                             
                             // signal update quote - so it saves to local storage

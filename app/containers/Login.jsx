@@ -3,8 +3,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-// import { isEqual } from 'lodash';
-import { translate } from 'react-i18next';
 
 // Actions
 import * as ACTION_TYPES from '../constants/actions.jsx';
@@ -70,7 +68,7 @@ class Login extends Component
     this.props.changeTab('signup');
   }
 
-  
+
 
   login()
   {
@@ -141,7 +139,7 @@ class Login extends Component
     dispatch(InvoiceActions.getInvoices());
     dispatch(PurchaseOrderActions.getPurchaseOrders());
     dispatch(RequisitionActions.getRequisitions());
-    
+
     // // Get compliance document index
     dispatch(ComplianceActions.getSafetyDocuments());
   }

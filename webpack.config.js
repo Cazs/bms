@@ -94,7 +94,7 @@ const commonConfig = merge([
         'react-hot-loader/patch',
         './app/renderers/startup.js',
         './app/renderers/dialog.js',
-        './app/renderers/menu.js',
+        // './app/renderers/menu.js',
         './app/index.jsx',
       ],
       preview: ['react-hot-loader/patch', './preview/index.jsx'],
