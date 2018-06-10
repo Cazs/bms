@@ -1,6 +1,7 @@
 const electron = require('electron');
 const path = require('path');
 const fs = require('fs');
+const mkdirp = require('mkdirp');
 import Log from './Logger';
 
 class Store
@@ -14,7 +15,15 @@ class Store
     // We'll use the `configName` property to set the file name and path.join to bring it all together as a string
     // const userDataPath = electron.app;
     // const dir = path.join(userDataPath, '/bms-db/');
-    this.path = path.join(userDataPath + '/data/', db_name + '.json');
+    mkdirp(userDataPath + '/data/', (err) =>
+    {
+      if(err)
+      {
+        return Log('error', err.message);
+      }
+      
+      this.path = path.join(userDataPath + '/data/', db_name + '.json');
+    });
     
     this.data = {};
     parseDataFile(this.path)

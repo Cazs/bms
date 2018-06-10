@@ -1,14 +1,12 @@
 // Libs
-const { BrowserWindow, ipcMain } = require('electron');
+const electron = require('electron');
+const { BrowserWindow, ipcMain } = electron;
 const appConfig = require('electron-settings');
 const previewWindowID = appConfig.get('previewWindowID');
 const previewWindow = BrowserWindow.fromId(previewWindowID);
 const mainWindowID = appConfig.get('mainWindowID');
 const mainWindow = BrowserWindow.fromId(mainWindowID);
-
-// import {emailDocument} from '../app/helpers/DataManager';
 const PDFWindow = require('electron-pdf-window');
-// let is_emailing = false;
 
 ipcMain.on('preview-document', (event, docData) =>
 {
@@ -26,117 +24,28 @@ ipcMain.on('preview-document', (event, docData) =>
   PDFWindow.addSupport(pdfWindow);
 
   const path = require('path');
-  const appDir = (require('electron').app || require('electron').remote.app).getAppPath(); // getAppPath()
-  const pdf_path = path.join(appDir, `temp.pdf`);
-  // const pdf_path = path.resolve( 'static/temp.pdf');
-  // const decodedBase64 = require('base64topdf').base64Decode(docData.file.split(';base64,').pop(), pdf_path);
-  require('fs').writeFile(pdf_path, docData.file.split(';base64,').pop(), {encoding: 'base64'}, (err) =>
+  const mkdirp = require('mkdirp');
+  const appDir = (electron.app || electron.remote.app).getAppPath();
+
+  mkdirp(appDir + '/data/', (err) =>
   {
-    console.log('created PDF document for PDF viewer');
-    pdfWindow.loadURL(pdf_path);
+    if(err)
+    {
+      return console.log('error: %s', err.message);
+    }
+    
+    const pdf_path = path.join(appDir, '/data/temp.pdf');
+    // const pdf_path = path.join(appDir, `temp.pdf`);
+    // const decodedBase64 = require('base64topdf').base64Decode(docData.file.split(';base64,').pop(), pdf_path);
+    require('fs').writeFile(pdf_path, docData.file.split(';base64,').pop(), {encoding: 'base64'}, (err) =>
+    {
+      console.log('created PDF document for PDF viewer');
+      pdfWindow.loadURL(pdf_path);
+    });
   });
   // Pass Data
   // previewWindow.webContents.send('update-document-preview', docData);
 });
-
-// ipcMain.on('email-quote', (event, emailData) =>
-// {
-//   is_emailing = true;
-//   // Show & Focus
-//   previewWindow.show();
-//   previewWindow.focus();
-
-//   console.log(emailData.quote);
-
-//   // update preview window in the background
-//   previewWindow.webContents.send('update-quote-preview', emailData.quote);
-// });
-
-// ipcMain.on('updated-preview', (event, pdfData) =>
-// {
-//   console.log('updated quote preview');
-
-//   if(is_emailing)
-//   {
-//     let printOptions;
-//     if (appConfig.has('general.printOptions'))
-//     {
-//       printOptions = appConfig.get('general.printOptions');
-//     } else
-//     {
-//       printOptions =
-//       {
-//         landscape: false,
-//         marginsType: 0,
-//         printBackground: true,
-//         printSelectionOnly: false,
-//       };
-//     }
-
-//     previewWindow.webContents.printToPDF(printOptions, (error, data) =>
-//     {
-//       if (error) throw error;
-      
-//       const path = require('path').resolve('static/test.pdf');
-//       const fs = require('fs');
-
-//       fs.writeFile(path, data, error =>
-//       {
-//         if (error)
-//         {
-//           throw error;
-//         }
-        
-//         console.log('Generated PDF document');
-
-//         const file_data = fs.readFileSync(path);
-//         const file_base64_str =
-//         `data:application/pdf;base64,${file_data.toString('base64')}`;
-
-//         // const file =
-//         // {
-//         //   filename: emailData.quote._id,
-//         //   content_type: 'application/pdf',
-//         //   file: file_data.toString('base64') // file_base64_str.split('base64,').pop()
-//         // }
-//         // import  * as DataManager from '../app/helpers/DataManager';
-//         // require('../app/helpers/DataManager')
-//         // emailDocument(emailData.dispatch, Object.assign(emailData.quote, { metafile: file }), '/quote/mailto')
-//         // .then(response => console.log('emailed PDF document', response));
-
-//         // const UIActions = require('../app/actions/ui');
-//         // const ACTION_TYPES = require('../app/constants/actions');
-
-//         // const HttpClient = require('axios').create(
-//         // {
-//         //     headers:
-//         //     {
-//         //       quote_id: emailData.quote_id,
-//         //       destination: emailData.destination,
-//         //       subject: emailData.subject,
-//         //       message : emailData.message,
-//         //       session_id : emailData.session_id,
-//         //       'Content-Type': 'application/json'
-//         //     }
-//         // });
-//         // const new_email_obj =
-//         // {
-//         //   quote_id: emailData.quote_id,
-//         //   destination: emailData.destination,
-//         //   subject: emailData.subject,
-//         //   message : emailData.message,
-//         //   metafile: file
-//         // };
-
-//         // return HttpClient.post('http://127.0.0.1:8080/quote/mailto', file)
-//         //                 .then(response =>
-//         //                   emailData.then.apply(response))
-//         //                 .catch(err => 
-//         //                   emailData.catch.apply(err));
-//       });
-//     })
-//   }
-// });
 
 ipcMain.on('model-to-pdf', (event, data, type) =>
 {

@@ -148,7 +148,6 @@ class Login extends Component
 
   render()
   {
-    const { t } = this.props;
     const home_button_style = {width: '450px', height: '190px', fontSize: '28pt'}
 
     return (
@@ -247,7 +246,7 @@ class Login extends Component
                   </LoginButton>
                 </div>
                 <div className="pageItem col-md-6">
-                  <p style={{textAlign: 'right', color: '#fff'}}>Don't have an account?</p>
+                  <p style={{textAlign: 'right', color: '#fff'}}>Don&apos;t have an account?</p>
                   <SignupButton
                     onClick={(evt)=>this.showSignup()}
                     style={{float: 'right'}}
@@ -269,8 +268,7 @@ Login.propTypes =
 {
   dispatch: PropTypes.func.isRequired,
   changeTab: PropTypes.func.isRequired,
-  setLoading: PropTypes.func.isRequired,
-  t: PropTypes.func.isRequired
+  setLoading: PropTypes.func.isRequired
 };
 
 // Map state to props & Export
@@ -280,6 +278,5 @@ const mapStateToProps = state => (
 
 export default compose(
   connect(mapStateToProps),
-  translate(),
   _withFadeInAnimation
 )(Login);
